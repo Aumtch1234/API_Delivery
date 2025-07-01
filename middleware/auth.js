@@ -8,6 +8,7 @@ function authenticateJWT(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+    console.log('Decoded user from token:', req.user);
     next();
   } catch (err) {
     res.status(403).json({ message: 'Invalid token' });
