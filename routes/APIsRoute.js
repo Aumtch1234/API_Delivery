@@ -9,7 +9,7 @@ const registerController = require('../controllers/registerController');
 const { googleLogin } = require('../controllers/authController');
 const authenticateJWT = require('../middleware/auth');
 const { getProfile } = require('../controllers/userController');
-const { marketsController, getMyMarket } = require('../controllers/marketController');
+const { marketsController, getMyMarket, addFood, getMyFoods, updateFood } = require('../controllers/marketController');
 const { refreshToken } = require('../controllers/refreshTokenController');
 
 
@@ -27,6 +27,10 @@ router.get('/profile', authenticateJWT, getProfile);
 //Market  getMyMarket
 router.post('/market/add', authenticateJWT, upload.single('shop_logo'), marketsController);
 router.get('/my-market', authenticateJWT, getMyMarket);
+router.post('/food/add', authenticateJWT, upload.single('image'), addFood);
+router.get('/my-foods', authenticateJWT, getMyFoods);
+router.put('/food/update/:id', authenticateJWT, upload.single('image'), updateFood);
+
 
 
 
