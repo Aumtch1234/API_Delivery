@@ -43,3 +43,51 @@ exports.googleLogin = async (req, res) => {
     res.status(401).json({ message: 'Invalid Google token' });
   }
 };
+
+
+exports.updateVerify = async (req, res) => {
+
+  try {
+    const userId = req.user.user_id;
+    const { display_name, phone, gender, birthdate } = req.body;
+    const file = req.file;
+
+    // photo_url อาจมาจากไฟล์ใหม่ หรือ URL เดิมจาก body
+    let photo_url = req.body.photo_url;
+
+    if (file) {
+      photo_url = file.path || file.location || '';
+      // file.path สำหรับ local multer storage
+      // file.location ถ้าใช้ multer-storage-cloudinary
+      console.log('File photo_url resolved to:', photo_url);
+    }
+
+    if (!display_name || !phone || gender == null || !birthdate || !photo_url) {
+      return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+    }
+
+    const query = `
+      UPDATE users SET 
+        display_name = $1,
+        phone = $2,
+        gender = $3,
+        birthdate = $4,
+        photo_url = $5,
+        is_verified = false
+      WHERE user_id = $6
+      RETURNING *;
+    `;
+
+    const values = [display_name, phone, gender, birthdate, photo_url, userId];
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้' });
+    }
+
+    res.json({ success: true, user: result.rows[0], message: 'อัปเดตข้อมูลสำเร็จ' });
+  } catch (error) {
+    console.error('Update verify error:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดจากระบบ' });
+  }
+};

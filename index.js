@@ -8,6 +8,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', authRoutes);
 
+
 const PORT = process.env.PORT || 4000;
 const HOST = '0.0.0.0';  // ฟังทุก interface
 app.listen(PORT, HOST, () => {

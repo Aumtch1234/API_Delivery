@@ -6,7 +6,7 @@ const upload = multer({ storage });
 
 const loginController = require('../controllers/loginController');
 const registerController = require('../controllers/registerController');
-const { googleLogin } = require('../controllers/authController');
+const { googleLogin, updateVerify } = require('../controllers/authController');
 const authenticateJWT = require('../middleware/auth');
 const { getProfile } = require('../controllers/userController');
 const { marketsController, getMyMarket, addFood, getMyFoods, updateFood } = require('../controllers/marketController');
@@ -17,6 +17,9 @@ const { refreshToken } = require('../controllers/refreshTokenController');
 router.post('/google-login', googleLogin);
 router.post('/login', loginController.loginUser);
 router.post('/register', registerController.registerUser);
+router.post('/update-verify', authenticateJWT, upload.single('Profile'), updateVerify);
+
+
 
 //refreshTokenAPI
 router.post('/refresh-token', authenticateJWT, refreshToken);
