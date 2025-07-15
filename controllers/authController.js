@@ -44,29 +44,35 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-
 exports.updateVerify = async (req, res) => {
-
   try {
     const userId = req.user.user_id;
-    const { display_name, phone, gender, birthdate } = req.body;
+    const { display_name, phone, gender, birthdate, email } = req.body;
     const file = req.file;
 
-    // photo_url อาจมาจากไฟล์ใหม่ หรือ URL เดิมจาก body
     let photo_url = req.body.photo_url;
-
     if (file) {
       photo_url = file.path || file.location || '';
-      // file.path สำหรับ local multer storage
-      // file.location ถ้าใช้ multer-storage-cloudinary
-      console.log('File photo_url resolved to:', photo_url);
     }
 
     if (!display_name || !phone || gender == null || !birthdate || !photo_url) {
       return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
     }
 
-    const query = `
+    // 🔍 ตรวจสอบว่า user ใช้ provider แบบ manual หรือไม่
+    const checkUser = await pool.query(
+      'SELECT providers FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (checkUser.rows.length === 0) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้' });
+    }
+
+    const provider = checkUser.rows[0].providers;
+
+    // 🔁 เตรียม query และค่าที่จะอัปเดต
+    let query = `
       UPDATE users SET 
         display_name = $1,
         phone = $2,
@@ -74,18 +80,28 @@ exports.updateVerify = async (req, res) => {
         birthdate = $4,
         photo_url = $5,
         is_verified = false
-      WHERE user_id = $6
-      RETURNING *;
     `;
+    const values = [display_name, phone, gender, birthdate, photo_url];
 
-    const values = [display_name, phone, gender, birthdate, photo_url, userId];
+    if (provider === 'manual' && email) {
+      query += `, email = $6`;
+      values.push(email);
+    }
+
+    query += ` WHERE user_id = $${values.length + 1} RETURNING *`;
+    values.push(userId);
+
     const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'ไม่พบผู้ใช้' });
     }
 
-    res.json({ success: true, user: result.rows[0], message: 'อัปเดตข้อมูลสำเร็จ' });
+    res.json({
+      success: true,
+      user: result.rows[0],
+      message: 'อัปเดตข้อมูลสำเร็จ',
+    });
   } catch (error) {
     console.error('Update verify error:', error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดจากระบบ' });

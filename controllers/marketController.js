@@ -247,3 +247,88 @@ exports.updateFood = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตเมนู' });
   }
 };
+
+exports.updateManualOverride = async (req, res) => {
+  const userId = req.user?.user_id; // ต้องมี middleware authenticateJWT กำหนด req.user
+  const marketId = req.params.id;
+  const { is_manual_override, is_open } = req.body;
+
+  if (typeof is_manual_override !== 'boolean') {
+    return res.status(400).json({ message: 'is_manual_override ต้องเป็น Boolean' });
+  }
+  if (typeof is_open !== 'boolean') {
+    return res.status(400).json({ message: 'is_open ต้องเป็น Boolean' });
+  }
+
+  try {
+    // ตรวจสอบเจ้าของร้าน
+    const marketCheck = await pool.query(
+      'SELECT * FROM markets WHERE market_id = $1 AND owner_id = $2',
+      [marketId, userId]
+    );
+
+    if (marketCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'คุณไม่มีสิทธิ์แก้ไขร้านค้านี้' });
+    }
+
+    // อัปเดตค่า is_manual_override และ is_open
+    await pool.query(
+      `UPDATE markets SET is_manual_override = $1, is_open = $2 WHERE market_id = $3`,
+      [is_manual_override, is_open, marketId]
+    );
+
+    res.status(200).json({ message: 'อัปเดต manual override สำเร็จ', is_manual_override, is_open });
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาดใน updateManualOverride:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+};
+
+exports.updateMarketStatus = async (req, res) => {
+  const userId = req.user?.user_id;
+  const marketId = req.params.id;
+  const { is_open, override_minutes } = req.body;
+
+  if (typeof is_open !== 'boolean') {
+    return res.status(400).json({ message: 'is_open ต้องเป็น Boolean (true/false)' });
+  }
+
+  try {
+    // ตรวจสอบเจ้าของร้าน
+    const marketCheck = await pool.query(
+      'SELECT * FROM markets WHERE market_id = $1 AND owner_id = $2',
+      [marketId, userId]
+    );
+
+    if (marketCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'คุณไม่มีสิทธิ์แก้ไขร้านค้านี้' });
+    }
+
+    const currentMarket = marketCheck.rows[0];
+
+    let override_until = currentMarket.override_until;
+    let is_manual_override = currentMarket.is_manual_override;
+
+    if (override_minutes && typeof override_minutes === 'number' && override_minutes > 0) {
+      // กำหนดเวลาหมดอายุ override ใหม่
+      override_until = new Date(Date.now() + override_minutes * 60 * 1000);
+      is_manual_override = true;
+    }
+
+    // ถ้า override_minutes ไม่ได้ส่งมา หรือ <=0 จะไม่เปลี่ยน override status และ override_until
+
+    await pool.query(
+      `UPDATE markets 
+       SET is_open = $1, 
+           is_manual_override = $2, 
+           override_until = $3 
+       WHERE market_id = $4`,
+      [is_open, is_manual_override, override_until, marketId]
+    );
+
+    res.status(200).json({ message: 'อัปเดตสถานะร้านสำเร็จ', is_open, is_manual_override, override_until });
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาด:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+};
