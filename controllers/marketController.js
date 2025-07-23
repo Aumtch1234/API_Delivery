@@ -46,7 +46,46 @@ exports.marketsController = async (req, res) => {
   }
 };
 
+exports.updateMarketController = async (req, res) => {
+  const { id } = req.params;
+  const { shop_name, shop_description, open_time, close_time } = req.body;
+  const shop_logo_url = req.file?.path;
 
+  if (!shop_name || !shop_description || !open_time || !close_time) {
+    return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  }
+
+  try {
+    const updateFields = [
+      `shop_name='${shop_name}'`,
+      `shop_description='${shop_description}'`,
+      `open_time='${open_time}'`,
+      `close_time='${close_time}'`
+    ];
+
+    if (shop_logo_url) {
+      updateFields.push(`shop_logo_url='${shop_logo_url}'`);
+    }
+
+    const updateQuery = `
+      UPDATE markets
+      SET ${updateFields.join(', ')}
+      WHERE market_id=$1
+      RETURNING *
+    `;
+
+    const result = await pool.query(updateQuery, [id]);
+
+    res.status(200).json({
+      message: 'อัปเดตร้านค้าสำเร็จ',
+      market: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating market:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: error.message });
+  }
+};
 
 exports.getMyMarket = async (req, res) => {
   const userId = req.user?.user_id;

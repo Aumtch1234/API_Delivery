@@ -25,7 +25,7 @@ exports.googleLogin = async (req, res) => {
       await pool.query(
         `INSERT INTO users (google_id, display_name, email, photo_url, is_verified, providers)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [google_id, display_name, email, photo_url, true, 'google']
+        [google_id, display_name, email, photo_url, false, 'google']
       );
       userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     }

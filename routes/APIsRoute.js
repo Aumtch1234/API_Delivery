@@ -9,7 +9,7 @@ const registerController = require('../controllers/registerController');
 const { googleLogin, updateVerify } = require('../controllers/authController');
 const authenticateJWT = require('../middleware/auth');
 const { getProfile } = require('../controllers/userController');
-const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride } = require('../controllers/marketController');
+const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController } = require('../controllers/marketController');
 const { refreshToken } = require('../controllers/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../controllers/otpController');
 
@@ -33,6 +33,7 @@ router.get('/profile', authenticateJWT, getProfile);
 
 //Market  getMyMarket
 router.post('/market/add', authenticateJWT, upload.single('shop_logo'), marketsController);
+router.put('/markets/:id', upload.single('shop_logo'), updateMarketController);
 router.get('/my-market', authenticateJWT, getMyMarket);
 router.patch('/my-market/override/:id', authenticateJWT, updateManualOverride);
 router.patch('/my-market/status/:id', authenticateJWT, updateMarketStatus);
