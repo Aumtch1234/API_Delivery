@@ -2,7 +2,7 @@ const pool = require('../config/db');
 
 exports.marketsController = async (req, res) => {
   const owner_id = req.user?.user_id;
-  const { shop_name, shop_description, open_time, close_time } = req.body;
+  const { shop_name, shop_description, open_time, close_time, latitude, longitude } = req.body;
   const shop_logo_url = req.file?.path;
 
   if (!owner_id) {
@@ -25,15 +25,18 @@ exports.marketsController = async (req, res) => {
       shop_description,
       shop_logo_url,
       open_time,
-      close_time
+      close_time,
+      latitude,
+      longitude
     });
 
     const result = await pool.query(
-      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time]
+      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, latitude, longitude)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+   RETURNING *`,
+      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, latitude, longitude]
     );
+
 
     res.status(200).json({
       message: 'เพิ่มร้านค้าสำเร็จ',

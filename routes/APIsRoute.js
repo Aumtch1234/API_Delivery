@@ -8,7 +8,7 @@ const loginController = require('../controllers/loginController');
 const registerController = require('../controllers/registerController');
 const { googleLogin, updateVerify } = require('../controllers/authController');
 const authenticateJWT = require('../middleware/auth');
-const { getProfile } = require('../controllers/userController');
+const { getProfile, updateProfile } = require('../controllers/userController');
 const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController } = require('../controllers/marketController');
 const { refreshToken } = require('../controllers/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../controllers/otpController');
@@ -23,6 +23,8 @@ router.post('/update-verify', authenticateJWT, upload.single('Profile'), updateV
 router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtp);
 
+//User Profile Routes
+router.put('/update-profile', authenticateJWT, upload.single('Profile'), updateProfile);
 
 
 //refreshTokenAPI
