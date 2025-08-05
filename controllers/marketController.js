@@ -48,13 +48,13 @@ exports.marketsController = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: error.message });
   }
 };
+
 exports.updateMarketController = async (req, res) => {
   const { id } = req.params;
-  const { shop_name, shop_description, open_time, close_time, latitude, longitude } = req.body;
+  const { shop_name, shop_description, open_time, close_time } = req.body;
   const shop_logo_url = req.file?.path;
 
-  // ตรวจสอบข้อมูลที่จำเป็นต้องครบถ้วน รวมถึง latitude และ longitude
-  if (!shop_name || !shop_description || !open_time || !close_time || !latitude || !longitude) {
+  if (!shop_name || !shop_description || !open_time || !close_time) {
     return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
@@ -63,10 +63,7 @@ exports.updateMarketController = async (req, res) => {
       `shop_name='${shop_name}'`,
       `shop_description='${shop_description}'`,
       `open_time='${open_time}'`,
-      `close_time='${close_time}'`,
-      // เพิ่มการอัปเดตพิกัด latitude และ longitude
-      `latitude=${latitude}`,
-      `longitude=${longitude}`
+      `close_time='${close_time}'`
     ];
 
     if (shop_logo_url) {
