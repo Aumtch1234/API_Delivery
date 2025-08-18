@@ -374,3 +374,40 @@ exports.updateMarketStatus = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
   }
 };
+
+exports.deleteFood = async (req, res) => {
+  const { food_id } = req.params;
+  const user_id = req.user.user_id; // จาก JWT
+
+  try {
+    // หา market_id ของ user ก่อน
+    const marketResult = await pool.query(
+      "SELECT market_id FROM markets WHERE owner_id = $1",
+      [user_id]
+    );
+
+    if (marketResult.rows.length === 0) {
+      return res.status(404).json({ message: "Market not found for this user" });
+    }
+
+    const market_id = marketResult.rows[0].market_id;
+
+    // เช็คว่าอาหารนี้อยู่ใน market_id ของ user ไหม
+    const foodResult = await pool.query(
+      "SELECT * FROM foods WHERE food_id = $1 AND market_id = $2",
+      [food_id, market_id]
+    );
+
+    if (foodResult.rows.length === 0) {
+      return res.status(403).json({ message: "You do not have permission to delete this food" });
+    }
+
+    // ลบอาหาร
+    await pool.query("DELETE FROM foods WHERE food_id = $1", [food_id]);
+
+    res.json({ message: "Food deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

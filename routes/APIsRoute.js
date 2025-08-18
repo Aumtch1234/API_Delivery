@@ -9,9 +9,10 @@ const registerController = require('../controllers/registerController');
 const { googleLogin, updateVerify } = require('../controllers/authController');
 const authenticateJWT = require('../middleware/auth');
 const { getProfile, updateProfile } = require('../controllers/userController');
-const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController } = require('../controllers/marketController');
+const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController, deleteFood } = require('../controllers/marketController');
 const { refreshToken } = require('../controllers/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../controllers/otpController');
+const { getAllFoods, getAllMarket } = require('../controllers/FoodsController');
 
 
 
@@ -40,12 +41,14 @@ router.get('/my-market', authenticateJWT, getMyMarket);
 router.patch('/my-market/override/:id', authenticateJWT, updateManualOverride);
 router.patch('/my-market/status/:id', authenticateJWT, updateMarketStatus);
 
+//food in owner market
 router.post('/food/add', authenticateJWT, upload.single('image'), addFood);
 router.get('/my-foods', authenticateJWT, getMyFoods);
+router.delete("/food/delete/:food_id", authenticateJWT, deleteFood);
 router.put('/food/update/:id', authenticateJWT, upload.single('image'), updateFood);
 
-
-
-
+//Main Market Food 
+router.get('/foods', getAllFoods);
+router.get('/markets', getAllMarket);
 
 module.exports = router;
