@@ -1,6 +1,6 @@
-const pool = require('../config/db');
+const pool = require('../../config/db');
 const bcrypt = require('bcrypt');
-const upload = require('../utils/cloudinary'); // import multer ที่ตั้งค่าแล้ว
+const upload = require('../../utils/Client/cloudinary'); // import multer ที่ตั้งค่าแล้ว
 exports.registerUser = async (req, res) => {
   try {
     const {

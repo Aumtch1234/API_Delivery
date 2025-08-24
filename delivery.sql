@@ -2,15 +2,14 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.4
--- Dumped by pg_dump version 17.4
+-- Dumped from database version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1)
 
--- Started on 2025-08-19 04:56:31
+-- Started on 2025-08-24 23:48:43 +07
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -24,7 +23,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 217 (class 1259 OID 32786)
+-- TOC entry 215 (class 1259 OID 16390)
 -- Name: admins; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -39,7 +38,7 @@ CREATE TABLE public.admins (
 ALTER TABLE public.admins OWNER TO postgres;
 
 --
--- TOC entry 218 (class 1259 OID 32792)
+-- TOC entry 216 (class 1259 OID 16396)
 -- Name: admins_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -55,8 +54,8 @@ CREATE SEQUENCE public.admins_id_seq
 ALTER SEQUENCE public.admins_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4853 (class 0 OID 0)
--- Dependencies: 218
+-- TOC entry 3459 (class 0 OID 0)
+-- Dependencies: 216
 -- Name: admins_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -64,7 +63,7 @@ ALTER SEQUENCE public.admins_id_seq OWNED BY public.admins.id;
 
 
 --
--- TOC entry 219 (class 1259 OID 32793)
+-- TOC entry 217 (class 1259 OID 16397)
 -- Name: food_options; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -79,7 +78,7 @@ CREATE TABLE public.food_options (
 ALTER TABLE public.food_options OWNER TO postgres;
 
 --
--- TOC entry 220 (class 1259 OID 32799)
+-- TOC entry 218 (class 1259 OID 16403)
 -- Name: food_options_option_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -95,8 +94,8 @@ CREATE SEQUENCE public.food_options_option_id_seq
 ALTER SEQUENCE public.food_options_option_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4854 (class 0 OID 0)
--- Dependencies: 220
+-- TOC entry 3460 (class 0 OID 0)
+-- Dependencies: 218
 -- Name: food_options_option_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -104,7 +103,7 @@ ALTER SEQUENCE public.food_options_option_id_seq OWNED BY public.food_options.op
 
 
 --
--- TOC entry 221 (class 1259 OID 32800)
+-- TOC entry 219 (class 1259 OID 16404)
 -- Name: foods; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -123,7 +122,7 @@ CREATE TABLE public.foods (
 ALTER TABLE public.foods OWNER TO postgres;
 
 --
--- TOC entry 222 (class 1259 OID 32807)
+-- TOC entry 220 (class 1259 OID 16411)
 -- Name: foods_food_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -139,8 +138,8 @@ CREATE SEQUENCE public.foods_food_id_seq
 ALTER SEQUENCE public.foods_food_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4855 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 3461 (class 0 OID 0)
+-- Dependencies: 220
 -- Name: foods_food_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -148,7 +147,7 @@ ALTER SEQUENCE public.foods_food_id_seq OWNED BY public.foods.food_id;
 
 
 --
--- TOC entry 223 (class 1259 OID 32808)
+-- TOC entry 221 (class 1259 OID 16412)
 -- Name: markets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -173,7 +172,7 @@ CREATE TABLE public.markets (
 ALTER TABLE public.markets OWNER TO postgres;
 
 --
--- TOC entry 224 (class 1259 OID 32814)
+-- TOC entry 222 (class 1259 OID 16420)
 -- Name: markets_market_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -189,8 +188,8 @@ CREATE SEQUENCE public.markets_market_id_seq
 ALTER SEQUENCE public.markets_market_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4856 (class 0 OID 0)
--- Dependencies: 224
+-- TOC entry 3462 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: markets_market_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -198,7 +197,7 @@ ALTER SEQUENCE public.markets_market_id_seq OWNED BY public.markets.market_id;
 
 
 --
--- TOC entry 225 (class 1259 OID 32815)
+-- TOC entry 223 (class 1259 OID 16421)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -222,7 +221,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 226 (class 1259 OID 32823)
+-- TOC entry 224 (class 1259 OID 16429)
 -- Name: users_user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -238,8 +237,8 @@ CREATE SEQUENCE public.users_user_id_seq
 ALTER SEQUENCE public.users_user_id_seq OWNER TO postgres;
 
 --
--- TOC entry 4857 (class 0 OID 0)
--- Dependencies: 226
+-- TOC entry 3463 (class 0 OID 0)
+-- Dependencies: 224
 -- Name: users_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -247,7 +246,7 @@ ALTER SEQUENCE public.users_user_id_seq OWNED BY public.users.user_id;
 
 
 --
--- TOC entry 4661 (class 2604 OID 32860)
+-- TOC entry 3269 (class 2604 OID 16430)
 -- Name: admins id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -255,7 +254,7 @@ ALTER TABLE ONLY public.admins ALTER COLUMN id SET DEFAULT nextval('public.admin
 
 
 --
--- TOC entry 4663 (class 2604 OID 32861)
+-- TOC entry 3271 (class 2604 OID 16431)
 -- Name: food_options option_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -263,7 +262,7 @@ ALTER TABLE ONLY public.food_options ALTER COLUMN option_id SET DEFAULT nextval(
 
 
 --
--- TOC entry 4665 (class 2604 OID 32862)
+-- TOC entry 3273 (class 2604 OID 16432)
 -- Name: foods food_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -271,7 +270,7 @@ ALTER TABLE ONLY public.foods ALTER COLUMN food_id SET DEFAULT nextval('public.f
 
 
 --
--- TOC entry 4668 (class 2604 OID 32863)
+-- TOC entry 3276 (class 2604 OID 16433)
 -- Name: markets market_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -279,7 +278,7 @@ ALTER TABLE ONLY public.markets ALTER COLUMN market_id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 4672 (class 2604 OID 32864)
+-- TOC entry 3280 (class 2604 OID 16434)
 -- Name: users user_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -287,8 +286,8 @@ ALTER TABLE ONLY public.users ALTER COLUMN user_id SET DEFAULT nextval('public.u
 
 
 --
--- TOC entry 4838 (class 0 OID 32786)
--- Dependencies: 217
+-- TOC entry 3444 (class 0 OID 16390)
+-- Dependencies: 215
 -- Data for Name: admins; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -304,8 +303,8 @@ COPY public.admins (id, username, password, role) FROM stdin;
 
 
 --
--- TOC entry 4840 (class 0 OID 32793)
--- Dependencies: 219
+-- TOC entry 3446 (class 0 OID 16397)
+-- Dependencies: 217
 -- Data for Name: food_options; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -314,8 +313,8 @@ COPY public.food_options (option_id, food_id, label, extra_price) FROM stdin;
 
 
 --
--- TOC entry 4842 (class 0 OID 32800)
--- Dependencies: 221
+-- TOC entry 3448 (class 0 OID 16404)
+-- Dependencies: 219
 -- Data for Name: foods; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -328,20 +327,20 @@ COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, 
 
 
 --
--- TOC entry 4844 (class 0 OID 32808)
--- Dependencies: 223
+-- TOC entry 3450 (class 0 OID 16412)
+-- Dependencies: 221
 -- Data for Name: markets; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.markets (market_id, owner_id, shop_name, shop_description, shop_logo_url, created_at, latitude, longitude, open_time, close_time, is_open, is_manual_override, override_until, rating) FROM stdin;
 31	21	Burger Street	ขายเบอร์เกอร์ที่อร่อยๆ มีให้เลือกมากมาย	https://res.cloudinary.com/djqdn2zru/image/upload/v1754250121/Market-LOGO/bsuaw6bjfyq5smej8hqm.jpg	2025-08-04 02:42:00.888232	17.2916162	104.1129242	05:50	20:40	f	f	\N	\N
-32	22	12 Burg	sell food	https://res.cloudinary.com/djqdn2zru/image/upload/v1755551672/Market-LOGO/liewi5quylceuazuy67o.jpg	2025-08-19 04:14:31.607904	17.169805653617185	104.14964765310287	03:12	23:18	t	f	\N	\N
+32	22	12 Burg	sell food	https://res.cloudinary.com/djqdn2zru/image/upload/v1755551672/Market-LOGO/liewi5quylceuazuy67o.jpg	2025-08-19 04:14:31.607904	17.169805653617185	104.14964765310287	03:12	23:18	f	f	\N	\N
 \.
 
 
 --
--- TOC entry 4846 (class 0 OID 32815)
--- Dependencies: 225
+-- TOC entry 3452 (class 0 OID 16421)
+-- Dependencies: 223
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -352,8 +351,8 @@ COPY public.users (user_id, google_id, display_name, email, password, birthdate,
 
 
 --
--- TOC entry 4858 (class 0 OID 0)
--- Dependencies: 218
+-- TOC entry 3464 (class 0 OID 0)
+-- Dependencies: 216
 -- Name: admins_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -361,8 +360,8 @@ SELECT pg_catalog.setval('public.admins_id_seq', 14, true);
 
 
 --
--- TOC entry 4859 (class 0 OID 0)
--- Dependencies: 220
+-- TOC entry 3465 (class 0 OID 0)
+-- Dependencies: 218
 -- Name: food_options_option_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -370,8 +369,8 @@ SELECT pg_catalog.setval('public.food_options_option_id_seq', 1, false);
 
 
 --
--- TOC entry 4860 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 3466 (class 0 OID 0)
+-- Dependencies: 220
 -- Name: foods_food_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -379,8 +378,8 @@ SELECT pg_catalog.setval('public.foods_food_id_seq', 7, true);
 
 
 --
--- TOC entry 4861 (class 0 OID 0)
--- Dependencies: 224
+-- TOC entry 3467 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: markets_market_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -388,8 +387,8 @@ SELECT pg_catalog.setval('public.markets_market_id_seq', 31, true);
 
 
 --
--- TOC entry 4862 (class 0 OID 0)
--- Dependencies: 226
+-- TOC entry 3468 (class 0 OID 0)
+-- Dependencies: 224
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -397,7 +396,7 @@ SELECT pg_catalog.setval('public.users_user_id_seq', 21, true);
 
 
 --
--- TOC entry 4677 (class 2606 OID 32830)
+-- TOC entry 3285 (class 2606 OID 16436)
 -- Name: admins admins_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -406,7 +405,7 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 4679 (class 2606 OID 32832)
+-- TOC entry 3287 (class 2606 OID 16438)
 -- Name: admins admins_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -415,7 +414,7 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 4681 (class 2606 OID 32834)
+-- TOC entry 3289 (class 2606 OID 16440)
 -- Name: food_options food_options_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -424,7 +423,7 @@ ALTER TABLE ONLY public.food_options
 
 
 --
--- TOC entry 4683 (class 2606 OID 32836)
+-- TOC entry 3291 (class 2606 OID 16442)
 -- Name: foods foods_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -433,7 +432,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 4685 (class 2606 OID 32838)
+-- TOC entry 3293 (class 2606 OID 16444)
 -- Name: markets markets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -442,7 +441,7 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 4687 (class 2606 OID 32840)
+-- TOC entry 3295 (class 2606 OID 16446)
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -451,7 +450,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4689 (class 2606 OID 32842)
+-- TOC entry 3297 (class 2606 OID 16448)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -460,7 +459,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4690 (class 2606 OID 32843)
+-- TOC entry 3298 (class 2606 OID 16449)
 -- Name: food_options food_options_food_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -469,7 +468,7 @@ ALTER TABLE ONLY public.food_options
 
 
 --
--- TOC entry 4691 (class 2606 OID 32848)
+-- TOC entry 3299 (class 2606 OID 16454)
 -- Name: foods foods_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -478,7 +477,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 4692 (class 2606 OID 32853)
+-- TOC entry 3300 (class 2606 OID 16459)
 -- Name: markets markets_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -486,7 +485,7 @@ ALTER TABLE ONLY public.markets
     ADD CONSTRAINT markets_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(user_id);
 
 
--- Completed on 2025-08-19 04:56:31
+-- Completed on 2025-08-24 23:48:43 +07
 
 --
 -- PostgreSQL database dump complete

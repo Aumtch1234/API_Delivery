@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('../../config/db');
 
 exports.marketsController = async (req, res) => {
   const owner_id = req.user?.user_id;

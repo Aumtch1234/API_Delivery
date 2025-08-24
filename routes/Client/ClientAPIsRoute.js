@@ -1,20 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { storage } = require('../utils/cloudinary'); // <-- path อาจต้องปรับ
+const { storage } = require('../../utils/Client/cloudinary'); // <-- path อาจต้องปรับ
 const upload = multer({ storage });
 
-const loginController = require('../controllers/loginController');
-const registerController = require('../controllers/registerController');
-const { googleLogin, updateVerify } = require('../controllers/authController');
-const authenticateJWT = require('../middleware/auth');
-const { getProfile, updateProfile } = require('../controllers/userController');
-const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController, deleteFood } = require('../controllers/marketController');
-const { refreshToken } = require('../controllers/refreshTokenController');
-const { sendOtp, verifyOtp } = require('../controllers/otpController');
-const { getAllFoods, getAllMarket } = require('../controllers/FoodsController');
-
-
+const loginController = require('../../controllers/Client/loginController');
+const registerController = require('../../controllers/Client/registerController');
+const { googleLogin, updateVerify } = require('../../controllers/Client/authController');
+const authenticateJWT = require('../../middleware/Client/auth');
+const { getProfile, updateProfile } = require('../../controllers/Client/userController');
+const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController, deleteFood } = require('../../controllers/Client/marketController');
+const { refreshToken } = require('../../controllers/Client/refreshTokenController');
+const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
+const { getAllFoods, getAllMarket } = require('../../controllers/Client/FoodsController');
 
 //Login and Register Routes
 router.post('/google-login', googleLogin);

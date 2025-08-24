@@ -3,12 +3,16 @@ const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db');
 const cron = require('node-cron');
-const authRoutes = require('./routes/APIsRoute');
+const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
+const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/api', authRoutes);
+
+app.use('/client', ClientRoutes);
+app.use('/admin', AdminRoutes);
+
 
 // cron job ทุก 1 นาที ตรวจสอบเวลาเปิด/ปิดร้าน
 cron.schedule('*/1 * * * *', async () => {

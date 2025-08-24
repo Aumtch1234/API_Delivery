@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const pool = require('../../config/db');
 
 exports.getProfile = async (req, res) => {
   const { user_id } = req.user;

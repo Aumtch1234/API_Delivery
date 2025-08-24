@@ -1,6 +1,6 @@
 const crypto = require('crypto');
-const db = require('../config/db'); // ใช้ PostgreSQL หรือ MongoDB ตามที่คุณใช้
-const { sendOtpEmail } = require('../utils/mailer');
+const db = require('../../config/db'); // ใช้ PostgreSQL หรือ MongoDB ตามที่คุณใช้
+const { sendOtpEmail } = require('../../utils/Client/mailer');
 
 const otpStore = {}; // หรือใช้ Redis แทนใน production
 
