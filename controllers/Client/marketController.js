@@ -2,14 +2,14 @@ const pool = require('../../config/db');
 
 exports.marketsController = async (req, res) => {
   const owner_id = req.user?.user_id;
-  const { shop_name, shop_description, open_time, close_time, latitude, longitude } = req.body;
+  const { shop_name, shop_description, open_time, close_time, address, phone, latitude, longitude } = req.body;
   const shop_logo_url = req.file?.path;
 
   if (!owner_id) {
     return res.status(400).json({ message: 'ไม่พบ owner_id จาก token' });
   }
 
-  if (!shop_name || !shop_description || !shop_logo_url || !open_time || !close_time) {
+  if (!shop_name || !shop_description || !shop_logo_url || !open_time || !close_time || !address || !phone) {
     return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
@@ -26,15 +26,17 @@ exports.marketsController = async (req, res) => {
       shop_logo_url,
       open_time,
       close_time,
+      address,
+      phone,
       latitude,
       longitude
     });
 
     const result = await pool.query(
-      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, latitude, longitude)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, address, phone, latitude, longitude)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
    RETURNING *`,
-      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, latitude, longitude]
+      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, address, phone, latitude, longitude]
     );
 
 

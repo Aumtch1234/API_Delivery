@@ -34,6 +34,38 @@ exports.getAllFoods = async (req, res) => {
     }
 };
 
+exports.getAllFoodForMarketID = async (req, res) => {
+  try {
+    const { marketId } = req.query;
+    let query = `
+      SELECT f.food_id, f.food_name, f.price, f.image_url, f.rating, m.shop_name
+      FROM foods f 
+      JOIN markets m ON f.market_id = m.market_id
+    `;
+    const params = [];
+    if (marketId) {
+      query += ` WHERE f.market_id = $1`;
+      params.push(marketId);
+    }
+    query += ` ORDER BY f.food_id`;
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json({
+      success: true,
+      message: 'Foods retrieved successfully',
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching foods:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message,
+    });
+  }
+};
+
 
 exports.getAllMarket = async (req, res) => {
     try {

@@ -7,6 +7,8 @@ const { getAllAdmins, verifyAdmin, getPendingAdmins } = require('../../controlle
 const { createFood, getFoods, deleteFood, updateFood } = require('../../controllers/Admin/FoodController');
 const { verifyToken } = require('../../middleware/Admin/authMiddleware');
 const { getUsersGroupedByProvider } = require('../../controllers/Admin/UsersController');
+const marketController = require('../../controllers/Admin/AdminMarketsController');
+
 
 
 const multer = require('multer');
@@ -21,7 +23,7 @@ router.post('/config-admin', configAdmin);
 
 // Admin Verification
 router.patch('/admins/verify/:id', verifyToken, verifyAdmin);
-router.get('/admins/pending', getPendingAdmins);
+router.get('/admins/pending', verifyToken, getPendingAdmins);
 router.get('/admins/all', verifyToken, getAllAdmins);
 
 // Food Menu
@@ -31,6 +33,11 @@ router.delete('/foods/:id', verifyToken, deleteFood);
 router.put('/foods/:id', verifyToken, upload.single('image'), updateFood);
 
 //Users Menu
-router.get('/users', getUsersGroupedByProvider, verifyToken); // Uncomment if you have a getUsers function
+router.get('/users', verifyToken, getUsersGroupedByProvider); // Uncomment if you have a getUsers function
+
+
+//Markets
+router.patch('/market/verify/:id', verifyToken, marketController.verifyMarket);
+router.get('/markets/all', verifyToken, marketController.getAllMarkets);
 
 module.exports = router;

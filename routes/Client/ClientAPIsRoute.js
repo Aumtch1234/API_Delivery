@@ -12,7 +12,7 @@ const { getProfile, updateProfile } = require('../../controllers/Client/userCont
 const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController, deleteFood } = require('../../controllers/Client/marketController');
 const { refreshToken } = require('../../controllers/Client/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
-const { getAllFoods, getAllMarket } = require('../../controllers/Client/FoodsController');
+const { getAllFoods, getAllMarket, getAllFoodForMarketID } = require('../../controllers/Client/FoodsController');
 
 //Login and Register Routes
 router.post('/google-login', googleLogin);
@@ -47,6 +47,7 @@ router.put('/food/update/:id', authenticateJWT, upload.single('image'), updateFo
 
 //Main Market Food 
 router.get('/foods', getAllFoods);
+router.get('/foods/:marketId', getAllFoodForMarketID);
 router.get('/markets', getAllMarket);
 
 module.exports = router;

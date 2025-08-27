@@ -1,5 +1,3 @@
-// controllers/allAdminController.js (หรือไฟล์ controller ที่เหมาะสม)
-
 const pool = require('../../config/db');
 
 exports.verifyAdmin = async (req, res) => {
@@ -18,9 +16,6 @@ exports.verifyAdmin = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-
-
 
 exports.getPendingAdmins = async (req, res) => {
   try {
