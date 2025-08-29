@@ -1,15 +1,15 @@
-const pool = require('../config/db');
+const pool = require('../../config/db');
 
 exports.marketsController = async (req, res) => {
   const owner_id = req.user?.user_id;
-  const { shop_name, shop_description, open_time, close_time } = req.body;
+  const { shop_name, shop_description, open_time, close_time, address, phone, latitude, longitude } = req.body;
   const shop_logo_url = req.file?.path;
 
   if (!owner_id) {
     return res.status(400).json({ message: 'ไม่พบ owner_id จาก token' });
   }
 
-  if (!shop_name || !shop_description || !shop_logo_url || !open_time || !close_time) {
+  if (!shop_name || !shop_description || !shop_logo_url || !open_time || !close_time || !address || !phone) {
     return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
   }
 
@@ -25,15 +25,20 @@ exports.marketsController = async (req, res) => {
       shop_description,
       shop_logo_url,
       open_time,
-      close_time
+      close_time,
+      address,
+      phone,
+      latitude,
+      longitude
     });
 
     const result = await pool.query(
-      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time]
+      `INSERT INTO markets (owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, address, phone, latitude, longitude)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+   RETURNING *`,
+      [owner_id, shop_name, shop_description, shop_logo_url, open_time, close_time, address, phone, latitude, longitude]
     );
+
 
     res.status(200).json({
       message: 'เพิ่มร้านค้าสำเร็จ',
@@ -46,7 +51,46 @@ exports.marketsController = async (req, res) => {
   }
 };
 
+exports.updateMarketController = async (req, res) => {
+  const { id } = req.params;
+  const { shop_name, shop_description, open_time, close_time } = req.body;
+  const shop_logo_url = req.file?.path;
 
+  if (!shop_name || !shop_description || !open_time || !close_time) {
+    return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  }
+
+  try {
+    const updateFields = [
+      `shop_name='${shop_name}'`,
+      `shop_description='${shop_description}'`,
+      `open_time='${open_time}'`,
+      `close_time='${close_time}'`
+    ];
+
+    if (shop_logo_url) {
+      updateFields.push(`shop_logo_url='${shop_logo_url}'`);
+    }
+
+    const updateQuery = `
+      UPDATE markets
+      SET ${updateFields.join(', ')}
+      WHERE market_id=$1
+      RETURNING *
+    `;
+
+    const result = await pool.query(updateQuery, [id]);
+
+    res.status(200).json({
+      message: 'อัปเดตร้านค้าสำเร็จ',
+      market: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating market:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: error.message });
+  }
+};
 
 exports.getMyMarket = async (req, res) => {
   const userId = req.user?.user_id;
@@ -245,5 +289,127 @@ exports.updateFood = async (req, res) => {
   } catch (err) {
     console.error('❌ อัปเดตเมนูผิดพลาด:', err);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตเมนู' });
+  }
+};
+
+exports.updateManualOverride = async (req, res) => {
+  const userId = req.user?.user_id; // ต้องมี middleware authenticateJWT กำหนด req.user
+  const marketId = req.params.id;
+  const { is_manual_override, is_open } = req.body;
+
+  if (typeof is_manual_override !== 'boolean') {
+    return res.status(400).json({ message: 'is_manual_override ต้องเป็น Boolean' });
+  }
+  if (typeof is_open !== 'boolean') {
+    return res.status(400).json({ message: 'is_open ต้องเป็น Boolean' });
+  }
+
+  try {
+    // ตรวจสอบเจ้าของร้าน
+    const marketCheck = await pool.query(
+      'SELECT * FROM markets WHERE market_id = $1 AND owner_id = $2',
+      [marketId, userId]
+    );
+
+    if (marketCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'คุณไม่มีสิทธิ์แก้ไขร้านค้านี้' });
+    }
+
+    // อัปเดตค่า is_manual_override และ is_open
+    await pool.query(
+      `UPDATE markets SET is_manual_override = $1, is_open = $2 WHERE market_id = $3`,
+      [is_manual_override, is_open, marketId]
+    );
+
+    res.status(200).json({ message: 'อัปเดต manual override สำเร็จ', is_manual_override, is_open });
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาดใน updateManualOverride:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+};
+
+exports.updateMarketStatus = async (req, res) => {
+  const userId = req.user?.user_id;
+  const marketId = req.params.id;
+  const { is_open, override_minutes } = req.body;
+
+  if (typeof is_open !== 'boolean') {
+    return res.status(400).json({ message: 'is_open ต้องเป็น Boolean (true/false)' });
+  }
+
+  try {
+    // ตรวจสอบเจ้าของร้าน
+    const marketCheck = await pool.query(
+      'SELECT * FROM markets WHERE market_id = $1 AND owner_id = $2',
+      [marketId, userId]
+    );
+
+    if (marketCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'คุณไม่มีสิทธิ์แก้ไขร้านค้านี้' });
+    }
+
+    const currentMarket = marketCheck.rows[0];
+
+    let override_until = currentMarket.override_until;
+    let is_manual_override = currentMarket.is_manual_override;
+
+    if (override_minutes && typeof override_minutes === 'number' && override_minutes > 0) {
+      // กำหนดเวลาหมดอายุ override ใหม่
+      override_until = new Date(Date.now() + override_minutes * 60 * 1000);
+      is_manual_override = true;
+    }
+
+    // ถ้า override_minutes ไม่ได้ส่งมา หรือ <=0 จะไม่เปลี่ยน override status และ override_until
+
+    await pool.query(
+      `UPDATE markets 
+       SET is_open = $1, 
+           is_manual_override = $2, 
+           override_until = $3 
+       WHERE market_id = $4`,
+      [is_open, is_manual_override, override_until, marketId]
+    );
+
+    res.status(200).json({ message: 'อัปเดตสถานะร้านสำเร็จ', is_open, is_manual_override, override_until });
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาด:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
+  }
+};
+
+exports.deleteFood = async (req, res) => {
+  const { food_id } = req.params;
+  const user_id = req.user.user_id; // จาก JWT
+
+  try {
+    // หา market_id ของ user ก่อน
+    const marketResult = await pool.query(
+      "SELECT market_id FROM markets WHERE owner_id = $1",
+      [user_id]
+    );
+
+    if (marketResult.rows.length === 0) {
+      return res.status(404).json({ message: "Market not found for this user" });
+    }
+
+    const market_id = marketResult.rows[0].market_id;
+
+    // เช็คว่าอาหารนี้อยู่ใน market_id ของ user ไหม
+    const foodResult = await pool.query(
+      "SELECT * FROM foods WHERE food_id = $1 AND market_id = $2",
+      [food_id, market_id]
+    );
+
+    if (foodResult.rows.length === 0) {
+      return res.status(403).json({ message: "You do not have permission to delete this food" });
+    }
+
+    // ลบอาหาร
+    await pool.query("DELETE FROM foods WHERE food_id = $1", [food_id]);
+
+    res.json({ message: "Food deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };

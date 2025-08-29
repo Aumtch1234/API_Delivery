@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken'); 
 const bcrypt = require('bcrypt');
 const SECRET = process.env.JWT_SECRET; // 👉 ควรเก็บใน .env
-const pool = require('../config/db'); 
+const pool = require('../../config/db'); 
 
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;

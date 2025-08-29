@@ -1,7 +1,7 @@
 // Node.js Express example
 
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const pool = require('../../config/db');
 const SECRET = process.env.JWT_SECRET;
 
 exports.refreshToken = async (req, res) => {
