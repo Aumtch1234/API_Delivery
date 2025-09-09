@@ -4,11 +4,23 @@ const router = express.Router();
 
 const { login, addAdmin, configAdmin } = require('../../controllers/Admin/authController');
 const { getAllAdmins, verifyAdmin, getPendingAdmins } = require('../../controllers/Admin/allAdminController');
-const { createFood, getFoods, deleteFood, updateFood } = require('../../controllers/Admin/FoodController');
+const { createFood, deleteFood, updateFood } = require('../../controllers/Admin/FoodController');
 const { verifyToken } = require('../../middleware/Admin/authMiddleware');
 const { getUsersGroupedByProvider } = require('../../controllers/Admin/UsersController');
 const marketController = require('../../controllers/Admin/AdminMarketsController');
+
 const riderController = require('../../controllers/Admin/RiderManagementController');
+
+const marketFoodController = require('../../controllers/Admin/FoodController');
+
+
+
+const riderController = require('../../controllers/Admin/RiderManagementController');
+const marketFoodController = require('../../controllers/Admin/FoodController');
+
+
+
+
 
 const multer = require('multer');
 const { storage } = require('../../utils/Admin/cloudinary');
@@ -25,8 +37,12 @@ router.get('/admins/pending', verifyToken, getPendingAdmins);
 router.get('/admins/all', verifyToken, getAllAdmins);
 
 // Food Menu
+router.post('/addmarket', upload.single('shop_logo_url'), verifyToken, marketFoodController.createMarket);
+router.post('/addcategory', verifyToken, marketFoodController.createCategory);
+router.get('/getcategories', verifyToken, marketFoodController.getCategories);
+router.get('/foods/market/:id', verifyToken, marketFoodController.getFoodsByMarketId);
 router.post('/addfood', verifyToken, upload.single('image'), createFood);
-router.get('/foods' , getFoods);
+router.get('/admin/markets', marketFoodController.getMarkets);
 router.delete('/foods/:id', verifyToken, deleteFood);
 router.put('/foods/:id', verifyToken, upload.single('image'), updateFood);
 
