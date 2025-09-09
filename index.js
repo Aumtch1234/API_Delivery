@@ -5,6 +5,7 @@ const pool = require('./config/db');
 const cron = require('node-cron');
 const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
 const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
+const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
+app.use('/rider', RiderRoutes);
 
 
 // cron job ทุก 1 นาที ตรวจสอบเวลาเปิด/ปิดร้าน
