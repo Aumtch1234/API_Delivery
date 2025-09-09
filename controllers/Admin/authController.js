@@ -17,11 +17,9 @@ exports.login = async (req, res) => {
 
   const token = jwt.sign(
     {
-<<<<<<< HEAD
       admin_id: user.id,
-=======
       id: user.id,           // 👈 เพิ่ม id ของ admin
->>>>>>> 3050771 (rider and admin manage-rider)
+      admin_id: user.id,
       username: user.username,
       role: user.role
     },
