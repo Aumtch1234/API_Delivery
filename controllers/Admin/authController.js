@@ -17,11 +17,12 @@ exports.login = async (req, res) => {
 
   const token = jwt.sign(
     {
+      id: user.id,           // 👈 เพิ่ม id ของ admin
       username: user.username,
-      role: user.role    // 👈 เพิ่ม role เข้าไป
+      role: user.role
     },
     process.env.JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '6h' }
   );
 
   res.json({ token });

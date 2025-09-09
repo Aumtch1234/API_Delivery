@@ -8,8 +8,7 @@ const { createFood, getFoods, deleteFood, updateFood } = require('../../controll
 const { verifyToken } = require('../../middleware/Admin/authMiddleware');
 const { getUsersGroupedByProvider } = require('../../controllers/Admin/UsersController');
 const marketController = require('../../controllers/Admin/AdminMarketsController');
-
-
+const riderController = require('../../controllers/Admin/RiderManagementController');
 
 const multer = require('multer');
 const { storage } = require('../../utils/Admin/cloudinary');
@@ -19,7 +18,6 @@ const upload = multer({ storage });
 router.post('/login', login);
 router.post('/add-admin', addAdmin);
 router.post('/config-admin', configAdmin);
-
 
 // Admin Verification
 router.patch('/admins/verify/:id', verifyToken, verifyAdmin);
@@ -35,9 +33,15 @@ router.put('/foods/:id', verifyToken, upload.single('image'), updateFood);
 //Users Menu
 router.get('/users', verifyToken, getUsersGroupedByProvider); // Uncomment if you have a getUsers function
 
-
 //Markets
 router.patch('/market/verify/:id', verifyToken, marketController.verifyMarket);
 router.get('/markets/all', verifyToken, marketController.getAllMarkets);
+
+// Rider Management
+router.get('/riders/pending', verifyToken, riderController.getPendingRiders);
+router.get('/riders/all', verifyToken, riderController.getAllRiders);
+router.get('/riders/:rider_id', verifyToken, riderController.getRiderDetails);
+router.patch('/riders/:rider_id/approve', verifyToken, riderController.approveRider);
+router.patch('/riders/:rider_id/reject', verifyToken, riderController.rejectRider);
 
 module.exports = router;
