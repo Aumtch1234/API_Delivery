@@ -15,6 +15,7 @@ const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController')
 const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder } = require('../../controllers/Client/FoodsController');
 
 const cartsController = require('../../controllers/Client/cartsController');
+const profileController = require('../../controllers/Client/userController');
 
 //Login and Register Routes
 router.post('/google-login', googleLogin);
@@ -26,7 +27,10 @@ router.post('/verify-otp', verifyOtp);
 
 //User Profile Routes
 router.put('/update-profile', authenticateJWT, upload.single('Profile'), updateProfile);
-
+router.post('/add/address', authenticateJWT, profileController.addAddress);
+router.get('/address', authenticateJWT, profileController.getAddresses);
+router.put('/update/address/:id', authenticateJWT, profileController.updateAddress);
+router.delete('/delete/address/:id', authenticateJWT, profileController.deleteAddress);
 
 //refreshTokenAPI
 router.post('/refresh-token', authenticateJWT, refreshToken);

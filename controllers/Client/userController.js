@@ -66,3 +66,136 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
   }
 };
+// ✅ addAddress Controller
+exports.addAddress = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // ได้จาก middleware ตรวจสอบ token
+
+    const {
+      name,
+      phone,
+      address,
+      district,
+      city,
+      postalCode,
+      notes,
+      latitude,
+      longitude,
+      locationText
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO client_addresses
+       (user_id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING id`,
+      [user_id, name, phone, address, district, city, postalCode, notes, latitude, longitude, locationText]
+    );
+
+    res.json({
+      success: true,
+      message: 'เพิ่มที่อยู่จัดส่งเรียบร้อย',
+      id: result.rows[0].id
+    });
+  } catch (err) {
+    console.error('❌ Add Address Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
+
+// ✅ getAddresses Controller
+exports.getAddresses = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // ได้จาก middleware ตรวจสอบ token
+
+    const result = await pool.query(
+      `SELECT id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text
+       FROM client_addresses
+       WHERE user_id = $1
+       ORDER BY id DESC`, // เอาล่าสุดขึ้นก่อน
+      [user_id]
+    );
+
+    res.json({
+      success: true,
+      addresses: result.rows
+    });
+  } catch (err) {
+    console.error('❌ Get Addresses Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
+
+// ✅ updateAddress Controller
+exports.updateAddress = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // ได้จาก middleware ตรวจสอบ token
+    const { id } = req.params; // id ของ address ที่จะแก้ไข
+
+    const {
+      name,
+      phone,
+      address,
+      district,
+      city,
+      postalCode,
+      notes,
+      latitude,
+      longitude,
+      locationText
+    } = req.body;
+
+    // ตรวจสอบว่าที่อยู่นี้เป็นของ user นี้จริงหรือไม่
+    const check = await pool.query(
+      'SELECT * FROM client_addresses WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+    if (check.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบที่อยู่สำหรับแก้ไข' });
+    }
+
+    // อัปเดตที่อยู่
+    await pool.query(
+      `UPDATE client_addresses
+       SET name = $1, phone = $2, address = $3, district = $4, city = $5,
+           postal_code = $6, notes = $7, latitude = $8, longitude = $9, location_text = $10
+       WHERE id = $11 AND user_id = $12`,
+      [name, phone, address, district, city, postalCode, notes, latitude, longitude, locationText, id, user_id]
+    );
+
+    res.json({ success: true, message: 'อัปเดตที่อยู่เรียบร้อย' });
+  } catch (err) {
+    console.error('❌ Update Address Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
+
+// DELETE /delete/address/:id
+exports.deleteAddress = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // ได้จาก middleware ตรวจสอบ token
+    const { id } = req.params;
+
+    // ตรวจสอบว่าที่อยู่นี้เป็นของ user จริงหรือไม่
+    const check = await pool.query(
+      'SELECT * FROM client_addresses WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+    if (check.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบที่อยู่สำหรับลบ' });
+    }
+
+    // ลบ address
+    await pool.query(
+      'DELETE FROM client_addresses WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+    res.json({ success: true, message: 'ลบที่อยู่เรียบร้อย' });
+  } catch (err) {
+    console.error('❌ Delete Address Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
