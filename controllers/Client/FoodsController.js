@@ -7,8 +7,10 @@ exports.getAllFoods = async (req, res) => {
         f.food_id,
         f.food_name,
         f.price,
+        f.sell_price,
         f.image_url,
         f.rating,
+        m.owner_id,
         m.shop_name
         FROM
         foods f 
@@ -38,7 +40,7 @@ exports.getAllFoodForMarketID = async (req, res) => {
   try {
     const { marketId } = req.params; // <-- เปลี่ยนจาก query เป็น params
     let query = `
-      SELECT f.food_id, f.food_name, f.price, f.image_url, f.rating as food_rating, 
+      SELECT f.food_id, f.food_name, f.price, f.image_url, f.rating as food_rating, f.sell_price,
       m.market_id, m.shop_name, m.shop_logo_url, m.latitude, m.longitude, m.is_open, m.rating as market_rating, m.address, m.phone
       FROM foods f 
       JOIN markets m ON f.market_id = m.market_id
@@ -89,7 +91,7 @@ exports.getFoodFromIDForOrder = async (req, res) => {
     const { foodId } = req.params;
     let query = `
     SELECT 
-        f.food_id, f.food_name, f.price, f.image_url, f.rating AS food_rating, f.options,
+        f.food_id, f.food_name, f.price, f.image_url, f.rating AS food_rating, f.options, f.sell_price,
         m.market_id, m.shop_name, m.shop_logo_url, m.latitude, m.longitude, m.is_open, m.rating AS market_rating, m.address, m.phone
     FROM foods f 
     JOIN markets m ON f.market_id = m.market_id  

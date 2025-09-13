@@ -107,38 +107,34 @@ exports.getMyMarket = async (req, res) => {
 };
 
 exports.addFood = async (req, res) => {
-  console.log("👉 [addFood] req.user:", req.user); // ต้องมี user_id
-  console.log('👉 addFood request body:', req.body);
-  console.log('👉 addFood request file:', req.file);
-  console.log('👉 user from token:', req.user);
-
   const userId = req.user?.user_id;
   const { food_name, price, options } = req.body;
 
   try {
+    // หา market ของ user
     const marketResult = await pool.query(
-      'SELECT market_id FROM markets WHERE owner_id = $1',
+      'SELECT market_id, owner_id FROM markets WHERE owner_id = $1',
       [userId]
     );
 
     if (marketResult.rows.length === 0) {
-      console.log('❌ ไม่พบร้านของผู้ใช้:', userId);
       return res.status(404).json({ message: 'ไม่พบร้านของผู้ใช้' });
     }
 
-    const marketId = marketResult.rows[0].market_id;
-
+    const market = marketResult.rows[0];
+    const marketId = market.market_id;
     const image = req.file?.path;
 
-    console.log('marketId:', marketId, 'image:', image);
+    // ✅ คำนวณราคาขาย
+    const sellPrice = market.owner_id
+      ? Math.floor(price * 1.15) // +15% แล้วปัดลง
+      : Math.floor(price * 1.20); // +20% แล้วปัดลง
 
     const result = await pool.query(
-      `INSERT INTO foods (market_id, food_name, price, image_url, options)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [marketId, food_name, price, image, options]
+      `INSERT INTO foods (market_id, food_name, price, sell_price, image_url, options)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [marketId, food_name, price, sellPrice, image, options]
     );
-
-    console.log('เพิ่มเมนูสำเร็จ:', result.rows[0]);
 
     res.status(200).json({ message: 'เพิ่มเมนูสำเร็จ', food: result.rows[0] });
   } catch (err) {
@@ -146,6 +142,7 @@ exports.addFood = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการเพิ่มเมนู' });
   }
 };
+
 
 exports.getMyFoods = async (req, res) => {
   const userId = req.user?.user_id;
@@ -186,36 +183,30 @@ exports.getMyFoods = async (req, res) => {
   }
 };
 
-exports.addFood = async (req, res) => {
-  const userId = req.user?.user_id;
-  const { food_name, price, options } = req.body;
-
+exports.updateSellPrices = async (req, res) => {
   try {
-    const marketResult = await pool.query(
-      'SELECT market_id FROM markets WHERE owner_id = $1',
-      [userId]
-    );
+    // ดึง foods ทั้งหมด + market.owner_id
+    const foods = await pool.query(`
+      SELECT f.food_id, f.price, f.sell_price, m.owner_id
+      FROM foods f
+      JOIN markets m ON f.market_id = m.market_id
+    `);
 
-    if (marketResult.rows.length === 0) {
-      return res.status(404).json({ message: 'ไม่พบร้านของผู้ใช้' });
+    for (let row of foods.rows) {
+      const sellPrice = row.owner_id
+        ? Math.floor(row.price * 1.15)
+        : Math.floor(row.price * 1.20);
+
+      await pool.query(
+        `UPDATE foods SET sell_price = $1 WHERE food_id = $2`,
+        [sellPrice, row.food_id]
+      );
     }
 
-    const marketId = marketResult.rows[0].market_id;
-    const image = req.file?.path;
-
-    // options ควรเป็น JSON string (frontend ต้องแปลงก่อนส่ง)
-    const optionsJson = options ? JSON.stringify(JSON.parse(options)) : null;
-
-    const result = await pool.query(
-      `INSERT INTO foods (market_id, food_name, price, image_url, options)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [marketId, food_name, price, image, optionsJson]
-    );
-
-    res.status(200).json({ message: 'เพิ่มเมนูสำเร็จ', food: result.rows[0] });
+    res.status(200).json({ message: "อัพเดตราคาขายเรียบร้อย" });
   } catch (err) {
-    console.error('❌ เกิดข้อผิดพลาดในการเพิ่มเมนู:', err);
-    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการเพิ่มเมนู' });
+    console.error("❌ เกิดข้อผิดพลาดในการอัพเดตราคาขาย:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัพเดตราคาขาย" });
   }
 };
 
@@ -234,7 +225,7 @@ exports.updateFood = async (req, res) => {
   try {
     // ตรวจสอบร้านของ user
     const marketResult = await pool.query(
-      'SELECT market_id FROM markets WHERE owner_id = $1',
+      'SELECT market_id, owner_id FROM markets WHERE owner_id = $1',
       [userId]
     );
     console.log('Market check result:', marketResult.rows);
@@ -243,7 +234,8 @@ exports.updateFood = async (req, res) => {
       return res.status(404).json({ message: 'ไม่พบร้านค้าของคุณ' });
     }
 
-    const marketId = marketResult.rows[0].market_id;
+    const market = marketResult.rows[0];
+    const marketId = market.market_id;
 
     // ตรวจสอบว่าเมนูนี้เป็นของร้านผู้ใช้
     const foodCheck = await pool.query(
@@ -256,14 +248,20 @@ exports.updateFood = async (req, res) => {
       return res.status(403).json({ message: 'ไม่มีสิทธิ์แก้ไขเมนูนี้' });
     }
 
+    // ✅ คำนวณ sell_price ใหม่
+    const sellPrice = market.owner_id
+      ? Math.floor(price * 1.15)
+      : Math.floor(price * 1.20);
+    console.log('Calculated sell_price:', sellPrice);
+
     // แปลง options
     const optionsJson = options ? JSON.stringify(JSON.parse(options)) : null;
     console.log('Parsed options JSON:', optionsJson);
 
-    // สร้าง query dynamic ตามว่ามีรูปภาพไหม และ options
-    let updateQuery = 'UPDATE foods SET food_name = $1, price = $2';
-    const params = [food_name, price];
-    let paramIndex = 3;
+    // ✅ สร้าง query dynamic
+    let updateQuery = 'UPDATE foods SET food_name = $1, price = $2, sell_price = $3';
+    const params = [food_name, price, sellPrice];
+    let paramIndex = 4;
 
     if (image) {
       updateQuery += `, image_url = $${paramIndex}`;

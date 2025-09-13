@@ -14,6 +14,8 @@ const { refreshToken } = require('../../controllers/Client/refreshTokenControlle
 const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
 const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder } = require('../../controllers/Client/FoodsController');
 
+const cartsController = require('../../controllers/Client/cartsController');
+
 //Login and Register Routes
 router.post('/google-login', googleLogin);
 router.post('/login', loginController.loginUser);
@@ -50,5 +52,10 @@ router.get('/foods', getAllFoods);
 router.get('/foods/:marketId', getAllFoodForMarketID);
 router.get('/markets', getAllMarket);
 router.get('/foods/order/:foodId', getFoodFromIDForOrder);
+
+//carts
+router.post('/cart/add', authenticateJWT, cartsController.AddCarts);
+router.get('/cart', authenticateJWT, cartsController.GetCarts);
+router.delete('/cart/:cart_id', authenticateJWT, cartsController.RemoveCart);
 
 module.exports = router;
