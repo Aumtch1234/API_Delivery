@@ -109,7 +109,7 @@ exports.getAddresses = async (req, res) => {
     const user_id = req.user.user_id; // ได้จาก middleware ตรวจสอบ token
 
     const result = await pool.query(
-      `SELECT id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text
+      `SELECT id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text, set_address
        FROM client_addresses
        WHERE user_id = $1
        ORDER BY id DESC`, // เอาล่าสุดขึ้นก่อน
@@ -123,6 +123,37 @@ exports.getAddresses = async (req, res) => {
   } catch (err) {
     console.error('❌ Get Addresses Error:', err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
+
+// 📥 ดึงที่อยู่หลัก (set_address = true) ของผู้ใช้
+exports.GetDefaultAddress = async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+
+    const result = await pool.query(
+      `SELECT *
+       FROM client_addresses
+       WHERE user_id = $1 AND set_address = true
+       LIMIT 1`,
+      [user_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        success: true,
+        data: [],      // ไม่มีที่อยู่หลัก
+        message: '⚠️ ไม่มีที่อยู่ในระบบ',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error('❌ GetDefaultAddress error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 };
 
@@ -196,6 +227,41 @@ exports.deleteAddress = async (req, res) => {
     res.json({ success: true, message: 'ลบที่อยู่เรียบร้อย' });
   } catch (err) {
     console.error('❌ Delete Address Error:', err);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
+  }
+};
+
+// ✅ setMainAddress Controller
+exports.setMainAddress = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // ได้จาก middleware
+    const { id } = req.params; // id ของ address ที่จะตั้งเป็นหลัก
+
+    // ตรวจสอบว่าที่อยู่นี้เป็นของ user จริงไหม
+    const check = await pool.query(
+      'SELECT * FROM client_addresses WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+    if (check.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบที่อยู่สำหรับตั้งค่า' });
+    }
+
+    // รีเซ็ต set_address = false ของที่อยู่ทั้งหมดของ user
+    await pool.query(
+      'UPDATE client_addresses SET set_address = false WHERE user_id = $1',
+      [user_id]
+    );
+
+    // ตั้ง address ที่เลือกเป็น true
+    await pool.query(
+      'UPDATE client_addresses SET set_address = true WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+    res.json({ success: true, message: 'ตั้งที่อยู่หลักเรียบร้อย' });
+  } catch (err) {
+    console.error('❌ Set Main Address Error:', err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
   }
 };

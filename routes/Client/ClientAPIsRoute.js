@@ -16,6 +16,7 @@ const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder 
 
 const cartsController = require('../../controllers/Client/cartsController');
 const profileController = require('../../controllers/Client/userController');
+const GoogleMapController = require('../../controllers/Client/GoogleMapController');
 
 //Login and Register Routes
 router.post('/google-login', googleLogin);
@@ -29,6 +30,7 @@ router.post('/verify-otp', verifyOtp);
 router.put('/update-profile', authenticateJWT, upload.single('Profile'), updateProfile);
 router.post('/add/address', authenticateJWT, profileController.addAddress);
 router.get('/address', authenticateJWT, profileController.getAddresses);
+router.get('/address/default', authenticateJWT, profileController.GetDefaultAddress);
 router.put('/update/address/:id', authenticateJWT, profileController.updateAddress);
 router.delete('/delete/address/:id', authenticateJWT, profileController.deleteAddress);
 
@@ -60,6 +62,10 @@ router.get('/foods/order/:foodId', getFoodFromIDForOrder);
 //carts
 router.post('/cart/add', authenticateJWT, cartsController.AddCarts);
 router.get('/cart', authenticateJWT, cartsController.GetCarts);
+router.put('/address/set-main/:id', authenticateJWT, profileController.setMainAddress);
 router.delete('/cart/:cart_id', authenticateJWT, cartsController.RemoveCart);
+
+
+router.post('/distance', authenticateJWT, GoogleMapController.Distance);
 
 module.exports = router;
