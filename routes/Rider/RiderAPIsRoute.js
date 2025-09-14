@@ -11,9 +11,18 @@ const {
 
 const {
     loginRider,
+    loginRiderWithGoogle,
     refreshToken,
     getProfile
 } = require('../../controllers/Rider/authController');
+
+const {
+    updateRiderPhone,
+    updateRiderPromptPay,
+    updateRiderGender,
+    updateRiderBirthdate,
+    updateRiderPhoto
+} = require('../../controllers/Rider/update-dataController');
 
 // Import middleware
 const {
@@ -55,6 +64,9 @@ const uploadFields = upload.fields([
 // POST /rider/login - เข้าสู่ระบบ
 router.post('/login', loginRider);
 
+// POST /rider/google-login - เข้าสู่ระบบด้วย Google
+router.post('/google-login', loginRiderWithGoogle);
+
 // POST /rider/refresh-token - รีเฟรช token
 router.post('/refresh-token', refreshToken);
 
@@ -75,13 +87,24 @@ router.post('/identity-verification',
 // GET /rider/profile - ดูข้อมูลโปรไฟล์ของตัวเอง
 router.get('/profile', verifyRiderToken, getProfile);
 
-// GET /rider/approval-status/:user_id - ตรวจสอบสถานะการอนุมัติ
-// ใช้ middleware เพื่อให้ดูได้เฉพาะข้อมูลของตัวเอง
-router.get('/approval-status/:user_id', 
-    verifyRiderToken, 
-    verifyOwnership, 
-    checkApprovalStatus
-);
+// GET /rider/approval-status - ตรวจสอบสถานะการอนุมัติ
+router.get('/approval-status', verifyRiderToken, checkApprovalStatus);
+
+// Update Data Routes (ต้องการ authentication)
+// PUT /rider/update-phone - อัพเดตเบอร์โทรศัพท์
+router.put('/update-phone', verifyRiderToken, updateRiderPhone);
+
+// PUT /rider/update-promptpay - อัพเดตหมายเลข PromptPay
+router.put('/update-promptpay', verifyRiderToken, updateRiderPromptPay);
+
+// PUT /rider/update-gender - อัพเดตเพศ
+router.put('/update-gender', verifyRiderToken, updateRiderGender);
+
+// PUT /rider/update-birthdate - อัพเดตวันเกิด
+router.put('/update-birthdate', verifyRiderToken, updateRiderBirthdate);
+
+// PUT /rider/update-photo - อัพเดตรูปโปรไฟล์
+router.put('/update-photo', verifyRiderToken, upload.single('photo'), updateRiderPhoto);
 
 // Routes สำหรับ rider ที่ได้รับการอนุมัติแล้ว
 // (เตรียมไว้สำหรับฟีเจอร์อนาคต เช่น รับงาน, อัปเดตสถานะ, ฯลฯ)

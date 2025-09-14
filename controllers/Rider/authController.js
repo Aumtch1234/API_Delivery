@@ -1,6 +1,8 @@
 const pool = require('../../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // เข้าสู่ระบบสำหรับไรเดอร์
 exports.loginRider = async (req, res) => {
@@ -90,6 +92,114 @@ exports.loginRider = async (req, res) => {
     }
 };
 
+// Login โดย Google
+exports.loginRiderWithGoogle = async (req, res) => {
+    const { tokenId } = req.body;
+    console.log('📥 Google login attempt with tokenId:', tokenId.substring(0, 20) + '...'); // แสดงบางส่วน
+    
+    try {
+        // ตรวจสอบ token กับ Google
+        const ticket = await client.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+        
+        // ตรวจสอบความถูกต้องของ token
+        const payload = ticket.getPayload();
+        console.log('✅ Google payload:', payload);
+        const { sub: google_id, name: display_name, email, picture: photo_url } = payload;
+
+        // ค้นหาผู้ใช้ในฐานข้อมูล
+        let userRiderResult = await pool.query(
+            'SELECT user_id, email, display_name, role, is_verified, google_id FROM users WHERE email = $1 AND role = $2',
+            [email, 'rider']
+        );
+
+        let user;
+        
+        if (userRiderResult.rows.length === 0) {
+            // ไม่พบผู้ใช้ - สร้างใหม่
+            console.log('🆕 สร้างไรเดอร์ใหม่จาก Google:', email);
+            const insertResult = await pool.query(
+                `INSERT INTO users (google_id, display_name, email, photo_url, role, is_verified, providers)
+                 VALUES ($1, $2, $3, $4, 'rider', false, 'google')
+                 RETURNING user_id, email, display_name, role, is_verified, google_id`,
+                [google_id, display_name, email, photo_url]
+            );
+            user = insertResult.rows[0];
+        } else {
+            // พบผู้ใช้แล้ว - อัปเดต google_id ถ้าจำเป็น
+            user = userRiderResult.rows[0];
+            
+            if (!user.google_id) {
+                await pool.query(
+                    'UPDATE users SET google_id = $1, photo_url = $2, providers = $3 WHERE user_id = $4',
+                    [google_id, photo_url, 'google', user.user_id]
+                );
+            }
+        }
+
+        // ตรวจสอบสถานะการยืนยันตัวตนของไรเดอร์
+        const riderProfileResult = await pool.query(
+            'SELECT approval_status, created_at as submitted_at FROM rider_profiles WHERE user_id = $1',
+            [user.user_id]
+        );
+
+        let riderStatus = {
+            has_submitted: false,
+            approval_status: null,
+            submitted_at: null
+        };
+
+        if (riderProfileResult.rows.length > 0) {
+            const profile = riderProfileResult.rows[0];
+            riderStatus = {
+                has_submitted: true,
+                approval_status: profile.approval_status,
+                submitted_at: profile.submitted_at
+            };
+        }
+
+        // สร้าง JWT token
+        const token = jwt.sign(
+            { 
+                user_id: user.user_id,
+                email: user.email,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        console.log('✅ ไรเดอร์ที่ login ผ่าน Google:', user);
+
+        // ส่งผลลัพธ์
+        res.json({
+            message: 'เข้าสู่ระบบด้วย Google สำเร็จ',
+            token: token,
+            user: {
+                user_id: user.user_id,
+                email: user.email,
+                display_name: user.display_name,
+                role: user.role,
+                is_verified: user.is_verified
+            },
+            rider_status: riderStatus
+        });
+
+    } catch (error) {
+        console.error('❌ Rider Google login error:', error);
+        if (error.message.includes('audience')) {
+            return res.status(401).json({ 
+                error: 'Google token ไม่ถูกต้อง - audience mismatch' 
+            });
+        }
+        res.status(401).json({ 
+            error: 'Google token ไม่ถูกต้องหรือหมดอายุ email ถูกใช้งานแล้ว' 
+        });
+    }
+};
+
 // รีเฟรช token
 exports.refreshToken = async (req, res) => {
     try {
@@ -160,6 +270,7 @@ exports.getProfile = async (req, res) => {
                 u.display_name,
                 u.email,
                 u.phone,
+                rp.promptpay,
                 u.birthdate,
                 u.gender,
                 u.photo_url,
@@ -200,6 +311,7 @@ exports.getProfile = async (req, res) => {
                 display_name: profile.display_name,
                 email: profile.email,
                 phone: profile.phone,
+                promptpay: profile.promptpay,
                 birthdate: profile.birthdate,
                 gender: profile.gender,
                 photo_url: profile.photo_url,
