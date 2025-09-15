@@ -27,8 +27,8 @@ exports.registerRider = async (req, res) => {
             return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
         }
 
-        // เช็คอีเมลซ้ำ
-        const existingUser = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+        // เช็คอีเมลซ้ำ ของ role ที่เป็น rider
+        const existingUser = await client.query('SELECT * FROM users WHERE email = $1 AND role = $2', [email, 'rider']);
         if (existingUser.rows.length > 0) {
             return res.status(400).json({ error: 'อีเมลนี้ถูกใช้งานแล้ว' });
         }
