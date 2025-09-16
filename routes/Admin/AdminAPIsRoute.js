@@ -6,10 +6,20 @@ const { login, addAdmin, configAdmin } = require('../../controllers/Admin/authCo
 const { getAllAdmins, verifyAdmin, getPendingAdmins } = require('../../controllers/Admin/allAdminController');
 const { createFood, deleteFood, updateFood } = require('../../controllers/Admin/FoodController');
 const { verifyToken } = require('../../middleware/Admin/authMiddleware');
+const { debugRequestBody } = require('../../middleware/Admin/debugMiddleware');
 const { getUsersGroupedByProvider } = require('../../controllers/Admin/UsersController');
 const marketController = require('../../controllers/Admin/AdminMarketsController');
 
 const riderController = require('../../controllers/Admin/RiderManagementController');
+
+const {
+    adminGetAllRiderTopUps,
+    adminGetPendingRiderTopUps,
+    adminGetApprovedRiderTopUps,
+    adminGetRejectedRiderTopUps,
+    adminApproveRiderTopUp,
+    adminGetTopUpStatistics
+} = require('../../controllers/Admin/admin-approve-topup_Controller');
 
 const marketFoodController = require('../../controllers/Admin/FoodController');
 
@@ -55,5 +65,13 @@ router.get('/riders/all', verifyToken, riderController.getAllRiders);
 router.get('/riders/:rider_id', verifyToken, riderController.getRiderDetails);
 router.patch('/riders/:rider_id/approve', verifyToken, riderController.approveRider);
 router.patch('/riders/:rider_id/reject', verifyToken, riderController.rejectRider);
+
+// Top-up Management
+router.get('/topups/all', verifyToken, adminGetAllRiderTopUps);
+router.get('/topups/pending', verifyToken, adminGetPendingRiderTopUps);
+router.get('/topups/approved', verifyToken, adminGetApprovedRiderTopUps);
+router.get('/topups/rejected', verifyToken, adminGetRejectedRiderTopUps);
+router.put('/topups/:topup_id/approve', debugRequestBody, verifyToken, adminApproveRiderTopUp);
+router.get('/topups/statistics', verifyToken, adminGetTopUpStatistics);
 
 module.exports = router;

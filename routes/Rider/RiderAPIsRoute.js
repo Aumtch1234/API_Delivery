@@ -24,6 +24,13 @@ const {
     updateRiderPhoto
 } = require('../../controllers/Rider/update-dataController');
 
+const {
+    getRiderGPBalance,
+    riderTopUp,
+    getRiderTopUpHistory,
+    getRiderTopUpStatus
+} = require('../../controllers/Rider/rider-topup_Controller');
+
 // Import middleware
 const {
     verifyRiderToken,
@@ -106,8 +113,24 @@ router.put('/update-birthdate', verifyRiderToken, updateRiderBirthdate);
 // PUT /rider/update-photo - อัพเดตรูปโปรไฟล์
 router.put('/update-photo', verifyRiderToken, upload.single('photo'), updateRiderPhoto);
 
+
+// Top-up Routes (ต้องการ authentication)
+// GET /rider/gp-balance - ดูยอด GP คงเหลือ
+router.get('/gp-balance', verifyRiderToken, getRiderGPBalance);
+
+// POST /rider/topup - เติมเงิน GP
+router.post('/topup', verifyRiderToken, upload.single('slip'), riderTopUp);
+
+// GET /rider/topup-history - ดูประวัติการเติมเงิน
+router.get('/topup-history', verifyRiderToken, getRiderTopUpHistory);
+
+// GET /rider/topup/:topup_id/status - ดูสถานะการเติมเงินรายการเดียว
+router.get('/topup/:topup_id/status', verifyRiderToken, getRiderTopUpStatus);
+
 // Routes สำหรับ rider ที่ได้รับการอนุมัติแล้ว
 // (เตรียมไว้สำหรับฟีเจอร์อนาคต เช่น รับงาน, อัปเดตสถานะ, ฯลฯ)
+
+
 
 // GET /rider/approved-only-test - ทดสอบ route ที่ต้องการ rider ที่อนุมัติแล้ว
 router.get('/approved-only-test', 

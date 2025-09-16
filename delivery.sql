@@ -5,7 +5,7 @@
 -- Dumped from database version 17.5
 -- Dumped by pg_dump version 17.5
 
--- Started on 2025-09-13 17:11:10
+-- Started on 2025-09-15 21:00:23
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,7 +20,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 233 (class 1255 OID 16747)
+-- TOC entry 239 (class 1255 OID 16771)
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -41,7 +41,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 217 (class 1259 OID 16616)
+-- TOC entry 217 (class 1259 OID 16772)
 -- Name: admins; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -56,7 +56,7 @@ CREATE TABLE public.admins (
 ALTER TABLE public.admins OWNER TO postgres;
 
 --
--- TOC entry 218 (class 1259 OID 16622)
+-- TOC entry 218 (class 1259 OID 16778)
 -- Name: admins_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -72,7 +72,7 @@ CREATE SEQUENCE public.admins_id_seq
 ALTER SEQUENCE public.admins_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5023 (class 0 OID 0)
+-- TOC entry 5073 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: admins_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -81,7 +81,51 @@ ALTER SEQUENCE public.admins_id_seq OWNED BY public.admins.id;
 
 
 --
--- TOC entry 232 (class 1259 OID 16757)
+-- TOC entry 219 (class 1259 OID 16779)
+-- Name: carts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.carts (
+    cart_id integer NOT NULL,
+    user_id integer NOT NULL,
+    food_id integer NOT NULL,
+    quantity integer DEFAULT 1 NOT NULL,
+    selected_options jsonb,
+    note text,
+    total numeric NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.carts OWNER TO postgres;
+
+--
+-- TOC entry 220 (class 1259 OID 16786)
+-- Name: carts_cart_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.carts_cart_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.carts_cart_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5074 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: carts_cart_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.carts_cart_id_seq OWNED BY public.carts.cart_id;
+
+
+--
+-- TOC entry 221 (class 1259 OID 16787)
 -- Name: categorys; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -94,7 +138,7 @@ CREATE TABLE public.categorys (
 ALTER TABLE public.categorys OWNER TO postgres;
 
 --
--- TOC entry 231 (class 1259 OID 16756)
+-- TOC entry 222 (class 1259 OID 16790)
 -- Name: categorys_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -110,8 +154,8 @@ CREATE SEQUENCE public.categorys_id_seq
 ALTER SEQUENCE public.categorys_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5024 (class 0 OID 0)
--- Dependencies: 231
+-- TOC entry 5075 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: categorys_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -119,26 +163,36 @@ ALTER SEQUENCE public.categorys_id_seq OWNED BY public.categorys.id;
 
 
 --
--- TOC entry 219 (class 1259 OID 16623)
--- Name: food_options; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 223 (class 1259 OID 16791)
+-- Name: client_addresses; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.food_options (
-    option_id integer NOT NULL,
-    food_id integer NOT NULL,
-    label text NOT NULL,
-    extra_price numeric(10,2) DEFAULT 0
+CREATE TABLE public.client_addresses (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    name character varying(100) NOT NULL,
+    phone character varying(20) NOT NULL,
+    address text NOT NULL,
+    district character varying(100) NOT NULL,
+    city character varying(100) NOT NULL,
+    postal_code character varying(10) NOT NULL,
+    notes text,
+    latitude double precision,
+    longitude double precision,
+    location_text text,
+    created_at timestamp without time zone DEFAULT now(),
+    set_address boolean
 );
 
 
-ALTER TABLE public.food_options OWNER TO postgres;
+ALTER TABLE public.client_addresses OWNER TO postgres;
 
 --
--- TOC entry 220 (class 1259 OID 16629)
--- Name: food_options_option_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- TOC entry 224 (class 1259 OID 16797)
+-- Name: client_addresses_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.food_options_option_id_seq
+CREATE SEQUENCE public.client_addresses_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -147,19 +201,19 @@ CREATE SEQUENCE public.food_options_option_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.food_options_option_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.client_addresses_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5025 (class 0 OID 0)
--- Dependencies: 220
--- Name: food_options_option_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- TOC entry 5076 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: client_addresses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.food_options_option_id_seq OWNED BY public.food_options.option_id;
+ALTER SEQUENCE public.client_addresses_id_seq OWNED BY public.client_addresses.id;
 
 
 --
--- TOC entry 221 (class 1259 OID 16630)
+-- TOC entry 225 (class 1259 OID 16798)
 -- Name: foods; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -171,14 +225,15 @@ CREATE TABLE public.foods (
     image_url text,
     created_at timestamp without time zone DEFAULT now(),
     options jsonb DEFAULT '[]'::jsonb,
-    rating numeric(2,1)
+    rating numeric(2,1),
+    sell_price numeric(10,2)
 );
 
 
 ALTER TABLE public.foods OWNER TO postgres;
 
 --
--- TOC entry 222 (class 1259 OID 16637)
+-- TOC entry 226 (class 1259 OID 16805)
 -- Name: foods_food_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -194,8 +249,8 @@ CREATE SEQUENCE public.foods_food_id_seq
 ALTER SEQUENCE public.foods_food_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5026 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 5077 (class 0 OID 0)
+-- Dependencies: 226
 -- Name: foods_food_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -203,7 +258,7 @@ ALTER SEQUENCE public.foods_food_id_seq OWNED BY public.foods.food_id;
 
 
 --
--- TOC entry 223 (class 1259 OID 16638)
+-- TOC entry 227 (class 1259 OID 16806)
 -- Name: markets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -233,7 +288,7 @@ CREATE TABLE public.markets (
 ALTER TABLE public.markets OWNER TO postgres;
 
 --
--- TOC entry 224 (class 1259 OID 16647)
+-- TOC entry 228 (class 1259 OID 16816)
 -- Name: markets_market_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -249,8 +304,8 @@ CREATE SEQUENCE public.markets_market_id_seq
 ALTER SEQUENCE public.markets_market_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5027 (class 0 OID 0)
--- Dependencies: 224
+-- TOC entry 5078 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: markets_market_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -258,7 +313,57 @@ ALTER SEQUENCE public.markets_market_id_seq OWNED BY public.markets.market_id;
 
 
 --
--- TOC entry 228 (class 1259 OID 16693)
+-- TOC entry 238 (class 1259 OID 17030)
+-- Name: orders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.orders (
+    order_id integer NOT NULL,
+    user_id integer,
+    market_id integer,
+    rider_id integer,
+    address text,
+    delivery_type character varying(50),
+    payment_method character varying(50),
+    note text,
+    distance_km numeric(10,2),
+    delivery_fee numeric(10,2),
+    total_price numeric(10,2),
+    status character varying(50) DEFAULT 'pending'::character varying,
+    items jsonb,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.orders OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 17029)
+-- Name: orders_order_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.orders_order_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.orders_order_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5079 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: orders_order_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.orders_order_id_seq OWNED BY public.orders.order_id;
+
+
+--
+-- TOC entry 229 (class 1259 OID 16817)
 -- Name: rider_addresses; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -280,8 +385,8 @@ CREATE TABLE public.rider_addresses (
 ALTER TABLE public.rider_addresses OWNER TO postgres;
 
 --
--- TOC entry 5028 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 5080 (class 0 OID 0)
+-- Dependencies: 229
 -- Name: TABLE rider_addresses; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -289,8 +394,8 @@ COMMENT ON TABLE public.rider_addresses IS 'ตารางเก็บที่
 
 
 --
--- TOC entry 5029 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 5081 (class 0 OID 0)
+-- Dependencies: 229
 -- Name: COLUMN rider_addresses.subdistrict; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -298,8 +403,8 @@ COMMENT ON COLUMN public.rider_addresses.subdistrict IS 'ตำบล';
 
 
 --
--- TOC entry 5030 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 5082 (class 0 OID 0)
+-- Dependencies: 229
 -- Name: COLUMN rider_addresses.district; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -307,8 +412,8 @@ COMMENT ON COLUMN public.rider_addresses.district IS 'อำเภอ';
 
 
 --
--- TOC entry 5031 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 5083 (class 0 OID 0)
+-- Dependencies: 229
 -- Name: COLUMN rider_addresses.province; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -316,7 +421,7 @@ COMMENT ON COLUMN public.rider_addresses.province IS 'จังหวัด';
 
 
 --
--- TOC entry 227 (class 1259 OID 16692)
+-- TOC entry 230 (class 1259 OID 16825)
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -332,8 +437,8 @@ CREATE SEQUENCE public.rider_addresses_address_id_seq
 ALTER SEQUENCE public.rider_addresses_address_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5032 (class 0 OID 0)
--- Dependencies: 227
+-- TOC entry 5084 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -341,7 +446,7 @@ ALTER SEQUENCE public.rider_addresses_address_id_seq OWNED BY public.rider_addre
 
 
 --
--- TOC entry 230 (class 1259 OID 16710)
+-- TOC entry 231 (class 1259 OID 16826)
 -- Name: rider_profiles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -367,6 +472,7 @@ CREATE TABLE public.rider_profiles (
     vehicle_registration_number text DEFAULT ''::text NOT NULL,
     vehicle_registration_province text DEFAULT ''::text NOT NULL,
     promptpay character varying(20),
+    gp_balance numeric(10,2) DEFAULT 0,
     CONSTRAINT chk_approval_status CHECK ((approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))),
     CONSTRAINT chk_vehicle_type CHECK ((vehicle_type = 'motorcycle'::text))
 );
@@ -375,8 +481,8 @@ CREATE TABLE public.rider_profiles (
 ALTER TABLE public.rider_profiles OWNER TO postgres;
 
 --
--- TOC entry 5033 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5085 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: TABLE rider_profiles; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -384,8 +490,8 @@ COMMENT ON TABLE public.rider_profiles IS 'ตารางเก็บข้อ�
 
 
 --
--- TOC entry 5034 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5086 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.id_card_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -393,8 +499,8 @@ COMMENT ON COLUMN public.rider_profiles.id_card_photo_url IS 'รูปถ่า
 
 
 --
--- TOC entry 5035 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5087 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.id_card_selfie_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -402,8 +508,8 @@ COMMENT ON COLUMN public.rider_profiles.id_card_selfie_url IS 'รูปถ่�
 
 
 --
--- TOC entry 5036 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5088 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.driving_license_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -411,8 +517,8 @@ COMMENT ON COLUMN public.rider_profiles.driving_license_photo_url IS 'รูป�
 
 
 --
--- TOC entry 5037 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5089 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.vehicle_type; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -420,8 +526,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_type IS 'ประเภทร�
 
 
 --
--- TOC entry 5038 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5090 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.vehicle_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -429,8 +535,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_photo_url IS 'รูปถ่า
 
 
 --
--- TOC entry 5039 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5091 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.vehicle_registration_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -438,8 +544,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_photo_url IS 'ร�
 
 
 --
--- TOC entry 5040 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5092 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.vehicle_registration_number; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -447,8 +553,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_number IS 'หม�
 
 
 --
--- TOC entry 5041 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5093 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.vehicle_registration_province; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -456,8 +562,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_province IS 'จั
 
 
 --
--- TOC entry 5042 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 5094 (class 0 OID 0)
+-- Dependencies: 231
 -- Name: COLUMN rider_profiles.promptpay; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -465,7 +571,7 @@ COMMENT ON COLUMN public.rider_profiles.promptpay IS 'หมายเลข Prom
 
 
 --
--- TOC entry 229 (class 1259 OID 16709)
+-- TOC entry 232 (class 1259 OID 16839)
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -481,8 +587,8 @@ CREATE SEQUENCE public.rider_profiles_rider_id_seq
 ALTER SEQUENCE public.rider_profiles_rider_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5043 (class 0 OID 0)
--- Dependencies: 229
+-- TOC entry 5095 (class 0 OID 0)
+-- Dependencies: 232
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -490,7 +596,82 @@ ALTER SEQUENCE public.rider_profiles_rider_id_seq OWNED BY public.rider_profiles
 
 
 --
--- TOC entry 225 (class 1259 OID 16648)
+-- TOC entry 236 (class 1259 OID 16944)
+-- Name: rider_topups; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rider_topups (
+    topup_id integer NOT NULL,
+    user_id integer NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    slip_url text NOT NULL,
+    status text DEFAULT 'pending'::text,
+    rejection_reason text,
+    admin_id integer,
+    approved_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    rider_id integer,
+    CONSTRAINT rider_topups_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])))
+);
+
+
+ALTER TABLE public.rider_topups OWNER TO postgres;
+
+--
+-- TOC entry 5096 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: TABLE rider_topups; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.rider_topups IS 'ตารางเก็บข้อมูลการเติมเงิน GP ของไรเดอร์';
+
+
+--
+-- TOC entry 5097 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: COLUMN rider_topups.user_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.rider_topups.user_id IS 'รหัสผู้ใช้ที่เป็นไรเดอร์ (อ้างอิงจาก users table)';
+
+
+--
+-- TOC entry 5098 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: COLUMN rider_topups.rider_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.rider_topups.rider_id IS 'รหัสไรเดอร์ (อ้างอิงจาก rider_profiles table)';
+
+
+--
+-- TOC entry 235 (class 1259 OID 16943)
+-- Name: rider_topups_topup_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.rider_topups_topup_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rider_topups_topup_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5099 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: rider_topups_topup_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.rider_topups_topup_id_seq OWNED BY public.rider_topups.topup_id;
+
+
+--
+-- TOC entry 233 (class 1259 OID 16840)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -515,7 +696,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 226 (class 1259 OID 16656)
+-- TOC entry 234 (class 1259 OID 16849)
 -- Name: users_user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -531,8 +712,8 @@ CREATE SEQUENCE public.users_user_id_seq
 ALTER SEQUENCE public.users_user_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5044 (class 0 OID 0)
--- Dependencies: 226
+-- TOC entry 5100 (class 0 OID 0)
+-- Dependencies: 234
 -- Name: users_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -540,7 +721,7 @@ ALTER SEQUENCE public.users_user_id_seq OWNED BY public.users.user_id;
 
 
 --
--- TOC entry 4778 (class 2604 OID 16657)
+-- TOC entry 4793 (class 2604 OID 16850)
 -- Name: admins id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -548,7 +729,15 @@ ALTER TABLE ONLY public.admins ALTER COLUMN id SET DEFAULT nextval('public.admin
 
 
 --
--- TOC entry 4807 (class 2604 OID 16760)
+-- TOC entry 4795 (class 2604 OID 16851)
+-- Name: carts cart_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carts ALTER COLUMN cart_id SET DEFAULT nextval('public.carts_cart_id_seq'::regclass);
+
+
+--
+-- TOC entry 4798 (class 2604 OID 16852)
 -- Name: categorys id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -556,15 +745,15 @@ ALTER TABLE ONLY public.categorys ALTER COLUMN id SET DEFAULT nextval('public.ca
 
 
 --
--- TOC entry 4780 (class 2604 OID 16658)
--- Name: food_options option_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- TOC entry 4799 (class 2604 OID 16853)
+-- Name: client_addresses id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.food_options ALTER COLUMN option_id SET DEFAULT nextval('public.food_options_option_id_seq'::regclass);
+ALTER TABLE ONLY public.client_addresses ALTER COLUMN id SET DEFAULT nextval('public.client_addresses_id_seq'::regclass);
 
 
 --
--- TOC entry 4782 (class 2604 OID 16659)
+-- TOC entry 4801 (class 2604 OID 16854)
 -- Name: foods food_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -572,7 +761,7 @@ ALTER TABLE ONLY public.foods ALTER COLUMN food_id SET DEFAULT nextval('public.f
 
 
 --
--- TOC entry 4785 (class 2604 OID 16660)
+-- TOC entry 4804 (class 2604 OID 16855)
 -- Name: markets market_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -580,7 +769,15 @@ ALTER TABLE ONLY public.markets ALTER COLUMN market_id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 4796 (class 2604 OID 16696)
+-- TOC entry 4831 (class 2604 OID 17033)
+-- Name: orders order_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders ALTER COLUMN order_id SET DEFAULT nextval('public.orders_order_id_seq'::regclass);
+
+
+--
+-- TOC entry 4810 (class 2604 OID 16856)
 -- Name: rider_addresses address_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -588,7 +785,7 @@ ALTER TABLE ONLY public.rider_addresses ALTER COLUMN address_id SET DEFAULT next
 
 
 --
--- TOC entry 4800 (class 2604 OID 16713)
+-- TOC entry 4814 (class 2604 OID 16857)
 -- Name: rider_profiles rider_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -596,7 +793,15 @@ ALTER TABLE ONLY public.rider_profiles ALTER COLUMN rider_id SET DEFAULT nextval
 
 
 --
--- TOC entry 4791 (class 2604 OID 16661)
+-- TOC entry 4827 (class 2604 OID 16947)
+-- Name: rider_topups topup_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rider_topups ALTER COLUMN topup_id SET DEFAULT nextval('public.rider_topups_topup_id_seq'::regclass);
+
+
+--
+-- TOC entry 4822 (class 2604 OID 16858)
 -- Name: users user_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -604,7 +809,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN user_id SET DEFAULT nextval('public.u
 
 
 --
--- TOC entry 5002 (class 0 OID 16616)
+-- TOC entry 5046 (class 0 OID 16772)
 -- Dependencies: 217
 -- Data for Name: admins; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -621,99 +826,131 @@ COPY public.admins (id, username, password, role) FROM stdin;
 
 
 --
--- TOC entry 5017 (class 0 OID 16757)
--- Dependencies: 232
+-- TOC entry 5048 (class 0 OID 16779)
+-- Dependencies: 219
+-- Data for Name: carts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.carts (cart_id, user_id, food_id, quantity, selected_options, note, total, created_at) FROM stdin;
+25	31	20	1	[]		35	2025-09-12 12:20:12.162249
+26	31	18	5	[{"label": "ไก่", "extraPrice": 10}]		180	2025-09-12 12:21:04.462235
+27	31	19	2	[]		134	2025-09-12 13:19:45.275549
+\.
+
+
+--
+-- TOC entry 5050 (class 0 OID 16787)
+-- Dependencies: 221
 -- Data for Name: categorys; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.categorys (id, name) FROM stdin;
-1	aad
-2	a
-3	z
 \.
 
 
 --
--- TOC entry 5004 (class 0 OID 16623)
--- Dependencies: 219
--- Data for Name: food_options; Type: TABLE DATA; Schema: public; Owner: postgres
+-- TOC entry 5052 (class 0 OID 16791)
+-- Dependencies: 223
+-- Data for Name: client_addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.food_options (option_id, food_id, label, extra_price) FROM stdin;
+COPY public.client_addresses (id, user_id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text, created_at, set_address) FROM stdin;
+2	31	สุดหล่อจ่ะ	0989520103	74Q9+GCW อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.28956803546931	104.11867182701826	74Q9+GCW อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-13 16:30:15.754407	f
+3	31	เสก สุดจะหล่อ	0987654321	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.286741935703482	104.11390386521816	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-13 18:03:41.179373	f
+4	32	สุดจะทน	0879465312	74HJ+7JG 74HJ+7JG ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.2781712	104.1316336	74HJ+7JG 74HJ+7JG ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:04:29.922383	f
+5	32	กับคนอย่างเธอ	0852134679	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.2863889	104.1127778	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:05:32.232987	f
+6	32	อาร์ม	0986123547	74JC+6RC Unnamed Rd อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000	ตึก B	17.2805649	104.1220182	74JC+6RC Unnamed Rd อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:06:42.914712	t
+7	31	สุดจัด	0849567312	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.26881945839936	104.13779195398092	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:13:49.04298	t
+8	31	เฟียส	0982147653	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000	หน้าร้าน ขายของชำ	17.271748923950433	104.12641134113073	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:17:19.27141	f
 \.
 
 
 --
--- TOC entry 5006 (class 0 OID 16630)
--- Dependencies: 221
+-- TOC entry 5054 (class 0 OID 16798)
+-- Dependencies: 225
 -- Data for Name: foods; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, options, rating) FROM stdin;
-8	32	Burger Full Set	159.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1756069572/Market-LOGO/ewxjmt8rwn0ccjvsi0hy.jpg	2025-08-25 04:06:13.402229	[{"label": "Kitchup", "extraPrice": 5}, {"label": "Mastard", "extraPrice": 20}]	\N
-9	33	Kaprao	1000.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1756286362/Market-LOGO/ffi3ws9zp1rfsqdxew2c.jpg	2025-08-27 16:19:23.176928	[{"label": "Meat", "extraPrice": 10}, {"label": "Pork", "extraPrice": 20000}]	\N
+COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, options, rating, sell_price) FROM stdin;
+18	37	ลาบะ	23.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614820/Market-LOGO/uxxu9ksyzmbjvejbiba6.jpg	2025-09-12 01:20:20.96686	[{"label": "ไก่", "extraPrice": 10}, {"label": "หมู", "extraPrice": 15}, {"label": "เนื้อ", "extraPrice": 20}, {"label": "เป็ด", "extraPrice": 40}]	\N	26.00
+19	38	อ่อมหมู	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614871/Market-LOGO/ph5jwppwayvgmih9ohpc.jpg	2025-09-12 01:21:12.136991	[]	\N	67.00
+20	37	ลข	31.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757654055/Market-LOGO/hwe1fcjovtxmkuyjh17n.jpg	2025-09-12 12:14:16.611986	[]	3.0	35.00
 \.
 
 
 --
--- TOC entry 5008 (class 0 OID 16638)
--- Dependencies: 223
+-- TOC entry 5056 (class 0 OID 16806)
+-- Dependencies: 227
 -- Data for Name: markets; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.markets (market_id, owner_id, shop_name, shop_description, shop_logo_url, created_at, latitude, longitude, open_time, close_time, is_open, is_manual_override, override_until, rating, address, phone, approve, admin_id, is_admin) FROM stdin;
-32	22	Burger 25hr.	Sell Fish Beef Meat Pork Steck Chim Chicken Burger all day 25 hr.	https://res.cloudinary.com/djqdn2zru/image/upload/v1756062639/Market-LOGO/wy8sf1qrwdpsnvq2bml4.jpg	2025-08-25 02:10:40.196895	16.950672627881698	104.48594704270363	02:00	01:50	t	f	\N	\N	25/10 Nakae Nakhonphanom 48130	0989520103	t	\N	f
-33	23	Pasin	Sell Food	https://res.cloudinary.com/djqdn2zru/image/upload/v1756286248/Market-LOGO/sltczixehdepqgbq7e63.jpg	2025-08-27 16:17:29.725681	13.849895288940463	100.57221047580242	15:16	23:20	t	f	\N	\N	Sakon	099999999	t	\N	f
+38	\N	ร้านแอดมิน	ร้านแอดมิน เด้อจ่ะ แพงขึ้น 20%	https://res.cloudinary.com/djqdn2zru/image/upload/v1757608039/food-menu/hserelfmmpvtup06j3lb.jpg	2025-09-11 23:27:20.249612	13.736717	100.523186	\N	\N	f	f	\N	\N	23/1 เชียงเครือ	-	f	1	t
+37	31	เสกสายเบิร์น (ย่าง)	ขายไก่ย่าง เนื้อย่าง ปลาเผา ส่งฟรี ส่งไว หอมอร่อย. 🏎️💥	https://res.cloudinary.com/djqdn2zru/image/upload/v1757491128/Market-LOGO/zegkbequ9px72yz8mdkn.jpg	2025-09-10 14:58:49.472311	17.27025890434053	104.13420014083385	14:00	20:30	f	f	\N	\N	42/6 เชียงเครือ หออะตอม 45801	0987654321	t	\N	f
 \.
 
 
 --
--- TOC entry 5013 (class 0 OID 16693)
--- Dependencies: 228
+-- TOC entry 5067 (class 0 OID 17030)
+-- Dependencies: 238
+-- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.orders (order_id, user_id, market_id, rider_id, address, delivery_type, payment_method, note, distance_km, delivery_fee, total_price, status, items, created_at) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5058 (class 0 OID 16817)
+-- Dependencies: 229
 -- Data for Name: rider_addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.rider_addresses (address_id, user_id, house_number, street, subdistrict, district, province, postal_code, is_default, created_at, updated_at) FROM stdin;
-1	26	a	\N	a	a	a	\N	t	2025-09-02 17:51:00.274911	2025-09-02 17:51:00.274911
-5	30	388	\N	เชียงเครือ	เมือง	สกล	\N	t	2025-09-09 00:46:10.474683	2025-09-09 00:46:10.474683
-6	48	202	\N	ดอนหัวฬ่อ	เมืองชลบุรี	ชลบุรี	\N	t	2025-09-13 14:40:35.001951	2025-09-13 14:40:35.001951
+6	33	388	\N	เชียงเครือ	เมือง	สกล	\N	t	2025-09-15 19:44:35.294902	2025-09-15 19:44:35.294902
 \.
 
 
 --
--- TOC entry 5015 (class 0 OID 16710)
--- Dependencies: 230
+-- TOC entry 5060 (class 0 OID 16826)
+-- Dependencies: 231
 -- Data for Name: rider_profiles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.rider_profiles (rider_id, user_id, id_card_number, id_card_photo_url, id_card_selfie_url, driving_license_number, driving_license_photo_url, vehicle_type, vehicle_brand_model, vehicle_color, vehicle_photo_url, vehicle_registration_photo_url, approval_status, approved_by, approved_at, rejection_reason, created_at, updated_at, vehicle_registration_number, vehicle_registration_province, promptpay) FROM stdin;
-1	26	1101700123456	https://res.cloudinary.com/djqdn2zru/image/upload/v1756895196/rider-documents/t4sjbi6shmdzqpt3ru4d.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1756895192/rider-documents/pc4cpwqtbzdb91fcmdhl.png	DL1234567	https://res.cloudinary.com/djqdn2zru/image/upload/v1756895199/rider-documents/isnkcjt3zzyjdqb4gtwy.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1756895203/rider-documents/g83egcjphuq2purqoowh.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1756895206/rider-documents/juk8pie7wofchtkaxigy.png	pending	\N	\N	\N	2025-09-03 17:26:20.32327	2025-09-13 11:14:38.098631			\N
-7	30	9901700123459	https://res.cloudinary.com/djqdn2zru/image/upload/v1757733085/rider-documents/v4igd7wx9wusmsuv7ci4.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1757733084/rider-documents/t9pl6unluaw96road7ge.png	DL1234568	https://res.cloudinary.com/djqdn2zru/image/upload/v1757733087/rider-documents/rk14eiwdzj6a2xi9fqkf.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1757733088/rider-documents/rxjarvh9u8d3viaotelz.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757733089/rider-documents/kxaqu3bhbezcglovl0an.jpg	rejected	1	2025-09-13 11:16:56.74126	ควาย...เอกสารไม่ครบ	2025-09-09 00:46:34.966598	2025-09-13 11:16:56.74126	ฟก-123	สกลนคร	\N
-12	48	1234567891230	https://res.cloudinary.com/djqdn2zru/image/upload/v1757751248/rider-documents/mhxwdmgqfbfhbtclvgmu.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757751247/rider-documents/ke8k0ggspkzdiop7i2kx.jpg	12345678	https://res.cloudinary.com/djqdn2zru/image/upload/v1757751250/rider-documents/be6jmanp9lkvh6thqghb.jpg	motorcycle	TOYOTO	brack	https://res.cloudinary.com/djqdn2zru/image/upload/v1757751251/rider-documents/veyb760e9hz9gnl301vl.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757751253/rider-documents/m6oxezhmuecschv2i4vd.jpg	pending	\N	\N	\N	2025-09-13 15:14:06.080696	2025-09-13 15:14:06.080696	as12	denmarg	\N
-11	47	1234678913484	https://res.cloudinary.com/djqdn2zru/image/upload/v1757745928/rider-documents/m6rl8dur6pdfpkidennw.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757745926/rider-documents/lbzxq3boidzmokgsiiqu.jpg	13465789	https://res.cloudinary.com/djqdn2zru/image/upload/v1757745929/rider-documents/dfwoguasvorkknngrvlb.jpg	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1757745931/rider-documents/s2fve8g8qbo5thgk3owl.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757745933/rider-documents/mzrxmz9fmulnawcjw7be.jpg	approved	1	2025-09-13 15:48:24.304955	\N	2025-09-13 11:00:16.266092	2025-09-13 16:30:59.374031	กธ12	สกล	\N
+COPY public.rider_profiles (rider_id, user_id, id_card_number, id_card_photo_url, id_card_selfie_url, driving_license_number, driving_license_photo_url, vehicle_type, vehicle_brand_model, vehicle_color, vehicle_photo_url, vehicle_registration_photo_url, approval_status, approved_by, approved_at, rejection_reason, created_at, updated_at, vehicle_registration_number, vehicle_registration_province, promptpay, gp_balance) FROM stdin;
+8	33	9901700123459	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940397/rider-documents/ylvr2mhrx9epwrsiznsp.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940396/rider-documents/wnhgibedrjohamkz4jhh.png	DL1234568	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940398/rider-documents/bl2qbcjojaopfojstmms.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940399/rider-documents/tuxqgbjiqp4ckdgmxwro.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940401/rider-documents/iknribyr9jv0ksjklkvm.jpg	approved	1	2025-09-15 19:51:33.672205	\N	2025-09-15 19:46:33.74592	2025-09-15 19:51:33.672205	ฟก-123	สกลนคร	\N	0.00
 \.
 
 
 --
--- TOC entry 5010 (class 0 OID 16648)
--- Dependencies: 225
+-- TOC entry 5065 (class 0 OID 16944)
+-- Dependencies: 236
+-- Data for Name: rider_topups; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.rider_topups (topup_id, user_id, amount, slip_url, status, rejection_reason, admin_id, approved_at, created_at, updated_at, rider_id) FROM stdin;
+1	33	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757943216/rider-topup-slips/fcunitujzs187gcd2tnr.png	pending	\N	\N	\N	2025-09-15 20:54:03.134776	2025-09-15 20:54:03.134776	8
+2	33	200.00	https://example.com/slip2.png	approved	\N	\N	\N	2025-09-15 20:54:03.134776	2025-09-15 20:54:03.134776	8
+3	33	150.00	https://example.com/slip3.png	rejected	\N	\N	\N	2025-09-15 20:54:03.134776	2025-09-15 20:54:03.134776	8
+4	33	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757944703/rider-topup-slips/a60z9stemnsxnm8kpmft.png	pending	\N	\N	\N	2025-09-15 20:58:23.89322	2025-09-15 20:58:23.89322	8
+\.
+
+
+--
+-- TOC entry 5062 (class 0 OID 16840)
+-- Dependencies: 233
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.users (user_id, google_id, display_name, email, password, birthdate, gender, phone, created_at, is_verified, photo_url, providers, is_seller, role) FROM stdin;
-22	105392817902249087793	Taweechok KHAMPHUSA	taweechok.k@ku.th	\N	2003-07-06	0	0989520103	2025-08-25 01:28:32.89199	t	https://lh3.googleusercontent.com/a/ACg8ocLgf2QVH2faiqfFPK_Xm49JegXu7hTVP6EjlEZUj4a0Oy6KCF6W=s96-c	google	t	member
-24	105426277786935562046	taweechok khamphusa	aumtch0@gmail.com	\N	2000-01-18	2	09999999	2025-08-27 16:26:26.101343	t	https://lh3.googleusercontent.com/a/ACg8ocLhitygVoLkOorCQb1eXQKeMRnO8QEYPqHRgBdySs_Rl8_EBA=s96-c	google	f	member
-23	101628051506191273987	Taweechok Khamphusa	aumt1569@gmail.com	\N	2000-01-04	2	0989520103	2025-08-27 04:13:43.553736	t	https://lh3.googleusercontent.com/a/ACg8ocJw8scPixF2PrzJUUzpznN9BOXF94U_ylti8av5jpEvQ9CN4g=s96-c	google	t	member
-45	110550184475464994880	ณัฐวุฒิ สุวรรณศรี	nadvdj08@gmail.com	\N	\N	\N	\N	2025-09-12 22:36:08.381357	f	https://lh3.googleusercontent.com/a/ACg8ocJ7lnlcbSf6WiCrBCJopWIvWSjLRwoCYUUC2uRdFIKHCFcrRQ=s96-c	google	f	rider
-26	\N	เย้ๆ	somchai@example.com	$2b$10$vMx95uWmZOKToq9Jm.MuleEjp41xrau3bB7rnL0E1X11fQg9/XN7i	1990-01-01	0	123456789	2025-09-02 17:51:00.274911	t	\N	\N	f	rider
-30	\N	เย้ๆ123	test@example.com	$2b$10$RaM.SghFxHMgQGM7AoDrqOrYV9E40Jwyu.drxhctU.0CsF/n1JOEG	1990-01-01	0	123456789	2025-09-09 00:46:10.474683	f	https://res.cloudinary.com/djqdn2zru/image/upload/v1757353571/rider-profiles/ndhbcxuthprmjgttydel.png	\N	f	rider
-47	118325243465533209842	ณัฐวุฒิ สุวรรณศรี	nuttass009@gmail.com	\N	\N	\N	\N	2025-09-13 09:47:09.731037	t	https://lh3.googleusercontent.com/a/ACg8ocLfWHIvZ9WWZTZIFHtxYHNZ3WtrMGXqK2QakqUx--csINqEPQY=s96-c	google	f	rider
-48	\N	Natthawut	Na@gmail.com	$2b$10$pZvQ14LUwD8sEjSvKUF9WuAgLOFrwCjSgzQS95/6gr.xAlZg7uZzm	2000-01-01	0	6549873	2025-09-13 14:40:35.001951	f	https://res.cloudinary.com/djqdn2zru/image/upload/v1757749238/rider-profiles/otoenty7xlafu1byjjk6.png	\N	f	rider
+31	105392817902249087793	Taweechok KHAMPHUSA	taweechok.k@ku.th	\N	2003-07-06	0	0989520103	2025-09-10 14:42:48.63126	t	https://lh3.googleusercontent.com/a/ACg8ocLgf2QVH2faiqfFPK_Xm49JegXu7hTVP6EjlEZUj4a0Oy6KCF6W=s96-c	google	t	member
+32	101628051506191273987	Taweechok Khamphusa	aumt1569@gmail.com	\N	\N	\N	\N	2025-09-10 20:09:47.358897	f	https://lh3.googleusercontent.com/a/ACg8ocJw8scPixF2PrzJUUzpznN9BOXF94U_ylti8av5jpEvQ9CN4g=s96-c	google	f	member
+33	\N	เย้ๆ123	test@example.com	$2b$10$Z0A3DbqebFmIUVvQoJ/q6ucngyaAyRHMZAQs.qx.BM4eQCwv7vhPy	1990-01-01	0	123456789	2025-09-15 19:44:35.294902	t	https://res.cloudinary.com/djqdn2zru/image/upload/v1757940277/rider-profiles/bvo5yzdffawrunos5fvw.png	\N	f	rider
 \.
 
 
 --
--- TOC entry 5045 (class 0 OID 0)
+-- TOC entry 5101 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: admins_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -722,44 +959,62 @@ SELECT pg_catalog.setval('public.admins_id_seq', 14, true);
 
 
 --
--- TOC entry 5046 (class 0 OID 0)
--- Dependencies: 231
+-- TOC entry 5102 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: carts_cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.carts_cart_id_seq', 27, true);
+
+
+--
+-- TOC entry 5103 (class 0 OID 0)
+-- Dependencies: 222
 -- Name: categorys_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.categorys_id_seq', 3, true);
+SELECT pg_catalog.setval('public.categorys_id_seq', 1, false);
 
 
 --
--- TOC entry 5047 (class 0 OID 0)
--- Dependencies: 220
--- Name: food_options_option_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- TOC entry 5104 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: client_addresses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.food_options_option_id_seq', 1, false);
+SELECT pg_catalog.setval('public.client_addresses_id_seq', 8, true);
 
 
 --
--- TOC entry 5048 (class 0 OID 0)
--- Dependencies: 222
+-- TOC entry 5105 (class 0 OID 0)
+-- Dependencies: 226
 -- Name: foods_food_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.foods_food_id_seq', 9, true);
+SELECT pg_catalog.setval('public.foods_food_id_seq', 20, true);
 
 
 --
--- TOC entry 5049 (class 0 OID 0)
--- Dependencies: 224
+-- TOC entry 5106 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: markets_market_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.markets_market_id_seq', 35, true);
+SELECT pg_catalog.setval('public.markets_market_id_seq', 38, true);
 
 
 --
--- TOC entry 5050 (class 0 OID 0)
--- Dependencies: 227
+-- TOC entry 5107 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: orders_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.orders_order_id_seq', 1, false);
+
+
+--
+-- TOC entry 5108 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -767,25 +1022,34 @@ SELECT pg_catalog.setval('public.rider_addresses_address_id_seq', 6, true);
 
 
 --
--- TOC entry 5051 (class 0 OID 0)
--- Dependencies: 229
+-- TOC entry 5109 (class 0 OID 0)
+-- Dependencies: 232
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.rider_profiles_rider_id_seq', 12, true);
+SELECT pg_catalog.setval('public.rider_profiles_rider_id_seq', 8, true);
 
 
 --
--- TOC entry 5052 (class 0 OID 0)
--- Dependencies: 226
+-- TOC entry 5110 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: rider_topups_topup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.rider_topups_topup_id_seq', 4, true);
+
+
+--
+-- TOC entry 5111 (class 0 OID 0)
+-- Dependencies: 234
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 48, true);
+SELECT pg_catalog.setval('public.users_user_id_seq', 33, true);
 
 
 --
--- TOC entry 4811 (class 2606 OID 16663)
+-- TOC entry 4838 (class 2606 OID 16860)
 -- Name: admins admins_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -794,7 +1058,7 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 4813 (class 2606 OID 16665)
+-- TOC entry 4840 (class 2606 OID 16862)
 -- Name: admins admins_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -803,7 +1067,16 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 4847 (class 2606 OID 16762)
+-- TOC entry 4842 (class 2606 OID 16864)
+-- Name: carts carts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carts
+    ADD CONSTRAINT carts_pkey PRIMARY KEY (cart_id);
+
+
+--
+-- TOC entry 4844 (class 2606 OID 16866)
 -- Name: categorys categorys_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -812,16 +1085,16 @@ ALTER TABLE ONLY public.categorys
 
 
 --
--- TOC entry 4815 (class 2606 OID 16667)
--- Name: food_options food_options_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 4846 (class 2606 OID 16868)
+-- Name: client_addresses client_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.food_options
-    ADD CONSTRAINT food_options_pkey PRIMARY KEY (option_id);
+ALTER TABLE ONLY public.client_addresses
+    ADD CONSTRAINT client_addresses_pkey PRIMARY KEY (id);
 
 
 --
--- TOC entry 4817 (class 2606 OID 16669)
+-- TOC entry 4848 (class 2606 OID 16870)
 -- Name: foods foods_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -830,7 +1103,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 4819 (class 2606 OID 16671)
+-- TOC entry 4850 (class 2606 OID 16872)
 -- Name: markets markets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -839,7 +1112,16 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 4828 (class 2606 OID 16703)
+-- TOC entry 4884 (class 2606 OID 17039)
+-- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_pkey PRIMARY KEY (order_id);
+
+
+--
+-- TOC entry 4855 (class 2606 OID 16874)
 -- Name: rider_addresses rider_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -848,7 +1130,7 @@ ALTER TABLE ONLY public.rider_addresses
 
 
 --
--- TOC entry 4837 (class 2606 OID 16729)
+-- TOC entry 4864 (class 2606 OID 16876)
 -- Name: rider_profiles rider_profiles_driving_license_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -857,7 +1139,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4839 (class 2606 OID 16727)
+-- TOC entry 4866 (class 2606 OID 16878)
 -- Name: rider_profiles rider_profiles_id_card_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -866,7 +1148,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4841 (class 2606 OID 16723)
+-- TOC entry 4868 (class 2606 OID 16880)
 -- Name: rider_profiles rider_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -875,7 +1157,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4843 (class 2606 OID 16725)
+-- TOC entry 4870 (class 2606 OID 16882)
 -- Name: rider_profiles rider_profiles_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -884,7 +1166,16 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4845 (class 2606 OID 16755)
+-- TOC entry 4882 (class 2606 OID 16955)
+-- Name: rider_topups rider_topups_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rider_topups
+    ADD CONSTRAINT rider_topups_pkey PRIMARY KEY (topup_id);
+
+
+--
+-- TOC entry 4872 (class 2606 OID 16884)
 -- Name: rider_profiles unique_vehicle_registration; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -893,7 +1184,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4821 (class 2606 OID 16673)
+-- TOC entry 4874 (class 2606 OID 16886)
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -902,7 +1193,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4823 (class 2606 OID 16675)
+-- TOC entry 4876 (class 2606 OID 16888)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -911,7 +1202,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 4824 (class 1259 OID 16742)
+-- TOC entry 4851 (class 1259 OID 16889)
 -- Name: idx_rider_addresses_district; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -919,7 +1210,7 @@ CREATE INDEX idx_rider_addresses_district ON public.rider_addresses USING btree 
 
 
 --
--- TOC entry 4825 (class 1259 OID 16741)
+-- TOC entry 4852 (class 1259 OID 16890)
 -- Name: idx_rider_addresses_province; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -927,7 +1218,7 @@ CREATE INDEX idx_rider_addresses_province ON public.rider_addresses USING btree 
 
 
 --
--- TOC entry 4826 (class 1259 OID 16740)
+-- TOC entry 4853 (class 1259 OID 16891)
 -- Name: idx_rider_addresses_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -935,7 +1226,7 @@ CREATE INDEX idx_rider_addresses_user_id ON public.rider_addresses USING btree (
 
 
 --
--- TOC entry 4829 (class 1259 OID 16744)
+-- TOC entry 4856 (class 1259 OID 16892)
 -- Name: idx_rider_profiles_approval_status; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -943,7 +1234,7 @@ CREATE INDEX idx_rider_profiles_approval_status ON public.rider_profiles USING b
 
 
 --
--- TOC entry 4830 (class 1259 OID 16746)
+-- TOC entry 4857 (class 1259 OID 16893)
 -- Name: idx_rider_profiles_driving_license_number; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -951,7 +1242,7 @@ CREATE INDEX idx_rider_profiles_driving_license_number ON public.rider_profiles 
 
 
 --
--- TOC entry 4831 (class 1259 OID 16745)
+-- TOC entry 4858 (class 1259 OID 16894)
 -- Name: idx_rider_profiles_id_card_number; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -959,7 +1250,7 @@ CREATE INDEX idx_rider_profiles_id_card_number ON public.rider_profiles USING bt
 
 
 --
--- TOC entry 4832 (class 1259 OID 16769)
+-- TOC entry 4859 (class 1259 OID 16895)
 -- Name: idx_rider_profiles_promptpay; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -967,7 +1258,7 @@ CREATE INDEX idx_rider_profiles_promptpay ON public.rider_profiles USING btree (
 
 
 --
--- TOC entry 4833 (class 1259 OID 16743)
+-- TOC entry 4860 (class 1259 OID 16896)
 -- Name: idx_rider_profiles_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -975,7 +1266,7 @@ CREATE INDEX idx_rider_profiles_user_id ON public.rider_profiles USING btree (us
 
 
 --
--- TOC entry 4834 (class 1259 OID 16753)
+-- TOC entry 4861 (class 1259 OID 16897)
 -- Name: idx_rider_profiles_vehicle_province; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -983,7 +1274,7 @@ CREATE INDEX idx_rider_profiles_vehicle_province ON public.rider_profiles USING 
 
 
 --
--- TOC entry 4835 (class 1259 OID 16752)
+-- TOC entry 4862 (class 1259 OID 16898)
 -- Name: idx_rider_profiles_vehicle_registration; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -991,7 +1282,39 @@ CREATE INDEX idx_rider_profiles_vehicle_registration ON public.rider_profiles US
 
 
 --
--- TOC entry 4855 (class 2620 OID 16748)
+-- TOC entry 4877 (class 1259 OID 17062)
+-- Name: idx_rider_topups_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rider_topups_created_at ON public.rider_topups USING btree (created_at);
+
+
+--
+-- TOC entry 4878 (class 1259 OID 17069)
+-- Name: idx_rider_topups_rider_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rider_topups_rider_id ON public.rider_topups USING btree (rider_id);
+
+
+--
+-- TOC entry 4879 (class 1259 OID 17061)
+-- Name: idx_rider_topups_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rider_topups_status ON public.rider_topups USING btree (status);
+
+
+--
+-- TOC entry 4880 (class 1259 OID 17060)
+-- Name: idx_rider_topups_user_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rider_topups_user_id ON public.rider_topups USING btree (user_id);
+
+
+--
+-- TOC entry 4899 (class 2620 OID 16899)
 -- Name: rider_addresses update_rider_addresses_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -999,7 +1322,7 @@ CREATE TRIGGER update_rider_addresses_updated_at BEFORE UPDATE ON public.rider_a
 
 
 --
--- TOC entry 4856 (class 2620 OID 16749)
+-- TOC entry 4900 (class 2620 OID 16900)
 -- Name: rider_profiles update_rider_profiles_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1007,7 +1330,25 @@ CREATE TRIGGER update_rider_profiles_updated_at BEFORE UPDATE ON public.rider_pr
 
 
 --
--- TOC entry 4850 (class 2606 OID 16764)
+-- TOC entry 4885 (class 2606 OID 16901)
+-- Name: carts carts_food_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carts
+    ADD CONSTRAINT carts_food_id_fkey FOREIGN KEY (food_id) REFERENCES public.foods(food_id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4886 (class 2606 OID 16906)
+-- Name: carts carts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.carts
+    ADD CONSTRAINT carts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4888 (class 2606 OID 16911)
 -- Name: markets fk_admin; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1016,7 +1357,7 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 4852 (class 2606 OID 16704)
+-- TOC entry 4890 (class 2606 OID 16916)
 -- Name: rider_addresses fk_rider_addresses_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1025,7 +1366,7 @@ ALTER TABLE ONLY public.rider_addresses
 
 
 --
--- TOC entry 4853 (class 2606 OID 16735)
+-- TOC entry 4891 (class 2606 OID 16921)
 -- Name: rider_profiles fk_rider_profiles_approved_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1034,7 +1375,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4854 (class 2606 OID 16730)
+-- TOC entry 4892 (class 2606 OID 16926)
 -- Name: rider_profiles fk_rider_profiles_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1043,16 +1384,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 4848 (class 2606 OID 16676)
--- Name: food_options food_options_food_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.food_options
-    ADD CONSTRAINT food_options_food_id_fkey FOREIGN KEY (food_id) REFERENCES public.foods(food_id) ON DELETE CASCADE;
-
-
---
--- TOC entry 4849 (class 2606 OID 16681)
+-- TOC entry 4887 (class 2606 OID 16931)
 -- Name: foods foods_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1061,7 +1393,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 4851 (class 2606 OID 16686)
+-- TOC entry 4889 (class 2606 OID 16936)
 -- Name: markets markets_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1069,7 +1401,61 @@ ALTER TABLE ONLY public.markets
     ADD CONSTRAINT markets_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(user_id);
 
 
--- Completed on 2025-09-13 17:11:10
+--
+-- TOC entry 4896 (class 2606 OID 17045)
+-- Name: orders orders_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_market_id_fkey FOREIGN KEY (market_id) REFERENCES public.markets(market_id);
+
+
+--
+-- TOC entry 4897 (class 2606 OID 17050)
+-- Name: orders orders_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_rider_id_fkey FOREIGN KEY (rider_id) REFERENCES public.rider_profiles(rider_id);
+
+
+--
+-- TOC entry 4898 (class 2606 OID 17040)
+-- Name: orders orders_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+
+
+--
+-- TOC entry 4893 (class 2606 OID 16961)
+-- Name: rider_topups rider_topups_admin_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rider_topups
+    ADD CONSTRAINT rider_topups_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public.admins(id);
+
+
+--
+-- TOC entry 4894 (class 2606 OID 17064)
+-- Name: rider_topups rider_topups_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rider_topups
+    ADD CONSTRAINT rider_topups_rider_id_fkey FOREIGN KEY (rider_id) REFERENCES public.rider_profiles(rider_id);
+
+
+--
+-- TOC entry 4895 (class 2606 OID 17055)
+-- Name: rider_topups rider_topups_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rider_topups
+    ADD CONSTRAINT rider_topups_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+
+
+-- Completed on 2025-09-15 21:00:23
 
 --
 -- PostgreSQL database dump complete
