@@ -1,10 +1,25 @@
-// controllers/SOCKETIO/ordersControllerSK.js - Updated for actual database schema
+// controllers/SOCKETIO/ordersControllerSK.js - Updated with logs and matching routes
 const pool = require("../../config/db");
 const { emitOrderUpdate } = require("../../SocketRoutes/socketEvents");
+
+// Helper function to log API calls
+const logAPICall = (endpoint, method, ip, body = null, query = null) => {
+    const timestamp = new Date().toISOString();
+    console.log(`\n🚀 [${timestamp}] ${method} ${endpoint}`);
+    console.log(`📍 IP: ${ip}`);
+    if (query && Object.keys(query).length > 0) {
+        console.log(`🔍 Query:`, JSON.stringify(query, null, 2));
+    }
+    if (body && Object.keys(body).length > 0) {
+        console.log(`📦 Body:`, JSON.stringify(body, null, 2));
+    }
+    console.log('─'.repeat(50));
+};
 
 // API: ดูสถานะออเดอร์
 exports.getOrderStatus = async (req, res) => {
     const { order_id } = req.params;
+    logAPICall('/order_status/:order_id', 'GET', req.ip, null, { order_id });
     
     try {
         const result = await pool.query(
@@ -29,6 +44,7 @@ exports.getOrderStatus = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+            console.log(`❌ Order ${order_id} not found`);
             return res.status(404).json({ 
                 success: false, 
                 error: "Order not found" 
@@ -36,8 +52,9 @@ exports.getOrderStatus = async (req, res) => {
         }
 
         const order = result.rows[0];
+        console.log(`✅ Order ${order_id} found with status: ${order.status}`);
 
-        res.json({
+        const responseData = {
             success: true,
             data: {
                 order_id: parseInt(order_id),
@@ -59,9 +76,12 @@ exports.getOrderStatus = async (req, res) => {
                     updated_at: order.updated_at
                 }
             }
-        });
+        };
+
+        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
+        res.json(responseData);
     } catch (err) {
-        console.error("getOrderStatus error:", err);
+        console.error("❌ getOrderStatus error:", err);
         res.status(500).json({ 
             success: false, 
             error: "Database error",
@@ -73,8 +93,10 @@ exports.getOrderStatus = async (req, res) => {
 // API: ร้านค้ารับออเดอร์
 exports.acceptOrder = async (req, res) => {
     const { order_id, market_id } = req.body;
+    logAPICall('/accept_order', 'POST', req.ip, req.body);
     
     if (!order_id) {
+        console.log(`❌ Missing order_id in request`);
         return res.status(400).json({
             success: false,
             error: "order_id is required"
@@ -82,13 +104,14 @@ exports.acceptOrder = async (req, res) => {
     }
 
     try {
-        // ตรวจสอบว่าออเดอร์ยังไม่ถูกรับ
+        console.log(`🔍 Checking order ${order_id} status...`);
         const checkResult = await pool.query(
             "SELECT status, market_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (checkResult.rows.length === 0) {
+            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -96,9 +119,10 @@ exports.acceptOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
+        console.log(`📋 Current order status: ${currentOrder.status}, market_id: ${currentOrder.market_id}`);
 
-        // เปลี่ยนจาก 'pending' เป็น 'waiting' ตามตารางจริง
         if (currentOrder.status !== 'waiting') {
+            console.log(`❌ Order ${order_id} already processed. Current status: ${currentOrder.status}`);
             return res.status(400).json({
                 success: false,
                 error: "Order already accepted",
@@ -106,15 +130,15 @@ exports.acceptOrder = async (req, res) => {
             });
         }
 
-        // ตรวจสอบว่าเป็นร้านเดียวกันหรือไม่ (ถ้ามี market_id ใน request)
         if (market_id && currentOrder.market_id !== market_id) {
+            console.log(`❌ Market mismatch. Order belongs to market ${currentOrder.market_id}, requested by ${market_id}`);
             return res.status(403).json({
                 success: false,
                 error: "This order belongs to another market"
             });
         }
 
-        // อัปเดตสถานะ
+        console.log(`🔄 Updating order ${order_id} status to 'accepted'...`);
         const updateResult = await pool.query(
             `UPDATE orders 
              SET status = 'accepted', 
@@ -125,6 +149,7 @@ exports.acceptOrder = async (req, res) => {
         );
 
         if (updateResult.rows.length === 0) {
+            console.log(`❌ Failed to update order ${order_id}`);
             return res.status(500).json({
                 success: false,
                 error: "Failed to update order"
@@ -143,9 +168,10 @@ exports.acceptOrder = async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
+        console.log(`📡 Emitting socket event:`, updateData);
         emitOrderUpdate(order_id, updateData);
 
-        res.json({ 
+        const responseData = { 
             success: true, 
             message: "Order accepted successfully",
             data: {
@@ -154,9 +180,12 @@ exports.acceptOrder = async (req, res) => {
                 market_id: currentOrder.market_id,
                 accepted_at: updateResult.rows[0].updated_at
             }
-        });
+        };
+
+        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
+        res.json(responseData);
     } catch (err) {
-        console.error("acceptOrder error:", err);
+        console.error("❌ acceptOrder error:", err);
         res.status(500).json({ 
             success: false, 
             error: "Database error",
@@ -168,8 +197,10 @@ exports.acceptOrder = async (req, res) => {
 // API: ไรเดอร์รับงาน
 exports.assignRider = async (req, res) => {
     const { order_id, rider_id } = req.body;
+    logAPICall('/assign_rider', 'POST', req.ip, req.body);
     
     if (!order_id || !rider_id) {
+        console.log(`❌ Missing required fields. order_id: ${order_id}, rider_id: ${rider_id}`);
         return res.status(400).json({
             success: false,
             error: "order_id and rider_id are required"
@@ -177,13 +208,14 @@ exports.assignRider = async (req, res) => {
     }
 
     try {
-        // ตรวจสอบว่าออเดอร์ถูกร้านรับแล้วและยังไม่มีไรเดอร์
+        console.log(`🔍 Checking order ${order_id} for rider assignment...`);
         const checkResult = await pool.query(
             "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (checkResult.rows.length === 0) {
+            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -191,8 +223,10 @@ exports.assignRider = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
+        console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
         
         if (currentOrder.status === 'waiting') {
+            console.log(`❌ Order ${order_id} not yet accepted by shop`);
             return res.status(400).json({
                 success: false,
                 error: "Order not yet accepted by shop",
@@ -201,6 +235,7 @@ exports.assignRider = async (req, res) => {
         }
 
         if (currentOrder.rider_id !== null) {
+            console.log(`❌ Order ${order_id} already has rider: ${currentOrder.rider_id}`);
             return res.status(400).json({
                 success: false,
                 error: "Order already has a rider",
@@ -208,7 +243,7 @@ exports.assignRider = async (req, res) => {
             });
         }
 
-        // อัปเดตสถานะ - เปลี่ยนเป็น 'delivering' แทน 'rider_assigned'
+        console.log(`🔄 Assigning rider ${rider_id} to order ${order_id}...`);
         const updateResult = await pool.query(
             `UPDATE orders 
              SET status = 'delivering', 
@@ -220,6 +255,7 @@ exports.assignRider = async (req, res) => {
         );
 
         if (updateResult.rows.length === 0) {
+            console.log(`❌ Failed to assign rider to order ${order_id}`);
             return res.status(500).json({
                 success: false,
                 error: "Failed to update order"
@@ -239,9 +275,10 @@ exports.assignRider = async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
+        console.log(`📡 Emitting socket event:`, updateData);
         emitOrderUpdate(order_id, updateData);
 
-        res.json({ 
+        const responseData = { 
             success: true, 
             message: "Rider assigned successfully",
             data: {
@@ -250,9 +287,12 @@ exports.assignRider = async (req, res) => {
                 rider_id: parseInt(rider_id),
                 assigned_at: updateResult.rows[0].updated_at
             }
-        });
+        };
+
+        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
+        res.json(responseData);
     } catch (err) {
-        console.error("assignRider error:", err);
+        console.error("❌ assignRider error:", err);
         res.status(500).json({ 
             success: false, 
             error: "Database error",
@@ -264,15 +304,16 @@ exports.assignRider = async (req, res) => {
 // API: อัปเดตสถานะออเดอร์ทั่วไป
 exports.updateOrderStatus = async (req, res) => {
     const { order_id, status, additional_data } = req.body;
+    logAPICall('/update_status', 'POST', req.ip, req.body);
     
     if (!order_id || !status) {
+        console.log(`❌ Missing required fields. order_id: ${order_id}, status: ${status}`);
         return res.status(400).json({
             success: false,
             error: "order_id and status are required"
         });
     }
 
-    // Define valid status transitions ตามตารางจริง
     const validStatuses = [
         'waiting',      // รอการยืนยัน
         'accepted',     // ร้านรับแล้ว
@@ -282,6 +323,7 @@ exports.updateOrderStatus = async (req, res) => {
     ];
 
     if (!validStatuses.includes(status)) {
+        console.log(`❌ Invalid status: ${status}. Valid statuses:`, validStatuses);
         return res.status(400).json({
             success: false,
             error: "Invalid status",
@@ -290,13 +332,14 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     try {
-        // Get current order info
+        console.log(`🔍 Getting current order ${order_id} info...`);
         const currentResult = await pool.query(
             "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (currentResult.rows.length === 0) {
+            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -304,8 +347,9 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const currentOrder = currentResult.rows[0];
+        console.log(`📋 Current order status: ${currentOrder.status} -> New status: ${status}`);
 
-        // Update order status
+        console.log(`🔄 Updating order ${order_id} status to '${status}'...`);
         const updateResult = await pool.query(
             `UPDATE orders 
              SET status = $2, updated_at = NOW() 
@@ -314,7 +358,7 @@ exports.updateOrderStatus = async (req, res) => {
             [order_id, status]
         );
 
-        console.log(`📦 Order ${order_id} status updated to: ${status}`);
+        console.log(`✅ Order ${order_id} status updated to: ${status}`);
 
         // Prepare socket event data
         const updateData = {
@@ -328,10 +372,10 @@ exports.updateOrderStatus = async (req, res) => {
             ...additional_data
         };
 
-        // Send socket event
+        console.log(`📡 Emitting socket event:`, updateData);
         emitOrderUpdate(order_id, updateData);
 
-        res.json({ 
+        const responseData = { 
             success: true, 
             message: "Order status updated successfully",
             data: {
@@ -341,9 +385,12 @@ exports.updateOrderStatus = async (req, res) => {
                 updated_at: updateResult.rows[0].updated_at,
                 ...updateData
             }
-        });
+        };
+
+        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
+        res.json(responseData);
     } catch (err) {
-        console.error("updateOrderStatus error:", err);
+        console.error("❌ updateOrderStatus error:", err);
         res.status(500).json({ 
             success: false, 
             error: "Database error",
@@ -355,8 +402,10 @@ exports.updateOrderStatus = async (req, res) => {
 // API: ยกเลิกออเดอร์
 exports.cancelOrder = async (req, res) => {
     const { order_id, reason } = req.body;
+    logAPICall('/cancel_order', 'POST', req.ip, req.body);
     
     if (!order_id) {
+        console.log(`❌ Missing order_id in request`);
         return res.status(400).json({
             success: false,
             error: "order_id is required"
@@ -364,13 +413,14 @@ exports.cancelOrder = async (req, res) => {
     }
 
     try {
-        // Check current status
+        console.log(`🔍 Checking order ${order_id} for cancellation...`);
         const checkResult = await pool.query(
             "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (checkResult.rows.length === 0) {
+            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -378,17 +428,18 @@ exports.cancelOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
+        console.log(`📋 Current order status: ${currentOrder.status}`);
 
-        // Check if order can be cancelled
         const nonCancellableStatuses = ['completed', 'cancelled'];
         if (nonCancellableStatuses.includes(currentOrder.status)) {
+            console.log(`❌ Cannot cancel order ${order_id} with status: ${currentOrder.status}`);
             return res.status(400).json({
                 success: false,
                 error: `Cannot cancel order with status: ${currentOrder.status}`
             });
         }
 
-        // Update order status to cancelled - เพิ่มคอลัมน์ note สำหรับเก็บเหตุผล
+        console.log(`🔄 Cancelling order ${order_id} with reason: ${reason || 'No reason provided'}`);
         await pool.query(
             `UPDATE orders 
              SET status = 'cancelled', 
@@ -398,9 +449,8 @@ exports.cancelOrder = async (req, res) => {
             [order_id, reason || 'No reason provided']
         );
 
-        console.log(`❌ Order ${order_id} cancelled. Reason: ${reason}`);
+        console.log(`✅ Order ${order_id} cancelled. Reason: ${reason}`);
 
-        // Send socket event
         const updateData = {
             order_id: parseInt(order_id),
             status: "cancelled",
@@ -412,15 +462,17 @@ exports.cancelOrder = async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
+        console.log(`📡 Emitting socket event:`, updateData);
         emitOrderUpdate(order_id, updateData);
 
+        console.log(`📤 Sending response:`, JSON.stringify(updateData, null, 2));
         res.json({ 
             success: true, 
             message: "Order cancelled successfully",
             data: updateData
         });
     } catch (err) {
-        console.error("cancelOrder error:", err);
+        console.error("❌ cancelOrder error:", err);
         res.status(500).json({ 
             success: false, 
             error: "Database error",
@@ -440,7 +492,18 @@ exports.getOrdersWithItems = async (req, res) => {
         offset = 0 
     } = req.query;
 
+    logAPICall('/orders', 'GET', req.ip, null, req.query);
+
     try {
+        console.log(`🔍 Fetching orders with filters:`, {
+            user_id,
+            market_id,
+            rider_id,
+            status,
+            limit,
+            offset
+        });
+
         let query = `
             SELECT 
                 o.order_id,
@@ -485,21 +548,25 @@ exports.getOrdersWithItems = async (req, res) => {
         if (user_id) {
             conditions.push(`o.user_id = $${valueIndex++}`);
             values.push(user_id);
+            console.log(`🔍 Filtering by user_id: ${user_id}`);
         }
 
         if (market_id) {
             conditions.push(`o.market_id = $${valueIndex++}`);
             values.push(market_id);
+            console.log(`🔍 Filtering by market_id: ${market_id}`);
         }
 
         if (rider_id) {
             conditions.push(`o.rider_id = $${valueIndex++}`);
             values.push(rider_id);
+            console.log(`🔍 Filtering by rider_id: ${rider_id}`);
         }
 
         if (status) {
             conditions.push(`o.status = $${valueIndex++}`);
             values.push(status);
+            console.log(`🔍 Filtering by status: ${status}`);
         }
 
         if (conditions.length > 0) {
@@ -514,9 +581,14 @@ exports.getOrdersWithItems = async (req, res) => {
 
         values.push(parseInt(limit), parseInt(offset));
 
+        console.log(`📊 Executing query:`, query);
+        console.log(`📊 Query values:`, values);
+
         const result = await pool.query(query, values);
 
-        res.json({
+        console.log(`✅ Found ${result.rows.length} orders`);
+
+        const responseData = {
             success: true,
             data: result.rows,
             pagination: {
@@ -524,10 +596,13 @@ exports.getOrdersWithItems = async (req, res) => {
                 offset: parseInt(offset),
                 total: result.rows.length
             }
-        });
+        };
+
+        console.log(`📤 Sending response with ${result.rows.length} orders`);
+        res.json(responseData);
 
     } catch (err) {
-        console.error("getOrdersWithItems error:", err);
+        console.error("❌ getOrdersWithItems error:", err);
         res.status(500).json({
             success: false,
             error: "Database error",
@@ -538,7 +613,11 @@ exports.getOrdersWithItems = async (req, res) => {
 
 // API: ดึงสถิติออเดอร์
 exports.getOrderStats = async (req, res) => {
+    logAPICall('/order_stats', 'GET', req.ip, null, req.query);
+
     try {
+        console.log(`📊 Fetching order statistics for today...`);
+
         const statsQuery = `
             SELECT 
                 status,
@@ -580,13 +659,18 @@ exports.getOrderStats = async (req, res) => {
             }
         });
 
-        res.json({
+        console.log(`✅ Order statistics:`, stats);
+
+        const responseData = {
             success: true,
             data: stats
-        });
+        };
+
+        console.log(`📤 Sending statistics response`);
+        res.json(responseData);
 
     } catch (err) {
-        console.error("getOrderStats error:", err);
+        console.error("❌ getOrderStats error:", err);
         res.status(500).json({
             success: false,
             error: "Database error",

@@ -86,7 +86,7 @@ cron.schedule('*/1 * * * *', async () => {
 
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '192.168.1.119';
+const HOST = '192.168.1.126';
 server.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });

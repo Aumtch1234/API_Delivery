@@ -19,7 +19,7 @@ router.put('/update_order_status', socketController.updateOrderStatus);
 router.post('/orders/cancel', socketController.cancelOrder);
 
 // ดึงรายการออเดอร์พร้อมรายการอาหาร
-router.get('/orders_with_items', socketController.getOrdersWithItems);
+router.get('/orders', socketController.getOrdersWithItems);
 
 // ดึงสถิติออเดอร์
 router.get('/order_stats', socketController.getOrderStats);
