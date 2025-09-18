@@ -14,6 +14,11 @@ const { refreshToken } = require('../../controllers/Client/refreshTokenControlle
 const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
 const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder } = require('../../controllers/Client/FoodsController');
 
+const cartsController = require('../../controllers/Client/cartsController');
+const profileController = require('../../controllers/Client/userController');
+const GoogleMapController = require('../../controllers/Client/GoogleMapController');
+const OrdersController = require('../../controllers/Client/ordersController')
+
 //Login and Register Routes
 router.post('/google-login', googleLogin);
 router.post('/login', loginController.loginUser);
@@ -24,7 +29,11 @@ router.post('/verify-otp', verifyOtp);
 
 //User Profile Routes
 router.put('/update-profile', authenticateJWT, upload.single('Profile'), updateProfile);
-
+router.post('/add/address', authenticateJWT, profileController.addAddress);
+router.get('/address', authenticateJWT, profileController.getAddresses);
+router.get('/address/default', authenticateJWT, profileController.GetDefaultAddress);
+router.put('/update/address/:id', authenticateJWT, profileController.updateAddress);
+router.delete('/delete/address/:id', authenticateJWT, profileController.deleteAddress);
 
 //refreshTokenAPI
 router.post('/refresh-token', authenticateJWT, refreshToken);
@@ -50,5 +59,17 @@ router.get('/foods', getAllFoods);
 router.get('/foods/:marketId', getAllFoodForMarketID);
 router.get('/markets', getAllMarket);
 router.get('/foods/order/:foodId', getFoodFromIDForOrder);
+
+//carts
+router.post('/cart/add', authenticateJWT, cartsController.AddCarts);
+router.get('/cart', authenticateJWT, cartsController.GetCarts);
+router.put('/address/set-main/:id', authenticateJWT, profileController.setMainAddress);
+router.delete('/cart/:cart_id', authenticateJWT, cartsController.RemoveCart);
+
+// Orders
+router.post('/orders', authenticateJWT, OrdersController.PostOrders)
+
+
+router.post('/distance', authenticateJWT, GoogleMapController.Distance);
 
 module.exports = router;

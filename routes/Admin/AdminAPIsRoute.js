@@ -10,6 +10,7 @@ const { debugRequestBody } = require('../../middleware/Admin/debugMiddleware');
 const { getUsersGroupedByProvider } = require('../../controllers/Admin/UsersController');
 const marketController = require('../../controllers/Admin/AdminMarketsController');
 
+const marketFoodController = require('../../controllers/Admin/FoodController');
 const riderController = require('../../controllers/Admin/RiderManagementController');
 
 const {
@@ -21,7 +22,6 @@ const {
     adminGetTopUpStatistics
 } = require('../../controllers/Admin/admin-approve-topup_Controller');
 
-const marketFoodController = require('../../controllers/Admin/FoodController');
 
 
 
