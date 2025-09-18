@@ -68,6 +68,7 @@ router.put('/address/set-main/:id', authenticateJWT, profileController.setMainAd
 router.delete('/cart/:cart_id', authenticateJWT, cartsController.RemoveCart);
 
 // Orders
+router.get("/orders/user", authenticateJWT, OrdersController.getOrdersByCustomer);
 router.get('/orders/:order_id', authenticateJWT, OrdersController.getOrderStatus);
 router.post('/orders', authenticateJWT, OrdersController.PostOrders)
 

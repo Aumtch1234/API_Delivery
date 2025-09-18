@@ -16,7 +16,7 @@ router.post('/assign_rider', socketController.assignRider);
 router.put('/update_order_status', socketController.updateOrderStatus);
 
 // ยกเลิกออเดอร์
-router.post('/orders/cancel', socketController.cancelOrder);
+router.post('/cancel_order', socketController.cancelOrder);
 
 // ดึงรายการออเดอร์พร้อมรายการอาหาร
 router.get('/orders', socketController.getOrdersWithItems);

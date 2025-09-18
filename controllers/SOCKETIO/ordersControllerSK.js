@@ -20,7 +20,7 @@ const logAPICall = (endpoint, method, ip, body = null, query = null) => {
 exports.getOrderStatus = async (req, res) => {
     const { order_id } = req.params;
     logAPICall('/order_status/:order_id', 'GET', req.ip, null, { order_id });
-    
+
     try {
         const result = await pool.query(
             `SELECT 
@@ -45,9 +45,9 @@ exports.getOrderStatus = async (req, res) => {
 
         if (result.rows.length === 0) {
             console.log(`❌ Order ${order_id} not found`);
-            return res.status(404).json({ 
-                success: false, 
-                error: "Order not found" 
+            return res.status(404).json({
+                success: false,
+                error: "Order not found"
             });
         }
 
@@ -82,8 +82,8 @@ exports.getOrderStatus = async (req, res) => {
         res.json(responseData);
     } catch (err) {
         console.error("❌ getOrderStatus error:", err);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             error: "Database error",
             message: err.message
         });
@@ -94,24 +94,22 @@ exports.getOrderStatus = async (req, res) => {
 exports.acceptOrder = async (req, res) => {
     const { order_id, market_id } = req.body;
     logAPICall('/accept_order', 'POST', req.ip, req.body);
-    
-    if (!order_id) {
-        console.log(`❌ Missing order_id in request`);
+
+    if (!order_id || !market_id) {
         return res.status(400).json({
             success: false,
-            error: "order_id is required"
+            error: "order_id and market_id are required"
         });
     }
 
     try {
         console.log(`🔍 Checking order ${order_id} status...`);
         const checkResult = await pool.query(
-            "SELECT status, market_id FROM orders WHERE order_id = $1",
+            "SELECT status, market_id, user_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (checkResult.rows.length === 0) {
-            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -119,75 +117,88 @@ exports.acceptOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
-        console.log(`📋 Current order status: ${currentOrder.status}, market_id: ${currentOrder.market_id}`);
-
+        
         if (currentOrder.status !== 'waiting') {
-            console.log(`❌ Order ${order_id} already processed. Current status: ${currentOrder.status}`);
             return res.status(400).json({
                 success: false,
-                error: "Order already accepted",
+                error: "Order already processed",
                 current_status: currentOrder.status
             });
         }
 
-        if (market_id && currentOrder.market_id !== market_id) {
-            console.log(`❌ Market mismatch. Order belongs to market ${currentOrder.market_id}, requested by ${market_id}`);
+        if (currentOrder.market_id !== parseInt(market_id)) {
             return res.status(403).json({
                 success: false,
                 error: "This order belongs to another market"
             });
         }
 
-        console.log(`🔄 Updating order ${order_id} status to 'accepted'...`);
+        // Update order status
         const updateResult = await pool.query(
             `UPDATE orders 
              SET status = 'accepted', 
                  updated_at = NOW()
-             WHERE order_id = $1
+             WHERE order_id = $1 AND market_id = $2
              RETURNING *`,
-            [order_id]
+            [order_id, market_id]
         );
 
         if (updateResult.rows.length === 0) {
-            console.log(`❌ Failed to update order ${order_id}`);
             return res.status(500).json({
                 success: false,
                 error: "Failed to update order"
             });
         }
 
-        console.log(`✅ Market ${currentOrder.market_id} accepted order ${order_id}`);
+        console.log(`✅ Market ${market_id} accepted order ${order_id}`);
 
-        // ส่ง socket event
+        // สร้างข้อมูลสำหรับ socket event พร้อมข้อมูลครบถ้วน
         const updateData = {
             order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: parseInt(market_id),
             status: "accepted",
             hasShop: true,
             hasRider: false,
-            market_id: currentOrder.market_id,
-            timestamp: new Date().toISOString()
+            rider_id: null,
+            timestamp: new Date().toISOString(),
+            action: 'order_accepted' // เพิ่ม action type
         };
 
-        console.log(`📡 Emitting socket event:`, updateData);
+        console.log(`📡 Broadcasting order acceptance to all parties:`, updateData);
+        
+        // Emit socket event ไปทุก room ที่เกี่ยวข้อง
         emitOrderUpdate(order_id, updateData);
+        
+        // เพิ่ม explicit broadcast เพื่อให้แน่ใจ
+        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const io = getIO();
+        
+        // ส่งไปทุก room พร้อมกัน
+        io.to(`order:${order_id}`).emit("order:updated", updateData);
+        io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
+        io.to(`shop:${market_id}`).emit("order:updated", updateData);
+        
+        console.log(`📡 Explicit broadcast sent to order:${order_id}, customer:${currentOrder.user_id}, shop:${market_id}`);
 
-        const responseData = { 
-            success: true, 
+        const responseData = {
+            success: true,
             message: "Order accepted successfully",
             data: {
                 order_id: parseInt(order_id),
                 status: "accepted",
-                market_id: currentOrder.market_id,
-                accepted_at: updateResult.rows[0].updated_at
+                market_id: parseInt(market_id),
+                user_id: currentOrder.user_id,
+                accepted_at: updateResult.rows[0].updated_at,
+                ...updateData
             }
         };
 
-        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
         res.json(responseData);
     } catch (err) {
         console.error("❌ acceptOrder error:", err);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             error: "Database error",
             message: err.message
         });
@@ -198,7 +209,7 @@ exports.acceptOrder = async (req, res) => {
 exports.assignRider = async (req, res) => {
     const { order_id, rider_id } = req.body;
     logAPICall('/assign_rider', 'POST', req.ip, req.body);
-    
+
     if (!order_id || !rider_id) {
         console.log(`❌ Missing required fields. order_id: ${order_id}, rider_id: ${rider_id}`);
         return res.status(400).json({
@@ -224,7 +235,7 @@ exports.assignRider = async (req, res) => {
 
         const currentOrder = checkResult.rows[0];
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
-        
+
         if (currentOrder.status === 'waiting') {
             console.log(`❌ Order ${order_id} not yet accepted by shop`);
             return res.status(400).json({
@@ -278,8 +289,8 @@ exports.assignRider = async (req, res) => {
         console.log(`📡 Emitting socket event:`, updateData);
         emitOrderUpdate(order_id, updateData);
 
-        const responseData = { 
-            success: true, 
+        const responseData = {
+            success: true,
             message: "Rider assigned successfully",
             data: {
                 order_id: parseInt(order_id),
@@ -293,8 +304,8 @@ exports.assignRider = async (req, res) => {
         res.json(responseData);
     } catch (err) {
         console.error("❌ assignRider error:", err);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             error: "Database error",
             message: err.message
         });
@@ -304,26 +315,17 @@ exports.assignRider = async (req, res) => {
 // API: อัปเดตสถานะออเดอร์ทั่วไป
 exports.updateOrderStatus = async (req, res) => {
     const { order_id, status, additional_data } = req.body;
-    logAPICall('/update_status', 'POST', req.ip, req.body);
-    
+    logAPICall('/update_order_status', 'PUT', req.ip, req.body);
+
     if (!order_id || !status) {
-        console.log(`❌ Missing required fields. order_id: ${order_id}, status: ${status}`);
         return res.status(400).json({
             success: false,
             error: "order_id and status are required"
         });
     }
 
-    const validStatuses = [
-        'waiting',      // รอการยืนยัน
-        'accepted',     // ร้านรับแล้ว
-        'delivering',   // ไรเดอร์กำลังส่ง
-        'completed',    // เสร็จแล้ว
-        'cancelled'     // ยกเลิก
-    ];
-
+    const validStatuses = ['waiting', 'accepted', 'delivering', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
-        console.log(`❌ Invalid status: ${status}. Valid statuses:`, validStatuses);
         return res.status(400).json({
             success: false,
             error: "Invalid status",
@@ -332,14 +334,13 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     try {
-        console.log(`🔍 Getting current order ${order_id} info...`);
+        // Get current order info including user_id
         const currentResult = await pool.query(
-            "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
+            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (currentResult.rows.length === 0) {
-            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -347,9 +348,9 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const currentOrder = currentResult.rows[0];
-        console.log(`📋 Current order status: ${currentOrder.status} -> New status: ${status}`);
+        console.log(`📋 Updating order ${order_id}: ${currentOrder.status} -> ${status}`);
 
-        console.log(`🔄 Updating order ${order_id} status to '${status}'...`);
+        // Update order status
         const updateResult = await pool.query(
             `UPDATE orders 
              SET status = $2, updated_at = NOW() 
@@ -360,23 +361,39 @@ exports.updateOrderStatus = async (req, res) => {
 
         console.log(`✅ Order ${order_id} status updated to: ${status}`);
 
-        // Prepare socket event data
+        // สร้างข้อมูลครบถ้วนสำหรับ socket event
         const updateData = {
             order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
             status: status,
             hasShop: status !== "waiting",
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
-            market_id: currentOrder.market_id,
             timestamp: new Date().toISOString(),
+            action: 'status_updated',
+            old_status: currentOrder.status,
             ...additional_data
         };
 
-        console.log(`📡 Emitting socket event:`, updateData);
+        console.log(`📡 Broadcasting status update to all parties:`, updateData);
+        
+        // Emit socket event ไปทุก room
         emitOrderUpdate(order_id, updateData);
+        
+        // เพิ่ม explicit broadcast
+        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const io = getIO();
+        
+        io.to(`order:${order_id}`).emit("order:updated", updateData);
+        io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
+        io.to(`shop:${currentOrder.market_id}`).emit("order:updated", updateData);
+        if (currentOrder.rider_id) {
+            io.to(`rider:${currentOrder.rider_id}`).emit("order:updated", updateData);
+        }
 
-        const responseData = { 
-            success: true, 
+        const responseData = {
+            success: true,
             message: "Order status updated successfully",
             data: {
                 order_id: parseInt(order_id),
@@ -387,25 +404,22 @@ exports.updateOrderStatus = async (req, res) => {
             }
         };
 
-        console.log(`📤 Sending response:`, JSON.stringify(responseData, null, 2));
         res.json(responseData);
     } catch (err) {
         console.error("❌ updateOrderStatus error:", err);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             error: "Database error",
             message: err.message
         });
     }
 };
-
 // API: ยกเลิกออเดอร์
 exports.cancelOrder = async (req, res) => {
     const { order_id, reason } = req.body;
     logAPICall('/cancel_order', 'POST', req.ip, req.body);
-    
+
     if (!order_id) {
-        console.log(`❌ Missing order_id in request`);
         return res.status(400).json({
             success: false,
             error: "order_id is required"
@@ -413,14 +427,12 @@ exports.cancelOrder = async (req, res) => {
     }
 
     try {
-        console.log(`🔍 Checking order ${order_id} for cancellation...`);
         const checkResult = await pool.query(
-            "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
+            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
             [order_id]
         );
 
         if (checkResult.rows.length === 0) {
-            console.log(`❌ Order ${order_id} not found in database`);
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -428,18 +440,16 @@ exports.cancelOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
-        console.log(`📋 Current order status: ${currentOrder.status}`);
 
         const nonCancellableStatuses = ['completed', 'cancelled'];
         if (nonCancellableStatuses.includes(currentOrder.status)) {
-            console.log(`❌ Cannot cancel order ${order_id} with status: ${currentOrder.status}`);
             return res.status(400).json({
                 success: false,
                 error: `Cannot cancel order with status: ${currentOrder.status}`
             });
         }
 
-        console.log(`🔄 Cancelling order ${order_id} with reason: ${reason || 'No reason provided'}`);
+        // Update order to cancelled
         await pool.query(
             `UPDATE orders 
              SET status = 'cancelled', 
@@ -451,45 +461,62 @@ exports.cancelOrder = async (req, res) => {
 
         console.log(`✅ Order ${order_id} cancelled. Reason: ${reason}`);
 
+        // สร้างข้อมูลครบถ้วนสำหรับ socket event
         const updateData = {
             order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
             status: "cancelled",
             hasShop: currentOrder.status !== "waiting",
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
-            market_id: currentOrder.market_id,
             cancellation_reason: reason,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            action: 'order_cancelled',
+            old_status: currentOrder.status
         };
 
-        console.log(`📡 Emitting socket event:`, updateData);
-        emitOrderUpdate(order_id, updateData);
+        console.log(`📡 Broadcasting cancellation to all parties:`, updateData);
 
-        console.log(`📤 Sending response:`, JSON.stringify(updateData, null, 2));
-        res.json({ 
-            success: true, 
+        // Emit ไปทุก room
+        emitOrderUpdate(order_id, updateData);
+        
+        // เพิ่ม explicit broadcast
+        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const io = getIO();
+        
+        io.to(`order:${order_id}`).emit("order:updated", updateData);
+        io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
+        io.to(`shop:${currentOrder.market_id}`).emit("order:updated", updateData);
+        if (currentOrder.rider_id) {
+            io.to(`rider:${currentOrder.rider_id}`).emit("order:updated", updateData);
+        }
+
+        res.json({
+            success: true,
             message: "Order cancelled successfully",
             data: updateData
         });
     } catch (err) {
         console.error("❌ cancelOrder error:", err);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             error: "Database error",
             message: err.message
         });
     }
 };
 
+
 // API: ดึงรายการออเดอร์พร้อมรายการอาหาร
 exports.getOrdersWithItems = async (req, res) => {
-    const { 
-        user_id, 
-        market_id, 
-        rider_id, 
-        status, 
-        limit = 20, 
-        offset = 0 
+    const {
+        user_id,
+        market_id,
+        rider_id,
+        status,
+        limit = 1000,
+        offset = 0
     } = req.query;
 
     logAPICall('/orders', 'GET', req.ip, null, req.query);
@@ -509,6 +536,7 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.order_id,
                 o.user_id,
                 o.market_id,
+                m.shop_name, 
                 o.rider_id,
                 o.address,
                 o.delivery_type,
@@ -522,23 +550,21 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.updated_at,
                 COALESCE(
                     json_agg(
-                        CASE WHEN oi.item_id IS NOT NULL THEN
-                            json_build_object(
-                                'item_id', oi.item_id,
-                                'food_id', oi.food_id,
-                                'food_name', oi.food_name,
-                                'quantity', oi.quantity,
-                                'sell_price', oi.sell_price,
-                                'subtotal', oi.subtotal,
-                                'selected_options', oi.selected_options
-                            )
-                        ELSE NULL
-                        END
+                        DISTINCT jsonb_build_object(
+                            'item_id', oi.item_id,
+                            'food_id', oi.food_id,
+                            'food_name', oi.food_name,
+                            'quantity', oi.quantity,
+                            'sell_price', oi.sell_price,
+                            'subtotal', oi.subtotal,
+                            'selected_options', oi.selected_options
+                        )
                     ) FILTER (WHERE oi.item_id IS NOT NULL),
                     '[]'
                 ) as items
             FROM orders o
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
+            LEFT JOIN markets m ON o.market_id = m.market_id
         `;
 
         const conditions = [];
@@ -574,7 +600,7 @@ exports.getOrdersWithItems = async (req, res) => {
         }
 
         query += `
-            GROUP BY o.order_id
+            GROUP BY o.order_id, m.shop_name
             ORDER BY o.created_at DESC
             LIMIT $${valueIndex++} OFFSET $${valueIndex++}
         `;

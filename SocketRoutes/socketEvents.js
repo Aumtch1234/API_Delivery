@@ -1,246 +1,93 @@
-// SocketRoutes/socketEvents.js - Updated for actual database schema
+// SocketRoutes/socketEvents.js - แก้ไขให้ส่ง event ครบทุกฝ่าย
 const pool = require("../config/db");
 
-let ioInstance; // เก็บ instance ของ io
+let ioInstance;
 
-module.exports = function (io) {
-  ioInstance = io; // เก็บ io instance ไว้ใช้ในฟังก์ชันอื่น
+// ฟังก์ชันส่ง event อัปเดตออเดอร์ไปยังทุกฝ่ายที่เกี่ยวข้อง
+async function emitOrderUpdate(orderId, data) {
+  if (!ioInstance) {
+    console.error("❌ Socket.io instance not initialized");
+    return;
+  }
 
-  io.on("connection", (socket) => {
-    console.log("🔌 A user connected:", socket.id);
+  try {
+    // ดึงข้อมูลออเดอร์เพื่อหา user_id, market_id, rider_id
+    const result = await pool.query(
+      "SELECT user_id, market_id, rider_id FROM orders WHERE order_id = $1",
+      [orderId]
+    );
 
-    // User registration
-    socket.on("register_user", (data) => {
-      const { userId } = data;
-      socket.userId = userId;
-      console.log(`👤 User ${userId} registered with socket ${socket.id}`);
-    });
-
-    // ให้ลูกค้าเข้าร่วม room ของออร์เดอร์
-    socket.on("customer:watchOrder", (orderId) => {
-      const roomName = `order:${orderId}`;
-      socket.join(roomName);
-      socket.currentOrderRoom = roomName;
-      console.log(`👤 Customer ${socket.id} joined room ${roomName}`);
-
-      // ส่งสถานะปัจจุบันให้ลูกค้าทันที
-      getCurrentOrderStatus(orderId, socket);
-    });
-
-    // ร้านค้าเข้าร่วม room ของออร์เดอร์
-    socket.on("shop:watchOrder", (orderId) => {
-      const roomName = `order:${orderId}`;
-      socket.join(roomName);
-      socket.currentOrderRoom = roomName;
-      console.log(`🏪 Shop ${socket.id} joined room ${roomName}`);
-
-      // ส่งสถานะปัจจุบันให้ร้านค้าทันที
-      getCurrentOrderStatus(orderId, socket);
-    });
-
-    // ไรเดอร์เข้าร่วม room ของออร์เดอร์
-    socket.on("rider:watchOrder", (orderId) => {
-      const roomName = `order:${orderId}`;
-      socket.join(roomName);
-      socket.currentOrderRoom = roomName;
-      console.log(`🏍️ Rider ${socket.id} joined room ${roomName}`);
-
-      // ส่งสถานะปัจจุบันให้ไรเดอร์ทันที
-      getCurrentOrderStatus(orderId, socket);
-    });
-
-    // ร้านค้ารับออเดอร์ (ผ่าน socket)
-    socket.on("shop:acceptOrder", async (data) => {
-      try {
-        const { order_id, market_id } = data;
-
-        if (!order_id) {
-          socket.emit("error", { message: "order_id is required" });
-          return;
-        }
-
-        console.log(`🏪 Market ${market_id} attempting to accept order ${order_id}`);
-
-        // ตรวจสอบสถานะปัจจุบัน
-        const checkResult = await pool.query(
-          "SELECT status, market_id FROM orders WHERE order_id = $1",
-          [order_id]
-        );
-
-        if (checkResult.rows.length === 0) {
-          socket.emit("error", { message: "Order not found" });
-          return;
-        }
-
-        const currentOrder = checkResult.rows[0];
-
-        // เปลี่ยนจาก 'pending' เป็น 'waiting' ตามตารางจริง
-        if (currentOrder.status !== 'waiting') {
-          socket.emit("error", { message: "Order already accepted" });
-          return;
-        }
-
-        // ตรวจสอบว่าเป็นร้านเดียวกันหรือไม่
-        if (market_id && currentOrder.market_id !== market_id) {
-          socket.emit("error", { message: "This order belongs to another market" });
-          return;
-        }
-
-        // อัปเดตสถานะ
-        await pool.query(
-          "UPDATE orders SET status = 'accepted', updated_at = NOW() WHERE order_id = $1",
-          [order_id]
-        );
-
-        console.log(`✅ Market ${currentOrder.market_id} accepted order ${order_id}`);
-
-        // ส่ง update ไปยังทุกคนในห้อง
-        const updateData = {
-          order_id: parseInt(order_id),
-          status: "accepted",
-          hasShop: true,
-          hasRider: false,
-          market_id: currentOrder.market_id,
-          timestamp: new Date().toISOString()
-        };
-
-        emitOrderUpdate(order_id, updateData);
-
-        // ส่งการยืนยันกลับให้ร้านค้า
-        socket.emit("shop:orderAccepted", {
-          success: true,
-          order_id: parseInt(order_id),
-          message: "Order accepted successfully"
-        });
-
-      } catch (error) {
-        console.error("Error accepting order:", error);
-        socket.emit("error", {
-          message: "Failed to accept order",
-          error: error.message
-        });
-      }
-    });
-
-    // ไรเดอร์รับงาน (ผ่าน socket)
-    socket.on("rider:acceptOrder", async (data) => {
-      try {
-        const { order_id, rider_id } = data;
-
-        if (!order_id || !rider_id) {
-          socket.emit("error", { message: "order_id and rider_id are required" });
-          return;
-        }
-
-        console.log(`🏍️ Rider ${rider_id} attempting to accept order ${order_id}`);
-
-        // ตรวจสอบสถานะปัจจุบัน
-        const checkResult = await pool.query(
-          "SELECT status, rider_id, market_id FROM orders WHERE order_id = $1",
-          [order_id]
-        );
-
-        if (checkResult.rows.length === 0) {
-          socket.emit("error", { message: "Order not found" });
-          return;
-        }
-
-        const currentOrder = checkResult.rows[0];
-
-        if (currentOrder.status === 'waiting') {
-          socket.emit("error", { message: "Order not yet accepted by shop" });
-          return;
-        }
-
-        if (currentOrder.rider_id !== null) {
-          socket.emit("error", { message: "Order already has a rider" });
-          return;
-        }
-
-        // อัปเดตสถานะ - เปลี่ยนเป็น 'delivering' ตามตารางจริง
-        await pool.query(
-          "UPDATE orders SET status = 'delivering', rider_id = $2, updated_at = NOW() WHERE order_id = $1",
-          [order_id, rider_id]
-        );
-
-        console.log(`✅ Rider ${rider_id} accepted order ${order_id}`);
-
-        // ส่ง update ไปยังทุกคนในห้อง
-        const updateData = {
-          order_id: parseInt(order_id),
-          status: "delivering",
-          hasShop: true,
-          hasRider: true,
-          rider_id: parseInt(rider_id),
-          market_id: currentOrder.market_id,
-          timestamp: new Date().toISOString()
-        };
-
-        emitOrderUpdate(order_id, updateData);
-
-        // ส่งการยืนยันกลับให้ไรเดอร์
-        socket.emit("rider:orderAccepted", {
-          success: true,
-          order_id: parseInt(order_id),
-          message: "Order assigned successfully"
-        });
-
-      } catch (error) {
-        console.error("Error assigning rider:", error);
-        socket.emit("error", {
-          message: "Failed to assign rider",
-          error: error.message
-        });
-      }
-    });
-
-    // Handle new order creation
-    socket.on("new_order", async (orderData) => {
-      try {
-        console.log("📦 New order received:", orderData);
-
-        // Broadcast to shops and riders
-        socket.broadcast.emit("new_order_notification", {
-          ...orderData,
-          timestamp: new Date().toISOString()
-        });
-
-      } catch (error) {
-        console.error("Error handling new order:", error);
-        socket.emit("error", {
-          message: "Failed to process new order",
-          error: error.message
-        });
-      }
-    });
-
-    // Handle disconnection
-    socket.on("disconnect", (reason) => {
-      console.log(`🔴 User disconnected: ${socket.id}, reason: ${reason}`);
-
-      if (socket.currentOrderRoom) {
-        socket.leave(socket.currentOrderRoom);
-        console.log(`👋 Left room: ${socket.currentOrderRoom}`);
-      }
-    });
-
-    // Error handling
-    socket.on("error", (error) => {
-      console.error("🚫 Socket error:", error);
-    });
-  });
-
-  // Handle server shutdown
-  process.on('SIGINT', () => {
-    console.log('🛑 Server shutting down...');
-    if (ioInstance) {
-      ioInstance.close();
+    if (result.rows.length === 0) {
+      console.error(`❌ Order ${orderId} not found for socket update`);
+      return;
     }
-    process.exit();
-  });
-};
 
-// ฟังก์ชันดึงสถานะปัจจุบันของออเดอร์ - อัปเดตให้ตรงกับตารางจริง
+    const { user_id, market_id, rider_id } = result.rows[0];
+
+    console.log(`📡 Broadcasting order update to all relevant parties:`, {
+      orderId,
+      user_id,
+      market_id,
+      rider_id,
+      data
+    });
+
+    // ส่งไปยัง order-specific room
+    const orderRoom = `order:${orderId}`;
+    ioInstance.to(orderRoom).emit("order:updated", data);
+    console.log(`   ↳ Sent to order room: ${orderRoom}`);
+
+    // ส่งไปยัง customer room
+    if (user_id) {
+      const customerRoom = `customer:${user_id}`;
+      ioInstance.to(customerRoom).emit("order:updated", data);
+      console.log(`   ↳ Sent to customer room: ${customerRoom}`);
+    }
+
+    // ส่งไปยัง shop room
+    if (market_id) {
+      const shopRoom = `shop:${market_id}`;
+      ioInstance.to(shopRoom).emit("order:updated", data);
+      console.log(`   ↳ Sent to shop room: ${shopRoom}`);
+    }
+
+    // ส่งไปยัง rider room (ถ้ามี rider)
+    if (rider_id) {
+      const riderRoom = `rider:${rider_id}`;
+      ioInstance.to(riderRoom).emit("order:updated", data);
+      console.log(`   ↳ Sent to rider room: ${riderRoom}`);
+    }
+
+    console.log(`✅ Order update broadcasted successfully for order ${orderId}`);
+
+  } catch (error) {
+    console.error(`❌ Error broadcasting order update for order ${orderId}:`, error);
+  }
+}
+
+function getIO() {
+  if (!ioInstance) {
+    throw new Error("Socket.io instance not initialized");
+  }
+  return ioInstance;
+}
+
+function emitNewOrderToCustomer(userId, orderData) {
+  if (!ioInstance) return;
+  const roomName = `customer:${userId}`;
+  ioInstance.to(roomName).emit("customer:newOrder", orderData);
+  console.log(`📡 Emitted new order to customer room ${roomName}:`, orderData);
+}
+
+// ฟังก์ชันส่ง notification ไปยัง shop เมื่อมีออเดอร์ใหม่
+function emitNewOrderToShop(marketId, orderData) {
+  if (!ioInstance) return;
+  const roomName = `shop:${marketId}`;
+  ioInstance.to(roomName).emit("new_order_notification", orderData);
+  console.log(`📡 Emitted new order notification to shop room ${roomName}:`, orderData);
+}
+
+// ฟังก์ชันดึงสถานะปัจจุบันของออเดอร์
 async function getCurrentOrderStatus(orderId, socket) {
   try {
     const result = await pool.query(
@@ -287,7 +134,6 @@ async function getCurrentOrderStatus(orderId, socket) {
         }
       };
 
-      // ส่งสถานะปัจจุบันให้ socket ที่ขอ
       socket.emit("order:updated", statusData);
       console.log(`📤 Sent current status to ${socket.id}:`, statusData);
     } else {
@@ -296,9 +142,124 @@ async function getCurrentOrderStatus(orderId, socket) {
   } catch (error) {
     console.error("Error getting current order status:", error);
     socket.emit("error", {
-      message: "Failed to process new order",
+      message: "Failed to get order status",
       error: error.message
     });
   }
-};
+}
 
+// ฟังก์ชัน initialize socket.io
+function initSocket(io) {
+  ioInstance = io;
+
+  io.on("connection", (socket) => {
+    console.log("🔌 A user connected:", socket.id);
+
+    // User registration
+    socket.on("register_user", (data) => {
+      const { userId, marketId, riderId, userType } = data;
+      
+      if (userId) {
+        socket.userId = userId;
+        console.log(`👤 User ${userId} registered with socket ${socket.id}`);
+      }
+      
+      if (marketId) {
+        socket.marketId = marketId;
+        console.log(`🏪 Market ${marketId} registered with socket ${socket.id}`);
+      }
+      
+      if (riderId) {
+        socket.riderId = riderId;
+        console.log(`🏍️ Rider ${riderId} registered with socket ${socket.id}`);
+      }
+
+      socket.userType = userType || 'customer';
+    });
+
+    // Generic room joining
+    socket.on("join_room", (data) => {
+      const { room } = data;
+      if (room) {
+        socket.join(room);
+        console.log(`📍 Socket ${socket.id} joined room: ${room}`);
+        
+        // Auto-join related rooms based on user type
+        if (socket.userId && !room.includes('customer:')) {
+          socket.join(`customer:${socket.userId}`);
+          console.log(`📍 Auto-joined customer room: customer:${socket.userId}`);
+        }
+        
+        if (socket.marketId && !room.includes('shop:')) {
+          socket.join(`shop:${socket.marketId}`);
+          console.log(`📍 Auto-joined shop room: shop:${socket.marketId}`);
+        }
+        
+        if (socket.riderId && !room.includes('rider:')) {
+          socket.join(`rider:${socket.riderId}`);
+          console.log(`📍 Auto-joined rider room: rider:${socket.riderId}`);
+        }
+      }
+    });
+
+    // Specific order watching
+    socket.on("customer:watchOrder", (orderId) => {
+      const roomName = `order:${orderId}`;
+      socket.join(roomName);
+      socket.currentOrderRoom = roomName;
+      console.log(`👤 Customer ${socket.id} watching order ${orderId}`);
+      getCurrentOrderStatus(orderId, socket);
+    });
+
+    socket.on("shop:watchOrder", (orderId) => {
+      const roomName = `order:${orderId}`;
+      socket.join(roomName);
+      socket.currentOrderRoom = roomName;
+      console.log(`🏪 Shop ${socket.id} watching order ${orderId}`);
+      getCurrentOrderStatus(orderId, socket);
+    });
+
+    socket.on("rider:watchOrder", (orderId) => {
+      const roomName = `order:${orderId}`;
+      socket.join(roomName);
+      socket.currentOrderRoom = roomName;
+      console.log(`🏍️ Rider ${socket.id} watching order ${orderId}`);
+      getCurrentOrderStatus(orderId, socket);
+    });
+
+    // Heartbeat for connection checking
+    socket.on("ping", () => {
+      socket.emit("pong", { timestamp: Date.now() });
+    });
+
+    // Disconnect handling
+    socket.on("disconnect", () => {
+      console.log(`🔌 User disconnected: ${socket.id}`);
+      if (socket.userId) {
+        console.log(`   ↳ Customer ${socket.userId} disconnected`);
+      }
+      if (socket.marketId) {
+        console.log(`   ↳ Shop ${socket.marketId} disconnected`);
+      }
+      if (socket.riderId) {
+        console.log(`   ↳ Rider ${socket.riderId} disconnected`);
+      }
+    });
+  });
+
+  process.on("SIGINT", () => {
+    console.log("🛑 Server shutting down...");
+    if (ioInstance) {
+      ioInstance.close();
+    }
+    process.exit();
+  });
+}
+
+module.exports = {
+  initSocket,
+  emitOrderUpdate,
+  getIO,
+  emitNewOrderToCustomer,
+  emitNewOrderToShop
+};

@@ -9,6 +9,7 @@ const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
 const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
 const SocketRoutes = require('./SocketRoutes/SocketRoutes')
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -17,7 +18,7 @@ app.use(express.json());
 app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
-app.use('/socket', SocketRoutes)
+app.use('/socket', SocketRoutes);
 
 // HTTP + Socket.IO
 const server = http.createServer(app);
@@ -30,8 +31,8 @@ const io = new Server(server, {
 app.set('io', io);
 
 // โหลด event จากไฟล์แยก
-require('./SocketRoutes/socketEvents')(io);
-
+const { initSocket } = require("./SocketRoutes/socketEvents");
+initSocket(io);   // ✅ ต้องเรียกตรงนี้
 
 // Cron job ทุก 1 นาที
 cron.schedule('*/1 * * * *', async () => {
@@ -86,7 +87,7 @@ cron.schedule('*/1 * * * *', async () => {
 
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '192.168.1.126';
+const HOST = '192.168.1.129';
 server.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });
