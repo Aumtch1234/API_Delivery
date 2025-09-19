@@ -24,11 +24,14 @@ exports.updateProfile = async (req, res) => {
       photoUrl, // อาจส่งมาเพื่อใช้ถ้าไม่อัปโหลดรูปใหม่
     } = req.body;
 
-    let imageUrl = photoUrl;
+    // จัดการรูปโปรไฟล์:
+    // - ถ้าอัปโหลดใหม่ (multer + cloudinary) => ใช้ req.file.path (URL จาก CloudinaryStorage)
+    // - ถ้าไม่อัปโหลดใหม่ แต่ส่ง photoUrl เดิมมา => ใช้ photoUrl
+    // - ถ้าไม่มีทั้งสอง => คงค่าเดิมใน DB (ภายหลังจะดึงก่อนแล้ว fallback)
+    let imageUrl = photoUrl || null;
 
-    if (req.file) {
-      // upload รูปจริงไป Cloudinary หรือเก็บ path
-      imageUrl = await uploadToCloud(req.file);
+    if (req.file?.path) {
+      imageUrl = req.file.path; // Cloudinary final URL
     }
 
     const userRes = await pool.query(
@@ -44,23 +47,29 @@ exports.updateProfile = async (req, res) => {
 
     const finalEmail = user.is_verified ? user.email : email;
 
+    // ก่อนอัปเดต ถ้า imageUrl ยังว่าง -> ดึงค่าเดิมเพื่อไม่เซ็ตเป็น null โดยไม่ได้ตั้งใจ
+    if (!imageUrl) {
+      const currentPhoto = await pool.query('SELECT photo_url FROM users WHERE user_id = $1', [userId]);
+      imageUrl = currentPhoto.rows[0]?.photo_url || null;
+    }
+
     await pool.query(
       `UPDATE users 
        SET display_name = $1, phone = $2, gender = $3, birthdate = $4, 
            email = $5, photo_url = $6 
        WHERE user_id = $7`,
       [
-        display_name,
-        phone,
-        parseInt(gender, 10), // แปลงเป็น int เพราะ DB เก็บเป็น integer
-        birthdate,
+        display_name || null,
+        phone || null,
+        gender !== undefined ? parseInt(gender, 10) : null,
+        birthdate || null,
         finalEmail,
         imageUrl,
         userId,
       ]
     );
 
-    res.json({ success: true, message: 'อัปเดตข้อมูลเรียบร้อย' });
+    res.json({ success: true, message: 'อัปเดตข้อมูลเรียบร้อย', photo_url: imageUrl });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์' });
