@@ -1,20 +1,30 @@
+// index.js  (single-file server + socket.io)
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');           // ⬅️ เพิ่ม
 const pool = require('./config/db');
 const cron = require('node-cron');
+
+// routes
 const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
 const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
+const ChatRoutes   = require('./routes/Chats/ChatsAPIsRoute');    // ⬅️ เพิ่ม
+
+// socket
+const socketInit   = require('./controllers/Chats/SocketChats');  // ⬅️ เพิ่ม
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// mount routes
 app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
-
+app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
 
 // cron job ทุก 1 นาที ตรวจสอบเวลาเปิด/ปิดร้าน
 cron.schedule('*/1 * * * *', async () => {
@@ -87,10 +97,22 @@ cron.schedule('*/1 * * * *', async () => {
   }
 });
 
+// ====== start HTTP + Socket.IO ======
 const PORT = process.env.PORT || 4000;
 const HOST = '0.0.0.0';
-app.listen(PORT, HOST, () => {
+
+const server = http.createServer(app);   // ⬅️ ใช้ server แทน app.listen
+socketInit(server);                      // ⬅️ ผูก Socket.IO แค่ครั้งเดียวที่นี่
+
+server.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
   console.log('Email user:', process.env.EMAIL_FROM);
   console.log('Email pass length:', process.env.EMAIL_PASS?.length);
 });
+
+// ====== start HTTP server แบบเดิม (ไม่ใช้ socket.io) ======
+// app.listen(PORT, HOST, () => {
+//   console.log(`Server running on http://${HOST}:${PORT}`);
+//   console.log('Email user:', process.env.EMAIL_FROM);
+//   console.log('Email pass length:', process.env.EMAIL_PASS?.length);
+// });
