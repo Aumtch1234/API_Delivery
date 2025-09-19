@@ -13,6 +13,7 @@ const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
 const SocketRoutes = require('./SocketRoutes/SocketRoutes')
 const ChatRoutes   = require('./routes/Chats/ChatsAPIsRoute');    // ⬅️ เพิ่ม
+const DashboardSaleRoutes = require('./routes/Analytics_Dashboard/Market/DashboardAPIsRoute'); // ⬅️ เพิ่ม
 
 // socket
 // Socket handlers (ใช้ io เดียวกัน)
@@ -31,6 +32,7 @@ app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
 app.use('/socket', SocketRoutes);
 app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
+app.use('/dashboard/sales', DashboardSaleRoutes); 
 
 // HTTP + Socket.IO
 const server = http.createServer(app);  // ⬅️ ใช้ server แทน app.listen
