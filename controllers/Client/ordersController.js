@@ -2,7 +2,7 @@ const pool = require('../../config/db');
 const { getIO } = require("../../SocketRoutes/socketEvents"); // ✅ import ฟังก์ชันดึง io instance
 
 exports.PostOrders = async (req, res) => {
-  const { basket, address, deliveryType, paymentMethod, note, distances, deliveryFees, totalPrices } = req.body;
+  const { basket, address_id, address, deliveryType, paymentMethod, note, distances, deliveryFees, totalPrices } = req.body;
   const user_id = req.user.user_id;
 
   const client = await pool.connect();
@@ -28,8 +28,8 @@ exports.PostOrders = async (req, res) => {
       // ✅ Insert order
       const orderInsert = await client.query(
         `INSERT INTO orders 
-          (user_id, market_id, address, delivery_type, payment_method, note, distance_km, delivery_fee, total_price, status, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())
+          (user_id, market_id, address, delivery_type, payment_method, note, distance_km, delivery_fee, total_price, status, created_at, updated_at, address_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW(),$11)
          RETURNING *`,
         [
           user_id,
@@ -41,7 +41,8 @@ exports.PostOrders = async (req, res) => {
           parseFloat(distance),
           parseFloat(deliveryFee),
           parseFloat(totalPrice),
-          'waiting'
+          'waiting',
+          address_id
         ]
       );
 
