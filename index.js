@@ -109,7 +109,7 @@ cron.schedule('*/1 * * * *', async () => {
 // ====== start HTTP + Socket.IO ======
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '192.168.1.128';
+const HOST = '0.0.0.0';
 // const HOST = '192.168.1.129';
 
 // (ลบการเรียกซ้ำ socketInit(server); เดิม เพราะตอนนี้ attachChatHandlers(io) ถูกเรียกแล้วด้านบน)
