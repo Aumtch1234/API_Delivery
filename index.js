@@ -33,7 +33,7 @@ app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
 app.use('/socket', SocketRoutes);
-app.use('/riders/socket', RiderSocketRoutes);
+app.use('/', RiderSocketRoutes);
 app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);

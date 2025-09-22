@@ -3,24 +3,6 @@ const express = require('express');
 const router = express.Router();
 const RiderSocketController = require('../controllers/SOCKETIO/RidaerControllerSK');
 
-// Helper function to log all requests
-const logRequest = (req, res, next) => {
-    const timestamp = new Date().toISOString();
-    console.log(`\n🚀 [${timestamp}] ${req.method} ${req.originalUrl}`);
-    console.log(`📍 IP: ${req.ip}`);
-    if (Object.keys(req.query).length > 0) {
-        console.log(`🔍 Query:`, req.query);
-    }
-    if (req.body && Object.keys(req.body).length > 0) {
-        console.log(`📦 Body:`, req.body);
-    }
-    console.log('─'.repeat(50));
-    next();
-};
-
-// Apply logging middleware to all routes
-router.use(logRequest);
-
 // GET /riders/orders - Get orders for riders (with optional rider filtering)
 router.get('/orders', RiderSocketController.getOrdersWithItems);
 

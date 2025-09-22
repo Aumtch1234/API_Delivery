@@ -16,24 +16,6 @@ const logAPICall = (endpoint, method, ip, body = null, query = null) => {
     console.log('─'.repeat(50));
 };
 
-// Calculate distance-based delivery fee
-const calculateDeliveryFee = (distanceKm) => {
-    if (!distanceKm || distanceKm < 0) return 10; // Default fee
-    
-    if (distanceKm <= 2) {
-        return 10; // 0-2 km = 10 baht
-    } else if (distanceKm <= 10) {
-        return 15; // 2-10 km = 15 baht  
-    } else {
-        return 20; // 10+ km = 20 baht
-    }
-};
-
-// Calculate rider earning (80% of delivery fee)
-const calculateRiderEarning = (deliveryFee) => {
-    return Math.round(deliveryFee * 0.8 * 100) / 100;
-};
-
 // API: ไรเดอร์รับงาน
 exports.assignRider = async (req, res) => {
     const { order_id, rider_id } = req.body;
@@ -157,13 +139,13 @@ exports.updateOrderStatus = async (req, res) => {
     // Valid status transitions
     const validStatuses = [
         'waiting',
-        'confirmed', 
+        'confirmed',
         'accepted',
         'rider_assigned',
         'going_to_shop',
         'arrived_at_shop',
         'picked_up',
-        'delivering', 
+        'delivering',
         'arrived_at_customer',
         'completed',
         'cancelled'
@@ -179,7 +161,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     try {
         console.log(`🔄 Updating order ${order_id} status to ${status}`);
-        
+
         // Get current order data
         const currentResult = await pool.query(
             "SELECT * FROM orders WHERE order_id = $1",
@@ -194,7 +176,7 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const currentOrder = currentResult.rows[0];
-        
+
         // Update order status
         const updateResult = await pool.query(
             `UPDATE orders 
@@ -209,7 +191,7 @@ exports.updateOrderStatus = async (req, res) => {
         let riderEarning = null;
         if (status === 'completed' && currentOrder.delivery_fee) {
             riderEarning = calculateRiderEarning(currentOrder.delivery_fee);
-            
+
             // Update rider's balance
             if (currentOrder.rider_id) {
                 await pool.query(
@@ -263,48 +245,6 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// ฟังก์ชันสำหรับคำนวณระยะทางและเวลาผ่าน Google Maps API
-async function calculateDistanceMatrix(origins, destinations) {
-    try {
-        const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-        
-        if (!GOOGLE_MAPS_API_KEY) {
-            console.warn('⚠️ GOOGLE_MAPS_API_KEY not found in .env, falling back to Haversine calculation');
-            return null;
-        }
-
-        const originsStr = origins.map(o => `${o.lat},${o.lng}`).join('|');
-        const destinationsStr = destinations.map(d => `${d.lat},${d.lng}`).join('|');
-        
-        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsStr}&destinations=${destinationsStr}&units=metric&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
-        
-        console.log('🗺️ Calling Google Maps Distance Matrix API');
-        const response = await axios.get(url, { timeout: 5000 });
-        
-        if (response.data.status === 'OK') {
-            return response.data;
-        } else {
-            console.warn('⚠️ Google Maps API error:', response.data.status);
-            return null;
-        }
-    } catch (error) {
-        console.warn('⚠️ Google Maps API call failed:', error.message);
-        return null;
-    }
-}
-
-// ฟังก์ชันสำรองสำหรับคำนวณระยะทางแบบ Haversine
-function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // รัศมีของโลกในหน่วยกิโลเมตร
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round((R * c) * 100) / 100; // ปัดเศษ 2 ตำแหน่ง
-}
-
 exports.getOrdersWithItems = async (req, res) => {
     const {
         user_id,
@@ -312,9 +252,7 @@ exports.getOrdersWithItems = async (req, res) => {
         rider_id,
         status,
         limit = 1000,
-        offset = 0,
-        rider_latitude,  // ตำแหน่งปัจจุบันของไรเดอร์
-        rider_longitude  // ตำแหน่งปัจจุบันของไรเดอร์
+        offset = 0
     } = req.query;
 
     logAPICall('/orders', 'GET', req.ip, null, req.query);
@@ -326,12 +264,10 @@ exports.getOrdersWithItems = async (req, res) => {
             rider_id,
             status,
             limit,
-            offset,
-            rider_position: rider_latitude && rider_longitude ? 
-                `${rider_latitude}, ${rider_longitude}` : 'not provided'
+            offset
         });
 
-        // Query หลักโดยไม่คำนวณระยะทางใน SQL
+        // Query หลัก
         let query = `
             SELECT
                 o.order_id,
@@ -403,26 +339,22 @@ exports.getOrdersWithItems = async (req, res) => {
         if (user_id) {
             conditions.push(`o.user_id = $${valueIndex++}`);
             values.push(user_id);
-            console.log(`🔍 Filtering by user_id: ${user_id}`);
         }
 
         if (market_id) {
             conditions.push(`o.market_id = $${valueIndex++}`);
             values.push(market_id);
-            console.log(`🔍 Filtering by market_id: ${market_id}`);
         }
 
         if (rider_id) {
-            // Show orders for this rider OR available orders
+            // แสดงออเดอร์ของ rider หรือออเดอร์ที่ยังไม่มีใครรับ
             conditions.push(`(o.rider_id = $${valueIndex++} OR (o.status IN ('confirmed', 'accepted', 'preparing', 'ready_for_pickup') AND o.rider_id IS NULL))`);
             values.push(rider_id);
-            console.log(`🔍 Filtering by rider_id: ${rider_id}`);
         }
 
         if (status) {
             conditions.push(`o.status = $${valueIndex++}`);
             values.push(status);
-            console.log(`🔍 Filtering by status: ${status}`);
         }
 
         if (conditions.length > 0) {
@@ -448,207 +380,12 @@ exports.getOrdersWithItems = async (req, res) => {
         const result = await pool.query(query, values);
         console.log(`✅ Found ${result.rows.length} orders`);
 
-        // คำนวณระยะทางด้วย Google Maps API (ถ้ามีตำแหน่งไรเดอร์)
-        let enhancedData = result.rows.map(order => {
-            // Calculate delivery fee based on existing distance or set default
-            let calculatedDeliveryFee = order.delivery_fee;
-            let riderEarning = null;
-            
-            if (order.distance_km) {
-                calculatedDeliveryFee = calculateDeliveryFee(parseFloat(order.distance_km));
-                riderEarning = calculateRiderEarning(calculatedDeliveryFee);
-            }
-
-            return {
-                ...order,
-                delivery_fee: calculatedDeliveryFee,
-                rider_earning: riderEarning
-            };
-        });
-        
-        if (rider_latitude && rider_longitude && result.rows.length > 0) {
-            console.log('🗺️ Calculating distances with Google Maps API');
-            
-            // เตรียมข้อมูลสำหรับ Google Maps API
-            const riderPos = { 
-                lat: parseFloat(rider_latitude), 
-                lng: parseFloat(rider_longitude) 
-            };
-            
-            // รวบรวม unique locations
-            const marketLocations = new Map();
-            const customerLocations = new Map();
-            
-            result.rows.forEach(order => {
-                if (order.market_location?.latitude && order.market_location?.longitude) {
-                    const key = `${order.market_location.latitude},${order.market_location.longitude}`;
-                    marketLocations.set(key, {
-                        lat: parseFloat(order.market_location.latitude),
-                        lng: parseFloat(order.market_location.longitude),
-                        market_id: order.market_location.market_id
-                    });
-                }
-                
-                if (order.customer_location?.latitude && order.customer_location?.longitude) {
-                    const key = `${order.customer_location.latitude},${order.customer_location.longitude}`;
-                    customerLocations.set(key, {
-                        lat: parseFloat(order.customer_location.latitude),
-                        lng: parseFloat(order.customer_location.longitude),
-                        address_id: order.customer_location.address_id
-                    });
-                }
-            });
-
-            const allDestinations = [...marketLocations.values(), ...customerLocations.values()];
-            
-            // เรียก Google Maps API
-            let distanceData = null;
-            if (allDestinations.length > 0) {
-                distanceData = await calculateDistanceMatrix([riderPos], allDestinations);
-            }
-
-            // ประมวลผลข้อมูลระยะทาง
-            enhancedData = result.rows.map((order, index) => {
-                let distance_to_market_km = null;
-                let distance_to_customer_km = null;
-                let duration_to_market_minutes = null;
-                let duration_to_customer_minutes = null;
-                let market_to_customer_km = null;
-                let market_to_customer_minutes = null;
-
-                if (distanceData && distanceData.status === 'OK') {
-                    const elements = distanceData.rows[0].elements;
-                    
-                    // หาตำแหน่งใน destinations array
-                    const marketKey = order.market_location ? 
-                        `${order.market_location.latitude},${order.market_location.longitude}` : null;
-                    const customerKey = order.customer_location ? 
-                        `${order.customer_location.latitude},${order.customer_location.longitude}` : null;
-                    
-                    if (marketKey) {
-                        const marketIndex = [...marketLocations.keys()].indexOf(marketKey);
-                        if (marketIndex >= 0 && elements[marketIndex]?.status === 'OK') {
-                            distance_to_market_km = Math.round((elements[marketIndex].distance.value / 1000) * 100) / 100;
-                            duration_to_market_minutes = Math.round(elements[marketIndex].duration.value / 60);
-                        }
-                    }
-                    
-                    if (customerKey) {
-                        const customerIndex = [...marketLocations.keys()].length + [...customerLocations.keys()].indexOf(customerKey);
-                        if (customerIndex >= 0 && elements[customerIndex]?.status === 'OK') {
-                            distance_to_customer_km = Math.round((elements[customerIndex].distance.value / 1000) * 100) / 100;
-                            duration_to_customer_minutes = Math.round(elements[customerIndex].duration.value / 60);
-                        }
-                    }
-
-                    // คำนวณระยะทางจากร้านไปลูกค้า
-                    if (order.market_location?.latitude && order.customer_location?.latitude) {
-                        market_to_customer_km = calculateHaversineDistance(
-                            parseFloat(order.market_location.latitude),
-                            parseFloat(order.market_location.longitude),
-                            parseFloat(order.customer_location.latitude),
-                            parseFloat(order.customer_location.longitude)
-                        );
-                        market_to_customer_minutes = Math.round(market_to_customer_km * 2.5); // ประมาณ 2.5 นาที/กม.
-                    }
-                } else {
-                    // ใช้การคำนวณ Haversine เป็นทางเลือก
-                    if (order.market_location?.latitude && order.market_location?.longitude) {
-                        distance_to_market_km = calculateHaversineDistance(
-                            parseFloat(rider_latitude),
-                            parseFloat(rider_longitude),
-                            parseFloat(order.market_location.latitude),
-                            parseFloat(order.market_location.longitude)
-                        );
-                        duration_to_market_minutes = Math.round(distance_to_market_km * 3); // ประมาณ 3 นาที/กม.
-                    }
-                    
-                    if (order.customer_location?.latitude && order.customer_location?.longitude) {
-                        distance_to_customer_km = calculateHaversineDistance(
-                            parseFloat(rider_latitude),
-                            parseFloat(rider_longitude),
-                            parseFloat(order.customer_location.latitude),
-                            parseFloat(order.customer_location.longitude)
-                        );
-                        duration_to_customer_minutes = Math.round(distance_to_customer_km * 3);
-                    }
-
-                    if (order.market_location?.latitude && order.customer_location?.latitude) {
-                        market_to_customer_km = calculateHaversineDistance(
-                            parseFloat(order.market_location.latitude),
-                            parseFloat(order.market_location.longitude),
-                            parseFloat(order.customer_location.latitude),
-                            parseFloat(order.customer_location.longitude)
-                        );
-                        market_to_customer_minutes = Math.round(market_to_customer_km * 3);
-                    }
-                }
-
-                // Calculate fees based on distance to market
-                let calculatedDeliveryFee = order.delivery_fee;
-                let riderEarning = null;
-                
-                if (distance_to_market_km) {
-                    calculatedDeliveryFee = calculateDeliveryFee(distance_to_market_km);
-                    riderEarning = calculateRiderEarning(calculatedDeliveryFee);
-                } else if (order.distance_km) {
-                    calculatedDeliveryFee = calculateDeliveryFee(parseFloat(order.distance_km));
-                    riderEarning = calculateRiderEarning(calculatedDeliveryFee);
-                }
-
-                return {
-                    ...order,
-                    delivery_fee: calculatedDeliveryFee,
-                    rider_earning: riderEarning,
-                    // เพิ่มตำแหน่งไรเดอร์ปัจจุบัน
-                    rider_current_location: {
-                        latitude: parseFloat(rider_latitude),
-                        longitude: parseFloat(rider_longitude),
-                        timestamp: new Date().toISOString()
-                    },
-                    // ข้อมูลระยะทางและเวลา
-                    distance_info: {
-                        rider_to_market_km: distance_to_market_km,
-                        rider_to_customer_km: distance_to_customer_km,
-                        market_to_customer_km: market_to_customer_km,
-                        duration_to_market_minutes: duration_to_market_minutes,
-                        duration_to_customer_minutes: duration_to_customer_minutes,
-                        market_to_customer_minutes: market_to_customer_minutes,
-                        calculation_method: distanceData ? 'google_maps' : 'haversine',
-                        total_delivery_time_minutes: duration_to_market_minutes && market_to_customer_minutes ? 
-                            duration_to_market_minutes + market_to_customer_minutes : null
-                    },
-                    // สรุปข้อมูลสำหรับไรเดอร์
-                    delivery_summary: {
-                        total_distance_km: distance_to_market_km && market_to_customer_km ? 
-                            Math.round((distance_to_market_km + market_to_customer_km) * 100) / 100 : null,
-                        estimated_total_time_minutes: duration_to_market_minutes && market_to_customer_minutes ? 
-                            duration_to_market_minutes + market_to_customer_minutes : null,
-                        is_available_for_pickup: order.rider_id === null && 
-                            ['confirmed', 'accepted', 'preparing', 'ready_for_pickup'].includes(order.status),
-                        is_assigned_to_rider: order.rider_id !== null,
-                        priority_score: distance_to_market_km ? Math.round(100 / distance_to_market_km) : 0,
-                        delivery_fee: calculatedDeliveryFee,
-                        rider_earning: riderEarning
-                    }
-                };
-            });
-
-            // เรียงลำดับใหม่ตามระยะทาง
-            enhancedData.sort((a, b) => {
-                // ออเดอร์ใหม่ขึ้นก่อน
-                if (a.delivery_summary.is_available_for_pickup !== b.delivery_summary.is_available_for_pickup) {
-                    return b.delivery_summary.is_available_for_pickup - a.delivery_summary.is_available_for_pickup;
-                }
-                // แล้วเรียงตามระยะทาง
-                if (a.distance_info.rider_to_market_km && b.distance_info.rider_to_market_km) {
-                    return a.distance_info.rider_to_market_km - b.distance_info.rider_to_market_km;
-                }
-                return 0;
-            });
-
-            console.log(`✅ Enhanced ${enhancedData.length} orders with distance calculations`);
-        }
+        // ใช้ delivery_fee ที่เก็บจาก DB โดยตรง
+        const enhancedData = result.rows.map(order => ({
+            ...order,
+            delivery_fee: order.delivery_fee,
+            rider_earning: null
+        }));
 
         const responseData = {
             success: true,
@@ -657,29 +394,9 @@ exports.getOrdersWithItems = async (req, res) => {
                 limit: parseInt(limit),
                 offset: parseInt(offset),
                 total: result.rows.length
-            },
-            fee_structure: {
-                "0-2km": "฿10",
-                "2-10km": "฿15", 
-                "10+km": "฿20",
-                rider_percentage: "80%"
-            },
-            rider_info: rider_latitude && rider_longitude ? {
-                current_position: {
-                    latitude: parseFloat(rider_latitude),
-                    longitude: parseFloat(rider_longitude),
-                    timestamp: new Date().toISOString()
-                },
-                location_provided: true,
-                google_maps_enabled: !!process.env.GOOGLE_MAPS_API_KEY
-            } : {
-                location_provided: false,
-                note: "ส่งพารามิเตอร์ rider_latitude และ rider_longitude เพื่อคำนวณระยะทางและเวลา",
-                google_maps_enabled: !!process.env.GOOGLE_MAPS_API_KEY
             }
         };
 
-        console.log(`📤 Sending response with ${enhancedData.length} orders`);
         res.json(responseData);
 
     } catch (err) {
@@ -715,7 +432,6 @@ exports.getOrderById = async (orderId) => {
                 o.created_at,
                 o.updated_at,
                 
-                -- ข้อมูลตำแหน่งร้านค้า
                 jsonb_build_object(
                     'market_id', m.market_id,
                     'shop_name', m.shop_name,
@@ -725,7 +441,6 @@ exports.getOrderById = async (orderId) => {
                     'phone', m.phone
                 ) as market_location,
                 
-                -- ข้อมูลตำแหน่งลูกค้า
                 jsonb_build_object(
                     'address_id', ca.id,
                     'name', ca.name,
@@ -740,7 +455,6 @@ exports.getOrderById = async (orderId) => {
                     'location_text', ca.location_text
                 ) as customer_location,
                 
-                -- ข้อมูลไรเดอร์
                 CASE 
                     WHEN o.rider_id IS NOT NULL THEN
                         jsonb_build_object(
@@ -786,7 +500,7 @@ exports.getOrderById = async (orderId) => {
         `;
 
         const result = await pool.query(query, [orderId]);
-        
+
         if (result.rows.length === 0) {
             return {
                 success: false,
@@ -795,22 +509,13 @@ exports.getOrderById = async (orderId) => {
         }
 
         const order = result.rows[0];
-        
-        // Calculate delivery fee if distance exists
-        let calculatedDeliveryFee = order.delivery_fee;
-        let riderEarning = null;
-        
-        if (order.distance_km) {
-            calculatedDeliveryFee = calculateDeliveryFee(parseFloat(order.distance_km));
-            riderEarning = calculateRiderEarning(calculatedDeliveryFee);
-        }
 
         return {
             success: true,
             data: {
                 ...order,
-                delivery_fee: calculatedDeliveryFee,
-                rider_earning: riderEarning
+                delivery_fee: order.delivery_fee,
+                rider_earning: null
             }
         };
     } catch (error) {
@@ -820,51 +525,5 @@ exports.getOrderById = async (orderId) => {
             error: "Database error",
             message: error.message
         };
-    }
-};
-
-// API: อัพเดทตำแหน่งไรเดอร์
-exports.updateRiderLocation = async (req, res) => {
-    const { rider_id, latitude, longitude } = req.body;
-    logAPICall('/update_rider_location', 'POST', req.ip, req.body);
-
-    if (!rider_id || !latitude || !longitude) {
-        return res.status(400).json({
-            success: false,
-            error: "rider_id, latitude, and longitude are required"
-        });
-    }
-
-    try {
-        // Store rider location in a separate table or cache
-        // For now, we'll just emit socket event
-        const locationData = {
-            rider_id: parseInt(rider_id),
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
-            timestamp: new Date().toISOString()
-        };
-
-        console.log(`📍 Updating rider ${rider_id} location:`, locationData);
-        
-        // Emit location update to all relevant rooms
-        emitOrderUpdate(`rider:${rider_id}`, {
-            type: 'location_update',
-            ...locationData
-        });
-
-        res.json({
-            success: true,
-            message: "Rider location updated successfully",
-            data: locationData
-        });
-
-    } catch (err) {
-        console.error("❌ updateRiderLocation error:", err);
-        res.status(500).json({
-            success: false,
-            error: "Failed to update rider location",
-            message: err.message
-        });
     }
 };
