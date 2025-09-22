@@ -3,51 +3,62 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 // เข้าสู่ระบบสำหรับไรเดอร์
 exports.loginRider = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log('\n📥 Rider Login attempt:', { email, time: new Date().toISOString() });
 
         // ตรวจสอบข้อมูลที่จำเป็น
         if (!email || !password) {
-            return res.status(400).json({ 
-                error: 'กรุณากรอกอีเมลและรหัสผ่าน' 
+            console.warn('⚠️ Missing email or password in request');
+            return res.status(400).json({
+                error: 'กรุณากรอกอีเมลและรหัสผ่าน'
             });
         }
 
         // ค้นหาผู้ใช้ในฐานข้อมูล
+        console.log('🔍 Checking rider user in DB...');
         const userResult = await pool.query(
             'SELECT user_id, email, password, display_name, role, is_verified FROM users WHERE email = $1 AND role = $2',
             [email, 'rider']
         );
 
+        console.log('📊 Query result (users):', userResult.rows.length, 'rows');
+
         if (userResult.rows.length === 0) {
-            return res.status(401).json({ 
-                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' 
+            console.warn('❌ No rider account found for email:', email);
+            return res.status(401).json({
+                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
             });
         }
 
         const user = userResult.rows[0];
 
         // ตรวจสอบรหัสผ่าน
+        console.log('🔑 Checking rider password...');
         const isPasswordValid = await bcrypt.compare(password, user.password);
+
         if (!isPasswordValid) {
-            return res.status(401).json({ 
-                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' 
+            console.warn('❌ Invalid password for:', email);
+            return res.status(401).json({
+                error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
             });
         }
+        console.log('🔓 Password verified successfully');
 
         // ตรวจสอบสถานะการยืนยันตัวตน
+        console.log('📂 Checking rider profile...');
         const riderProfileResult = await pool.query(
-            'SELECT approval_status, created_at as submitted_at FROM rider_profiles WHERE user_id = $1',
+            'SELECT rider_id, approval_status, created_at as submitted_at FROM rider_profiles WHERE user_id = $1',
             [user.user_id]
         );
 
         let riderStatus = {
             has_submitted: false,
             approval_status: null,
-            submitted_at: null
+            submitted_at: null,
+            rider_id: null
         };
 
         if (riderProfileResult.rows.length > 0) {
@@ -55,13 +66,20 @@ exports.loginRider = async (req, res) => {
             riderStatus = {
                 has_submitted: true,
                 approval_status: profile.approval_status,
-                submitted_at: profile.submitted_at
+                submitted_at: profile.submitted_at,
+                rider_id: profile.rider_id
+
             };
+            console.log('📋 Rider profile found:', riderStatus);
+        } else {
+            console.log('ℹ️ Rider has not submitted profile yet');
         }
 
         // สร้าง JWT token
+        console.log('🔐 Creating JWT token...');
         const token = jwt.sign(
-            { 
+            {
+                rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,
                 role: user.role
@@ -70,11 +88,14 @@ exports.loginRider = async (req, res) => {
             { expiresIn: '7d' } // token หมดอายุใน 7 วัน
         );
 
+        console.log('🎟️ Token created successfully (length):', token.length);
+
         // ส่งผลลัพธ์
         res.json({
             message: 'เข้าสู่ระบบสำเร็จ',
             token: token,
             user: {
+                rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,
                 display_name: user.display_name,
@@ -85,25 +106,26 @@ exports.loginRider = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Rider login error:', error);
-        res.status(500).json({ 
-            error: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' 
+        console.error('❗ Rider login error:', error);
+        res.status(500).json({
+            error: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
         });
     }
 };
+
 
 // Login โดย Google
 exports.loginRiderWithGoogle = async (req, res) => {
     const { tokenId } = req.body;
     console.log('📥 Google login attempt with tokenId:', tokenId.substring(0, 20) + '...'); // แสดงบางส่วน
-    
+
     try {
         // ตรวจสอบ token กับ Google
         const ticket = await client.verifyIdToken({
             idToken: tokenId,
             audience: process.env.GOOGLE_CLIENT_ID
         });
-        
+
         // ตรวจสอบความถูกต้องของ token
         const payload = ticket.getPayload();
         console.log('✅ Google payload:', payload);
@@ -116,7 +138,7 @@ exports.loginRiderWithGoogle = async (req, res) => {
         );
 
         let user;
-        
+
         if (userRiderResult.rows.length === 0) {
             // ไม่พบผู้ใช้ - สร้างใหม่
             console.log('🆕 สร้างไรเดอร์ใหม่จาก Google:', email);
@@ -130,7 +152,7 @@ exports.loginRiderWithGoogle = async (req, res) => {
         } else {
             // พบผู้ใช้แล้ว - อัปเดต google_id ถ้าจำเป็น
             user = userRiderResult.rows[0];
-            
+
             if (!user.google_id) {
                 await pool.query(
                     'UPDATE users SET google_id = $1, photo_url = $2, providers = $3 WHERE user_id = $4',
@@ -148,7 +170,8 @@ exports.loginRiderWithGoogle = async (req, res) => {
         let riderStatus = {
             has_submitted: false,
             approval_status: null,
-            submitted_at: null
+            submitted_at: null,
+            rider_id: null
         };
 
         if (riderProfileResult.rows.length > 0) {
@@ -156,13 +179,16 @@ exports.loginRiderWithGoogle = async (req, res) => {
             riderStatus = {
                 has_submitted: true,
                 approval_status: profile.approval_status,
-                submitted_at: profile.submitted_at
+                submitted_at: profile.submitted_at,
+                rider_id: profile.rider_id
+
             };
         }
 
         // สร้าง JWT token
         const token = jwt.sign(
-            { 
+            {
+                rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,
                 role: user.role
@@ -178,6 +204,7 @@ exports.loginRiderWithGoogle = async (req, res) => {
             message: 'เข้าสู่ระบบด้วย Google สำเร็จ',
             token: token,
             user: {
+                rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,
                 display_name: user.display_name,
@@ -190,12 +217,12 @@ exports.loginRiderWithGoogle = async (req, res) => {
     } catch (error) {
         console.error('❌ Rider Google login error:', error);
         if (error.message.includes('audience')) {
-            return res.status(401).json({ 
-                error: 'Google token ไม่ถูกต้อง - audience mismatch' 
+            return res.status(401).json({
+                error: 'Google token ไม่ถูกต้อง - audience mismatch'
             });
         }
-        res.status(401).json({ 
-            error: 'Google token ไม่ถูกต้องหรือหมดอายุ email ถูกใช้งานแล้ว' 
+        res.status(401).json({
+            error: 'Google token ไม่ถูกต้องหรือหมดอายุ email ถูกใช้งานแล้ว'
         });
     }
 };
@@ -206,8 +233,8 @@ exports.refreshToken = async (req, res) => {
         const { refresh_token } = req.body;
 
         if (!refresh_token) {
-            return res.status(400).json({ 
-                error: 'กรุณาส่ง refresh token' 
+            return res.status(400).json({
+                error: 'กรุณาส่ง refresh token'
             });
         }
 
@@ -221,8 +248,8 @@ exports.refreshToken = async (req, res) => {
         );
 
         if (userResult.rows.length === 0) {
-            return res.status(401).json({ 
-                error: 'ไม่พบข้อมูลผู้ใช้' 
+            return res.status(401).json({
+                error: 'ไม่พบข้อมูลผู้ใช้'
             });
         }
 
@@ -230,7 +257,7 @@ exports.refreshToken = async (req, res) => {
 
         // สร้าง access token ใหม่
         const newToken = jwt.sign(
-            { 
+            {
                 user_id: user.user_id,
                 email: user.email,
                 role: user.role
@@ -246,14 +273,14 @@ exports.refreshToken = async (req, res) => {
 
     } catch (error) {
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-            return res.status(401).json({ 
-                error: 'Refresh token ไม่ถูกต้องหรือหมดอายุ' 
+            return res.status(401).json({
+                error: 'Refresh token ไม่ถูกต้องหรือหมดอายุ'
             });
         }
 
         console.error('Refresh token error:', error);
-        res.status(500).json({ 
-            error: 'เกิดข้อผิดพลาดในการรีเฟรช token' 
+        res.status(500).json({
+            error: 'เกิดข้อผิดพลาดในการรีเฟรช token'
         });
     }
 };
@@ -298,8 +325,8 @@ exports.getProfile = async (req, res) => {
         `, [userId]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                error: 'ไม่พบข้อมูลผู้ใช้' 
+            return res.status(404).json({
+                error: 'ไม่พบข้อมูลผู้ใช้'
             });
         }
 
@@ -344,8 +371,8 @@ exports.getProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Get rider profile error:', error);
-        res.status(500).json({ 
-            error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' 
+        res.status(500).json({
+            error: 'เกิดข้อผิดพลาดในการดึงข้อมูล'
         });
     }
 };

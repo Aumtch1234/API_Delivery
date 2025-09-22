@@ -11,7 +11,8 @@ const pool = require('./config/db');
 const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
 const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
-const SocketRoutes = require('./SocketRoutes/SocketRoutes')
+const SocketRoutes = require('./SocketRoutes/SocketRoutes');
+const RiderSocketRoutes = require('./SocketRoutes/RiderSocketRoutes');
 const ChatRoutes   = require('./routes/Chats/ChatsAPIsRoute');    // ⬅️ เพิ่ม
 const DashboardSaleRoutes = require('./routes/Analytics_Dashboard/Market/DashboardAPIsRoute'); // ⬅️ เพิ่ม
 const ReviewsRoutes = require('./routes/Reviews/ReviewsAPIsRoute'); // ⬅️ เพิ่ม
@@ -32,6 +33,7 @@ app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
 app.use('/socket', SocketRoutes);
+app.use('/riders/socket', RiderSocketRoutes);
 app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);
@@ -107,7 +109,7 @@ cron.schedule('*/1 * * * *', async () => {
 // ====== start HTTP + Socket.IO ======
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '0.0.0.0';
+const HOST = '192.168.1.128';
 // const HOST = '192.168.1.129';
 
 // (ลบการเรียกซ้ำ socketInit(server); เดิม เพราะตอนนี้ attachChatHandlers(io) ถูกเรียกแล้วด้านบน)
