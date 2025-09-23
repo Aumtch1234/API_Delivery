@@ -16,7 +16,6 @@ const logAPICall = (endpoint, method, ip, body = null, query = null) => {
     console.log('─'.repeat(50));
 };
 
-
 // API: ไรเดอร์รับงาน
 exports.assignRider = async (req, res) => {
     const { order_id, rider_id } = req.body;
