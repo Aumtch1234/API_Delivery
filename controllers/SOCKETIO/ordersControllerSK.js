@@ -61,7 +61,7 @@ exports.getOrderStatus = async (req, res) => {
                 user_id: order.user_id,
                 market_id: order.market_id,
                 status: order.status,
-                hasShop: order.status !== "waiting",
+                hasShop: !['waiting'].includes(order.status), // มี shop เมื่อไม่ใช่ waiting
                 hasRider: order.rider_id !== null,
                 rider_id: order.rider_id,
                 address: order.address,
@@ -133,10 +133,10 @@ exports.acceptOrder = async (req, res) => {
             });
         }
 
-        // Update order status
+        // Update order status to 'confirmed' (new status for shop acceptance)
         const updateResult = await pool.query(
             `UPDATE orders 
-             SET status = 'accepted', 
+             SET status = 'confirmed', 
                  updated_at = NOW()
              WHERE order_id = $1 AND market_id = $2
              RETURNING *`,
@@ -150,22 +150,22 @@ exports.acceptOrder = async (req, res) => {
             });
         }
 
-        console.log(`✅ Market ${market_id} accepted order ${order_id}`);
+        console.log(`✅ Market ${market_id} confirmed order ${order_id}`);
 
         // สร้างข้อมูลสำหรับ socket event พร้อมข้อมูลครบถ้วน
         const updateData = {
             order_id: parseInt(order_id),
             user_id: currentOrder.user_id,
             market_id: parseInt(market_id),
-            status: "accepted",
+            status: "confirmed",
             hasShop: true,
             hasRider: false,
             rider_id: null,
             timestamp: new Date().toISOString(),
-            action: 'order_accepted' // เพิ่ม action type
+            action: 'order_confirmed' // เปลี่ยนจาก accepted เป็น confirmed
         };
 
-        console.log(`📡 Broadcasting order acceptance to all parties:`, updateData);
+        console.log(`📡 Broadcasting order confirmation to all parties:`, updateData);
         
         // Emit socket event ไปทุก room ที่เกี่ยวข้อง
         emitOrderUpdate(order_id, updateData);
@@ -183,13 +183,13 @@ exports.acceptOrder = async (req, res) => {
 
         const responseData = {
             success: true,
-            message: "Order accepted successfully",
+            message: "Order confirmed successfully",
             data: {
                 order_id: parseInt(order_id),
-                status: "accepted",
+                status: "confirmed",
                 market_id: parseInt(market_id),
                 user_id: currentOrder.user_id,
-                accepted_at: updateResult.rows[0].updated_at,
+                confirmed_at: updateResult.rows[0].updated_at,
                 ...updateData
             }
         };
@@ -237,10 +237,10 @@ exports.assignRider = async (req, res) => {
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
 
         if (currentOrder.status === 'waiting') {
-            console.log(`❌ Order ${order_id} not yet accepted by shop`);
+            console.log(`❌ Order ${order_id} not yet confirmed by shop`);
             return res.status(400).json({
                 success: false,
-                error: "Order not yet accepted by shop",
+                error: "Order not yet confirmed by shop",
                 current_status: currentOrder.status
             });
         }
@@ -257,7 +257,7 @@ exports.assignRider = async (req, res) => {
         console.log(`🔄 Assigning rider ${rider_id} to order ${order_id}...`);
         const updateResult = await pool.query(
             `UPDATE orders 
-             SET status = 'delivering', 
+             SET status = 'rider_assigned', 
                  rider_id = $2, 
                  updated_at = NOW()
              WHERE order_id = $1
@@ -273,12 +273,12 @@ exports.assignRider = async (req, res) => {
             });
         }
 
-        console.log(`✅ Rider ${rider_id} accepted order ${order_id}`);
+        console.log(`✅ Rider ${rider_id} assigned to order ${order_id}`);
 
         // ส่ง socket event
         const updateData = {
             order_id: parseInt(order_id),
-            status: "delivering",
+            status: "rider_assigned",
             hasShop: true,
             hasRider: true,
             rider_id: parseInt(rider_id),
@@ -294,7 +294,7 @@ exports.assignRider = async (req, res) => {
             message: "Rider assigned successfully",
             data: {
                 order_id: parseInt(order_id),
-                status: "delivering",
+                status: "rider_assigned",
                 rider_id: parseInt(rider_id),
                 assigned_at: updateResult.rows[0].updated_at
             }
@@ -324,7 +324,12 @@ exports.updateOrderStatus = async (req, res) => {
         });
     }
 
-    const validStatuses = ['waiting', 'accepted', 'delivering', 'completed', 'cancelled'];
+    const validStatuses = [
+        'waiting', 'confirmed', 'preparing', 'ready_for_pickup', 
+        'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
+        'picked_up', 'delivering', 'arrived_at_customer', 
+        'completed', 'cancelled'
+    ];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({
             success: false,
@@ -367,7 +372,7 @@ exports.updateOrderStatus = async (req, res) => {
             user_id: currentOrder.user_id,
             market_id: currentOrder.market_id,
             status: status,
-            hasShop: status !== "waiting",
+            hasShop: !['waiting'].includes(status), // มี shop เมื่อไม่ใช่ waiting
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
             timestamp: new Date().toISOString(),
@@ -467,7 +472,7 @@ exports.cancelOrder = async (req, res) => {
             user_id: currentOrder.user_id,
             market_id: currentOrder.market_id,
             status: "cancelled",
-            hasShop: currentOrder.status !== "waiting",
+            hasShop: !['waiting'].includes(currentOrder.status), // มี shop ถ้าไม่ใช่ waiting
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
             cancellation_reason: reason,
@@ -499,6 +504,269 @@ exports.cancelOrder = async (req, res) => {
         });
     } catch (err) {
         console.error("❌ cancelOrder error:", err);
+        res.status(500).json({
+            success: false,
+            error: "Database error",
+            message: err.message
+        });
+    }
+};
+
+// =========================== เพิ่มฟังก์ชันใหม่สำหรับสถานะเฉพาะ ===========================
+
+// API: ร้านอัปเดตสถานะการเตรียมอาหาร
+exports.updatePreparationStatus = async (req, res) => {
+    const { order_id, status } = req.body; // status: 'preparing' หรือ 'ready_for_pickup'
+    logAPICall('/update_preparation_status', 'POST', req.ip, req.body);
+
+    const validPrepStatuses = ['preparing', 'ready_for_pickup'];
+    if (!order_id || !status || !validPrepStatuses.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            error: "order_id and valid status are required",
+            valid_statuses: validPrepStatuses
+        });
+    }
+
+    try {
+        // ตรวจสอบว่าออเดอร์อยู่ในสถานะที่เหมาะสม
+        const checkResult = await pool.query(
+            "SELECT status, market_id, user_id, rider_id FROM orders WHERE order_id = $1",
+            [order_id]
+        );
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "Order not found"
+            });
+        }
+
+        const currentOrder = checkResult.rows[0];
+        
+        // ตรวจสอบว่าสามารถอัปเดตสถานะการเตรียมได้หรือไม่
+        const validCurrentStatuses = ['confirmed', 'preparing', 'ready_for_pickup'];
+        if (!validCurrentStatuses.includes(currentOrder.status)) {
+            return res.status(400).json({
+                success: false,
+                error: "Cannot update preparation status from current order status",
+                current_status: currentOrder.status
+            });
+        }
+
+        // อัปเดตสถานะ
+        const updateResult = await pool.query(
+            `UPDATE orders 
+             SET status = $2, updated_at = NOW()
+             WHERE order_id = $1
+             RETURNING *`,
+            [order_id, status]
+        );
+
+        console.log(`✅ Order ${order_id} preparation status updated to: ${status}`);
+
+        const updateData = {
+            order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
+            status: status,
+            hasShop: true,
+            hasRider: currentOrder.rider_id !== null,
+            rider_id: currentOrder.rider_id,
+            timestamp: new Date().toISOString(),
+            action: 'preparation_status_updated',
+            old_status: currentOrder.status
+        };
+
+        // ส่ง socket event
+        emitOrderUpdate(order_id, updateData);
+
+        res.json({
+            success: true,
+            message: `Order preparation status updated to ${status}`,
+            data: updateData
+        });
+
+    } catch (err) {
+        console.error("❌ updatePreparationStatus error:", err);
+        res.status(500).json({
+            success: false,
+            error: "Database error",
+            message: err.message
+        });
+    }
+};
+
+// API: ไรเดอร์อัปเดตสถานะตำแหน่ง
+exports.updateRiderLocation = async (req, res) => {
+    const { order_id, status } = req.body; // status: 'going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'
+    logAPICall('/update_rider_location', 'POST', req.ip, req.body);
+
+    const validRiderStatuses = ['going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'];
+    if (!order_id || !status || !validRiderStatuses.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            error: "order_id and valid rider status are required",
+            valid_statuses: validRiderStatuses
+        });
+    }
+
+    try {
+        const checkResult = await pool.query(
+            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
+            [order_id]
+        );
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "Order not found"
+            });
+        }
+
+        const currentOrder = checkResult.rows[0];
+
+        // ตรวจสอบว่าออเดอร์มีไรเดอร์แล้ว
+        if (!currentOrder.rider_id) {
+            return res.status(400).json({
+                success: false,
+                error: "Order has no assigned rider"
+            });
+        }
+
+        // ตรวจสอบ status progression logic
+        const statusProgression = [
+            'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
+            'picked_up', 'delivering', 'arrived_at_customer', 'completed'
+        ];
+        
+        const currentIndex = statusProgression.indexOf(currentOrder.status);
+        const newIndex = statusProgression.indexOf(status);
+        
+        if (currentIndex === -1 || newIndex === -1 || newIndex <= currentIndex) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid status progression",
+                current_status: currentOrder.status,
+                requested_status: status
+            });
+        }
+
+        // อัปเดตสถานะ
+        const updateResult = await pool.query(
+            `UPDATE orders 
+             SET status = $2, updated_at = NOW()
+             WHERE order_id = $1
+             RETURNING *`,
+            [order_id, status]
+        );
+
+        console.log(`✅ Rider location for order ${order_id} updated to: ${status}`);
+
+        const updateData = {
+            order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
+            status: status,
+            hasShop: true,
+            hasRider: true,
+            rider_id: currentOrder.rider_id,
+            timestamp: new Date().toISOString(),
+            action: 'rider_location_updated',
+            old_status: currentOrder.status
+        };
+
+        // ส่ง socket event
+        emitOrderUpdate(order_id, updateData);
+
+        res.json({
+            success: true,
+            message: `Rider location updated to ${status}`,
+            data: updateData
+        });
+
+    } catch (err) {
+        console.error("❌ updateRiderLocation error:", err);
+        res.status(500).json({
+            success: false,
+            error: "Database error",
+            message: err.message
+        });
+    }
+};
+
+// API: ปิดงาน (complete order)
+exports.completeOrder = async (req, res) => {
+    const { order_id } = req.body;
+    logAPICall('/complete_order', 'POST', req.ip, req.body);
+
+    if (!order_id) {
+        return res.status(400).json({
+            success: false,
+            error: "order_id is required"
+        });
+    }
+
+    try {
+        const checkResult = await pool.query(
+            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
+            [order_id]
+        );
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "Order not found"
+            });
+        }
+
+        const currentOrder = checkResult.rows[0];
+
+        // ตรวจสอบว่าออเดอร์อยู่ในสถานะที่พร้อมจะปิดงาน
+        if (currentOrder.status !== 'arrived_at_customer') {
+            return res.status(400).json({
+                success: false,
+                error: "Order must be in 'arrived_at_customer' status to complete",
+                current_status: currentOrder.status
+            });
+        }
+
+        // อัปเดตเป็น completed
+        const updateResult = await pool.query(
+            `UPDATE orders 
+             SET status = 'completed', updated_at = NOW()
+             WHERE order_id = $1
+             RETURNING *`,
+            [order_id]
+        );
+
+        console.log(`✅ Order ${order_id} completed successfully`);
+
+        const updateData = {
+            order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
+            status: "completed",
+            hasShop: true,
+            hasRider: true,
+            rider_id: currentOrder.rider_id,
+            timestamp: new Date().toISOString(),
+            action: 'order_completed',
+            old_status: currentOrder.status,
+            completed_at: updateResult.rows[0].updated_at
+        };
+
+        // ส่ง socket event
+        emitOrderUpdate(order_id, updateData);
+
+        res.json({
+            success: true,
+            message: "Order completed successfully",
+            data: updateData
+        });
+
+    } catch (err) {
+        console.error("❌ completeOrder error:", err);
         res.status(500).json({
             success: false,
             error: "Database error",
