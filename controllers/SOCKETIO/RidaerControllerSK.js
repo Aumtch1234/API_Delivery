@@ -22,10 +22,10 @@ const calculateDeliveryFee = (distanceKm) => {
     
     if (distanceKm <= 2) {
         return 10; // 0-2 km = 10 baht
-    } else if (distanceKm <= 10) {
-        return 15; // 2-10 km = 15 baht  
+    } else if (distanceKm <= 5) {
+        return 15; // 2-5 km = 15 baht
     } else {
-        return 20; // 10+ km = 20 baht
+        return 20; // 5+ km = 20 baht
     }
 };
 
