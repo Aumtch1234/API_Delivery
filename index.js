@@ -33,7 +33,7 @@ app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
 app.use('/socket', SocketRoutes);
-app.use('/', RiderSocketRoutes);
+app.use('/riders/socket', RiderSocketRoutes);
 app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);
@@ -45,7 +45,7 @@ const server = http.createServer(app);  // ⬅️ ใช้ server แทน app
 // สร้าง Socket.IO แค่ครั้งเดียว แล้วแชร์ให้ทุกโมดูล
 const { Server } = require("socket.io");
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
+  cors: { origin: "*", methods: ['GET','POST','PUT','DELETE'] }
 });
 
 // ให้ io เข้าถึงใน controller เผื่อ controller ฝั่ง HTTP ต้องการ emit ผ่าน req.app.get('io'
@@ -109,7 +109,7 @@ cron.schedule('*/1 * * * *', async () => {
 // ====== start HTTP + Socket.IO ======
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '0.0.0.0';
+const HOST = '10.175.183.44';
 // const HOST = '192.168.1.129';
 
 // (ลบการเรียกซ้ำ socketInit(server); เดิม เพราะตอนนี้ attachChatHandlers(io) ถูกเรียกแล้วด้านบน)

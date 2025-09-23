@@ -58,11 +58,58 @@ async function emitOrderUpdate(orderId, data) {
       console.log(`   ↳ Sent to rider room: ${riderRoom}`);
     }
 
+    // ⭐ เพิ่ม: ถ้าออเดอร์เป็น confirmed/preparing/ready_for_pickup และยังไม่มีไรเดอร์
+    // ส่งไปยัง ALL riders เพื่อแจ้งว่ามีออเดอร์ใหม่พร้อมรับ
+    const availableStatuses = ['confirmed', 'accepted', 'preparing', 'ready_for_pickup'];
+    if (!rider_id && availableStatuses.includes(data.status)) {
+      // ส่งไปทุก connected riders
+      ioInstance.emit("new_order_available", {
+        ...data,
+        message: "New order available for pickup",
+        order_id: parseInt(orderId)
+      });
+      console.log(`   ↳ 🎯 Broadcasted new available order to ALL riders`);
+      
+      // เพิ่ม: ส่งเฉพาะไปยัง riders ที่ online (ถ้ามี rider room list)
+      const connectedSockets = await ioInstance.fetchSockets();
+      let riderNotificationCount = 0;
+      
+      for (const socket of connectedSockets) {
+        if (socket.riderId) { // ถ้า socket นี้เป็นของ rider
+          socket.emit("new_order_notification", {
+            ...data,
+            message: "New order available for you to accept",
+            order_id: parseInt(orderId),
+            notification_type: "new_order_available"
+          });
+          riderNotificationCount++;
+        }
+      }
+      
+      console.log(`   ↳ 🏍️ Notified ${riderNotificationCount} online riders about new available order`);
+    }
+
     console.log(`✅ Order update broadcasted successfully for order ${orderId}`);
 
   } catch (error) {
     console.error(`❌ Error broadcasting order update for order ${orderId}:`, error);
   }
+}
+
+function emitNewOrderToRiders(orderData) {
+  if (!ioInstance) {
+    console.error("❌ Socket.io instance not initialized");
+    return;
+  }
+
+  console.log(`📡 Emitting new order notification to all riders:`, orderData);
+  
+  // ส่งไปทุก riders
+  ioInstance.emit("new_order_available", {
+    ...orderData,
+    message: "New order available for pickup",
+    notification_type: "new_order_available"
+  });
 }
 
 function getIO() {
@@ -148,30 +195,36 @@ async function getCurrentOrderStatus(orderId, socket) {
   }
 }
 
-// ฟังก์ชัน initialize socket.io
 function initSocket(io) {
   ioInstance = io;
 
   io.on("connection", (socket) => {
     console.log("🔌 A user connected:", socket.id);
 
-    // User registration
+    // User registration - ปรับปรุงให้รองรับ rider
     socket.on("register_user", (data) => {
       const { userId, marketId, riderId, userType } = data;
       
       if (userId) {
         socket.userId = userId;
-        console.log(`👤 User ${userId} registered with socket ${socket.id}`);
+        socket.join(`customer:${userId}`);
+        console.log(`👤 Customer ${userId} registered and joined room customer:${userId}`);
       }
       
       if (marketId) {
         socket.marketId = marketId;
-        console.log(`🏪 Market ${marketId} registered with socket ${socket.id}`);
+        socket.join(`shop:${marketId}`);
+        console.log(`🏪 Shop ${marketId} registered and joined room shop:${marketId}`);
       }
       
       if (riderId) {
         socket.riderId = riderId;
-        console.log(`🏍️ Rider ${riderId} registered with socket ${socket.id}`);
+        socket.join(`rider:${riderId}`);
+        console.log(`🏍️ Rider ${riderId} registered and joined room rider:${riderId}`);
+        
+        // ⭐ เพิ่ม: Auto-join global riders room สำหรับรับแจ้งเตือนออเดอร์ใหม่
+        socket.join('all_riders');
+        console.log(`🏍️ Rider ${riderId} joined global riders room`);
       }
 
       socket.userType = userType || 'customer';
@@ -183,22 +236,6 @@ function initSocket(io) {
       if (room) {
         socket.join(room);
         console.log(`📍 Socket ${socket.id} joined room: ${room}`);
-        
-        // Auto-join related rooms based on user type
-        if (socket.userId && !room.includes('customer:')) {
-          socket.join(`customer:${socket.userId}`);
-          console.log(`📍 Auto-joined customer room: customer:${socket.userId}`);
-        }
-        
-        if (socket.marketId && !room.includes('shop:')) {
-          socket.join(`shop:${socket.marketId}`);
-          console.log(`📍 Auto-joined shop room: shop:${socket.marketId}`);
-        }
-        
-        if (socket.riderId && !room.includes('rider:')) {
-          socket.join(`rider:${socket.riderId}`);
-          console.log(`📍 Auto-joined rider room: rider:${socket.riderId}`);
-        }
       }
     });
 
@@ -225,6 +262,18 @@ function initSocket(io) {
       socket.currentOrderRoom = roomName;
       console.log(`🏍️ Rider ${socket.id} watching order ${orderId}`);
       getCurrentOrderStatus(orderId, socket);
+    });
+
+    // ⭐ เพิ่ม: Rider request available orders
+    socket.on("rider:requestAvailableOrders", () => {
+      if (socket.riderId) {
+        console.log(`🏍️ Rider ${socket.riderId} requesting available orders`);
+        // ส่งกลับไปว่าให้ refresh data
+        socket.emit("rider:refreshOrders", {
+          message: "Please refresh your orders list",
+          timestamp: new Date().toISOString()
+        });
+      }
     });
 
     // Heartbeat for connection checking
@@ -261,5 +310,6 @@ module.exports = {
   emitOrderUpdate,
   getIO,
   emitNewOrderToCustomer,
-  emitNewOrderToShop
+  emitNewOrderToShop,
+  emitNewOrderToRiders // เพิ่มฟังก์ชันใหม่
 };
