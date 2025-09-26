@@ -1,5 +1,5 @@
 const pool = require('../../config/db');
-const { getIO } = require("../../SocketRoutes/socketEvents"); // ✅ import ฟังก์ชันดึง io instance
+const { getIO } = require("../../SocketRoutes/Events/socketEvents"); // ✅ import ฟังก์ชันดึง io instance
 
 exports.PostOrders = async (req, res) => {
   const { basket, address_id, address, deliveryType, paymentMethod, note, distances, deliveryFees, totalPrices } = req.body;

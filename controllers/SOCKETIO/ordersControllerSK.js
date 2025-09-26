@@ -1,6 +1,6 @@
 // controllers/SOCKETIO/ordersControllerSK.js - Updated with logs and matching routes
 const pool = require("../../config/db");
-const { emitOrderUpdate } = require("../../SocketRoutes/socketEvents");
+const { emitOrderUpdate } = require("../../SocketRoutes/Events/socketEvents");
 
 // Helper function to log API calls
 const logAPICall = (endpoint, method, ip, body = null, query = null) => {
@@ -171,7 +171,7 @@ exports.acceptOrder = async (req, res) => {
         emitOrderUpdate(order_id, updateData);
         
         // เพิ่ม explicit broadcast เพื่อให้แน่ใจ
-        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
         
         // ส่งไปทุก room พร้อมกัน
@@ -387,7 +387,7 @@ exports.updateOrderStatus = async (req, res) => {
         emitOrderUpdate(order_id, updateData);
         
         // เพิ่ม explicit broadcast
-        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
         
         io.to(`order:${order_id}`).emit("order:updated", updateData);
@@ -487,7 +487,7 @@ exports.cancelOrder = async (req, res) => {
         emitOrderUpdate(order_id, updateData);
         
         // เพิ่ม explicit broadcast
-        const { getIO } = require("../../SocketRoutes/socketEvents");
+        const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
         
         io.to(`order:${order_id}`).emit("order:updated", updateData);

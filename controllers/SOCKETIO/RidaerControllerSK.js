@@ -1,5 +1,5 @@
 const pool = require("../../config/db");
-const { emitOrderUpdate } = require("../../SocketRoutes/socketEvents");
+const { emitOrderUpdate } = require("../../SocketRoutes/Events/socketEvents");
 const axios = require('axios');
 
 // Helper function to log API calls

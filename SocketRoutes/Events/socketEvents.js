@@ -1,5 +1,5 @@
 // SocketRoutes/socketEvents.js - แก้ไขให้ส่ง event ครบทุกฝ่าย
-const pool = require("../config/db");
+const pool = require("../../config/db");
 
 let ioInstance;
 

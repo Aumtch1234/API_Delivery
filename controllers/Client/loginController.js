@@ -5,7 +5,7 @@ const pool = require('../../config/db');
 
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log('📥 Login attempt:', email); // ✅ log email ที่รับเข้ามา
+  console.log('📥 Login attempt:', email);
 
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -32,6 +32,7 @@ exports.loginUser = async (req, res) => {
       birthdate: user.birthdate,
       gender: user.gender,
       phone: user.phone,
+      role: user.role,
       created_at: user.created_at,
       is_verified: user.is_verified,
       photo_url: user.photo_url,
@@ -43,7 +44,10 @@ exports.loginUser = async (req, res) => {
 
     const token = jwt.sign(tokenPayload, SECRET, { expiresIn: '7d' });
 
-    console.log('🎟️ Token ที่สร้าง:', token);
+    // ✅ เพิ่ม log ตรงนี้ก่อนส่ง
+    console.log('🎟️ Token ที่สร้างแล้ว (จะถูกส่งให้ Client):');
+    console.log('👉', token);
+    console.log('📦 ส่งกลับไปพร้อม user_id:', user.user_id);
 
     res.status(200).json({
       message: 'เข้าสู่ระบบสำเร็จ',
@@ -57,6 +61,7 @@ exports.loginUser = async (req, res) => {
         birthdate: user.birthdate,
         gender: user.gender,
         phone: user.phone,
+        role: user.role,
         created_at: user.created_at,
         is_seller: user.is_seller,
       },
@@ -66,4 +71,3 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
   }
 };
-

@@ -19,10 +19,23 @@ exports.loginRider = async (req, res) => {
 
         // ค้นหาผู้ใช้ในฐานข้อมูล
         console.log('🔍 Checking rider user in DB...');
-        const userResult = await pool.query(
-            'SELECT user_id, email, password, display_name, role, is_verified FROM users WHERE email = $1 AND role = $2',
-            [email, 'rider']
+        const userResult = await pool.query(`
+        SELECT 
+            u.user_id,
+            u.email,
+            u.password,
+            u.display_name,
+            u.role,
+            u.is_verified,
+            rp.rider_id,
+            rp.approval_status,
+            rp.created_at AS submitted_at
+        FROM users u
+        LEFT JOIN rider_profiles rp ON rp.user_id = u.user_id
+        WHERE u.email = $1 AND u.role = $2
+        `, [email, 'rider']
         );
+
 
         console.log('📊 Query result (users):', userResult.rows.length, 'rows');
 
@@ -78,7 +91,8 @@ exports.loginRider = async (req, res) => {
         // สร้าง JWT token
         console.log('🔐 Creating JWT token...');
         const token = jwt.sign(
-            {
+            {   
+                rider_id: user.rider_id,
                 rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,
@@ -95,6 +109,7 @@ exports.loginRider = async (req, res) => {
             message: 'เข้าสู่ระบบสำเร็จ',
             token: token,
             user: {
+                rider_id: user.rider_id,
                 rider_id: riderStatus.rider_id,
                 user_id: user.user_id,
                 email: user.email,

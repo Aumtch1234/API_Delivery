@@ -11,16 +11,19 @@ const pool = require('./config/db');
 const ClientRoutes = require('./routes/Client/ClientAPIsRoute');
 const AdminRoutes = require('./routes/Admin/AdminAPIsRoute');
 const RiderRoutes = require('./routes/Rider/RiderAPIsRoute');
-const SocketRoutes = require('./SocketRoutes/SocketRoutes');
-const RiderSocketRoutes = require('./SocketRoutes/RiderSocketRoutes');
-const ChatRoutes   = require('./routes/Chats/ChatsAPIsRoute');    // ⬅️ เพิ่ม
+
 const DashboardSaleRoutes = require('./routes/Analytics_Dashboard/Market/DashboardAPIsRoute'); // ⬅️ เพิ่ม
 const ReviewsRoutes = require('./routes/Reviews/ReviewsAPIsRoute'); // ⬅️ เพิ่ม
 
+
+const SocketRoutes = require('./SocketRoutes/SocketRoutes');
+const RiderSocketRoutes = require('./SocketRoutes/RiderSocketRoutes');
+const RiderChatRoutes = require('./SocketRoutes/Chats/RiderChatRoutes');
+const CustomerChatRoutes = require('./SocketRoutes/Chats/CustomerChatRoutes');
+
 // socket
 // Socket handlers (ใช้ io เดียวกัน)
-const { initSocket } = require('./SocketRoutes/socketEvents');   // ฟังก์ชันรับ io (order / status updates)
-const attachChatHandlers = require('./controllers/Chats/SocketChats');  // แนบ event ของแชท (ไม่สร้าง server ใหม่)
+const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // ฟังก์ชันรับ io (order / status updates)
 
 
 const app = express();
@@ -34,7 +37,8 @@ app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);
 app.use('/socket', SocketRoutes);
 app.use('/riders/socket', RiderSocketRoutes);
-app.use('/chat',   ChatRoutes);     // ⬅️ เพิ่ม
+app.use('/chat/rider', RiderChatRoutes);
+app.use('/chat/customer', CustomerChatRoutes);
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);
 
@@ -44,6 +48,7 @@ const server = http.createServer(app);  // ⬅️ ใช้ server แทน app
 
 // สร้าง Socket.IO แค่ครั้งเดียว แล้วแชร์ให้ทุกโมดูล
 const { Server } = require("socket.io");
+const attachChatHandlers = require('./SocketRoutes/Events/ChatEvents');
 const io = new Server(server, {
   cors: { origin: "*", methods: ['GET','POST','PUT','DELETE'] }
 });
@@ -53,7 +58,7 @@ app.set('io', io);
 
 // --- ผูก event ของ "ทั้งสอง" โมดูลเข้ากับ io เดียวกัน ---
 initSocket(io);          // order / rider / shop events
-attachChatHandlers(io);  // chat namespace (/chat)
+attachChatHandlers(io);
 
 // Cron job ทุก 1 นาที
 cron.schedule('*/1 * * * *', async () => {
@@ -109,20 +114,11 @@ cron.schedule('*/1 * * * *', async () => {
 // ====== start HTTP + Socket.IO ======
 // Listen
 const PORT = process.env.PORT || 4000;
-const HOST = '10.175.183.44';
-// const HOST = '192.168.1.129';
+const HOST = '192.168.1.129';
 
-// (ลบการเรียกซ้ำ socketInit(server); เดิม เพราะตอนนี้ attachChatHandlers(io) ถูกเรียกแล้วด้านบน)
 
 server.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
   console.log('Email user:', process.env.EMAIL_FROM);
   console.log('Email pass length:', process.env.EMAIL_PASS?.length);
 });
-
-// ====== start HTTP server แบบเดิม (ไม่ใช้ socket.io) ======
-// app.listen(PORT, HOST, () => {
-//   console.log(`Server running on http://${HOST}:${PORT}`);
-//   console.log('Email user:', process.env.EMAIL_FROM);
-//   console.log('Email pass length:', process.env.EMAIL_PASS?.length);
-// });
