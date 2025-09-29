@@ -114,7 +114,9 @@ cron.schedule('*/1 * * * *', async () => {
 // ====== start HTTP + Socket.IO ======
 // Listen
 const PORT = process.env.PORT || 4000;
+
 const HOST = '192.168.1.129';
+
 
 
 server.listen(PORT, HOST, () => {
