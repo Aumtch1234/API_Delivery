@@ -108,7 +108,8 @@ exports.getMyMarket = async (req, res) => {
 
 exports.addFood = async (req, res) => {
   const userId = req.user?.user_id;
-  const { food_name, price, options } = req.body;
+  // const { food_name, price, options } = req.body;
+  let { food_name, price, options } = req.body;
 
   try {
     // หา market ของ user
@@ -125,15 +126,38 @@ exports.addFood = async (req, res) => {
     const marketId = market.market_id;
     const image = req.file?.path;
 
+    // ✅ ตรวจสอบและ normalize options
+    if (!options) {
+      options = [];
+    } else if (typeof options === 'string') {
+      try {
+        options = JSON.parse(options);
+      } catch (err) {
+        console.warn("⚠️ options JSON.parse failed:", err);
+        options = [];
+      }
+    }
+    if (!Array.isArray(options)) {
+      options = [];
+    }
     // ✅ คำนวณราคาขาย
     const sellPrice = market.owner_id
-      ? Math.floor(price * 1.15) // +15% แล้วปัดลง
-      : Math.floor(price * 1.20); // +20% แล้วปัดลง
+      ? Math.ceil(price * 1.15) // +15% แล้วปัดขึ้น
+      : Math.ceil(price * 1.20); // +20% แล้วปัดขึ้น
+      
+      // ✅ คำนวณราคา options +15% ของสมาชิก หรือ +20% ของแอดมิน ถ้ามี
+    const sellOptions = options.map(option => {
+  const optPriceNum = Number(option.extraPrice || option.price) || 0;
+  const optionPrice = market.owner_id
+    ? Math.ceil(optPriceNum * 1.15)
+    : Math.ceil(optPriceNum * 1.20);
+  return { ...option, extraPrice: optionPrice };
+});
 
     const result = await pool.query(
-      `INSERT INTO foods (market_id, food_name, price, sell_price, image_url, options)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [marketId, food_name, price, sellPrice, image, options]
+      `INSERT INTO foods (market_id, food_name, price, sell_price, image_url, options, sell_options)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [marketId, food_name, price, sellPrice, image, JSON.stringify(options), JSON.stringify(sellOptions)]
     );
 
     res.status(200).json({ message: 'เพิ่มเมนูสำเร็จ', food: result.rows[0] });
@@ -213,7 +237,7 @@ exports.updateSellPrices = async (req, res) => {
 exports.updateFood = async (req, res) => {
   const userId = req.user?.user_id;
   const foodId = req.params.id;
-  const { food_name, price, options } = req.body;
+  let { food_name, price, options } = req.body;
   const image = req.file?.path;
 
   console.log('🟢 updateFood called');
@@ -250,13 +274,39 @@ exports.updateFood = async (req, res) => {
 
     // ✅ คำนวณ sell_price ใหม่
     const sellPrice = market.owner_id
-      ? Math.floor(price * 1.15)
-      : Math.floor(price * 1.20);
+      ? Math.ceil(price * 1.15) // +15% แล้วปัดขึ้น
+      : Math.ceil(price * 1.20); // +20% แล้วปัดขึ้น
     console.log('Calculated sell_price:', sellPrice);
 
     // แปลง options
-    const optionsJson = options ? JSON.stringify(JSON.parse(options)) : null;
-    console.log('Parsed options JSON:', optionsJson);
+    // const optionsJson = options ? JSON.stringify(JSON.parse(options)) : null;
+    // console.log('Parsed options JSON:', optionsJson);
+
+    // ✅ ตรวจสอบและแปลง options
+    let parsedOptions = [];
+    let sellOptions = [];
+    if (options) {
+      if (typeof options === 'string') {
+        try {
+          parsedOptions = JSON.parse(options);
+        } catch (err) {
+          console.warn("⚠️ options JSON.parse failed:", err);
+          parsedOptions = [];
+        }
+      } else if (Array.isArray(options)) {
+        parsedOptions = options;
+      }
+      // คำนวณ sell_options ใหม่
+      sellOptions = parsedOptions.map(option => {
+        const optPriceNum = Number(option.extraPrice || option.price) || 0;
+        const optionPrice = market.owner_id
+          ? Math.ceil(optPriceNum * 1.15)
+          : Math.ceil(optPriceNum * 1.20);
+        return { ...option, extraPrice: optionPrice };
+      });
+    }
+      console.log('Parsed options:', parsedOptions);
+      console.log('Calculated sell_options:', sellOptions);
 
     // ✅ สร้าง query dynamic
     let updateQuery = 'UPDATE foods SET food_name = $1, price = $2, sell_price = $3';
@@ -268,9 +318,15 @@ exports.updateFood = async (req, res) => {
       params.push(image);
       paramIndex++;
     }
-    if (optionsJson) {
-      updateQuery += `, options = $${paramIndex}`;
-      params.push(optionsJson);
+
+    // เพิ่ม options และ sell_options ถ้ามี
+    if (options) {
+       updateQuery += `, options = $${paramIndex}`;
+      params.push(JSON.stringify(parsedOptions));
+      paramIndex++;
+
+      updateQuery += `, sell_options = $${paramIndex}`;
+      params.push(JSON.stringify(sellOptions));
       paramIndex++;
     }
 

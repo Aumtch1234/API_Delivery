@@ -825,7 +825,10 @@ exports.getOrdersWithItems = async (req, res) => {
                             'quantity', oi.quantity,
                             'sell_price', oi.sell_price,
                             'subtotal', oi.subtotal,
-                            'selected_options', oi.selected_options
+                            'selected_options', oi.selected_options,
+                            'original_price', oi.original_price,
+                            'original_subtotal', oi.original_subtotal,
+                            'original_options', oi.original_options
                         )
                     ) FILTER (WHERE oi.item_id IS NOT NULL),
                     '[]'

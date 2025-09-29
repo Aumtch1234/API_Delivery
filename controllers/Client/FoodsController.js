@@ -91,7 +91,7 @@ exports.getFoodFromIDForOrder = async (req, res) => {
     const { foodId } = req.params;
     let query = `
     SELECT 
-        f.food_id, f.food_name, f.price, f.image_url, f.rating AS food_rating, f.options, f.sell_price,
+        f.food_id, f.food_name, f.price, f.image_url, f.rating AS food_rating, f.options, f.sell_options, f.sell_price,
         m.market_id, m.shop_name, m.shop_logo_url, m.latitude, m.longitude, m.is_open, m.rating AS market_rating, m.address, m.phone
     FROM foods f 
     JOIN markets m ON f.market_id = m.market_id  

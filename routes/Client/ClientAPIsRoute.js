@@ -72,6 +72,9 @@ router.get("/orders/user", authenticateJWT, OrdersController.getOrdersByCustomer
 router.get('/orders/:order_id', authenticateJWT, OrdersController.getOrderStatus);
 router.post('/orders', authenticateJWT, OrdersController.PostOrders)
 
+// ดึงข้อมูลร้านค้าเพื่อเช็คว่าร้านไหนเป็นร้านแอดมิน
+router.post('/markets/info', authenticateJWT, OrdersController.getMarketsInfo);
+
 // Socket
 
 router.post('/distance', authenticateJWT, GoogleMapController.Distance);

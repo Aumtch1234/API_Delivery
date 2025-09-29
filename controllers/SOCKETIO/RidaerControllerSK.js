@@ -319,6 +319,7 @@ exports.getOrdersWithItems = async (req, res) => {
                             'food_id', oi.food_id,
                             'food_name', oi.food_name,
                             'quantity', oi.quantity,
+                            'base_price', f.price,
                             'sell_price', oi.sell_price,
                             'subtotal', oi.subtotal,
                             'selected_options', oi.selected_options
@@ -329,9 +330,10 @@ exports.getOrdersWithItems = async (req, res) => {
             FROM orders o
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             LEFT JOIN markets m ON o.market_id = m.market_id
+            LEFT JOIN foods f ON f.food_id = oi.food_id
             LEFT JOIN client_addresses ca ON ca.id = o.address_id
         `;
-
+// เพิ่ม join ตาราง foods ดึง price ในfoods
         const conditions = [];
         const values = [];
         let valueIndex = 1;
