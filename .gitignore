@@ -43,3 +43,15 @@ coverage/
 
 # TypeScript cache
 *.tsbuildinfo
+
+# 🐳 Docker & Database volumes
+pgdata/              # PostgreSQL data directory
+docker-data/         # (ถ้ามี mount volume ชื่ออื่น)
+
+# 📁 Uploads & user-generated files
+uploads/             # เก็บไฟล์อัปโหลด (เช่น รูป chat ฯลฯ)
+
+# 🔥 Build artifacts / runtime junk
+*.swp
+*.swo
+*.bak
