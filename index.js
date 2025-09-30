@@ -115,7 +115,7 @@ cron.schedule('*/1 * * * *', async () => {
 // Listen
 const PORT = process.env.PORT || 4000;
 
-const HOST = '192.168.1.129';
+const HOST = '0.0.0.0';
 
 
 

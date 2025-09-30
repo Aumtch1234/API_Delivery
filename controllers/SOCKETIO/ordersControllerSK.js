@@ -806,6 +806,8 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.market_id,
                 m.shop_name, 
                 o.rider_id,
+                ca.name AS customer_name,
+                ca.phone AS customer_phone,
                 o.address,
                 o.delivery_type,
                 o.payment_method,
@@ -836,6 +838,7 @@ exports.getOrdersWithItems = async (req, res) => {
             FROM orders o
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             LEFT JOIN markets m ON o.market_id = m.market_id
+            LEFT JOIN client_addresses ca ON o.address_id = ca.id
         `;
 
         const conditions = [];
@@ -871,7 +874,7 @@ exports.getOrdersWithItems = async (req, res) => {
         }
 
         query += `
-            GROUP BY o.order_id, m.shop_name
+            GROUP BY o.order_id, m.shop_name, ca.name, ca.phone
             ORDER BY o.created_at DESC
             LIMIT $${valueIndex++} OFFSET $${valueIndex++}
         `;
