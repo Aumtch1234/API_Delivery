@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # ✅ PostgreSQL Database
   postgres:
     image: postgres:16
     container_name: postgres
@@ -13,6 +14,7 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
 
+  # ✅ pgAdmin (GUI จัดการ DB)
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
@@ -25,9 +27,10 @@ services:
     depends_on:
       - postgres
 
+  # ✅ API Delivery (Node.js Backend)
   api:
     build: .
-    container_name: Delivery-API
+    container_name: delivery-api
     ports:
       - "4000:4000"
     environment:
@@ -39,3 +42,18 @@ services:
       DB_PORT: 5432
     depends_on:
       - postgres
+
+  # ✅ Jenkins (CI/CD Server)
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    user: root
+    restart: always
+    ports:
+      - "8080:8080"      # Jenkins Web UI
+      - "50000:50000"    # สำหรับเชื่อมกับ Jenkins Agent
+    volumes:
+      - ./jenkins_home:/var/jenkins_home   # เก็บข้อมูล job/pipeline
+      - /var/run/docker.sock:/var/run/docker.sock  # ให้ Jenkins ใช้ Docker ได้
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
