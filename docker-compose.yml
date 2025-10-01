@@ -11,8 +11,8 @@ services:
       POSTGRES_DB: delivery
     ports:
       - "5432:5432"
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
+    # volumes:
+    #   - ./pgdata:/var/lib/postgresql/data
 
   # ✅ pgAdmin (GUI จัดการ DB)
   pgadmin:
@@ -42,18 +42,3 @@ services:
       DB_PORT: 5432
     depends_on:
       - postgres
-
-  # ✅ Jenkins (CI/CD Server)
-  jenkins:
-    image: jenkins/jenkins:lts-jdk17
-    container_name: jenkins
-    user: root
-    restart: always
-    ports:
-      - "8080:8080"      # Jenkins Web UI
-      - "50000:50000"    # สำหรับเชื่อมกับ Jenkins Agent
-    volumes:
-      - ./jenkins_home:/var/jenkins_home   # เก็บข้อมูล job/pipeline
-      - /var/run/docker.sock:/var/run/docker.sock  # ให้ Jenkins ใช้ Docker ได้
-    environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
