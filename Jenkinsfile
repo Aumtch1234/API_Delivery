@@ -3,6 +3,8 @@ pipeline {
         docker {
             image 'nikolaik/python-nodejs:python3.10-nodejs22'
             args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
+            // เพิ่ม label ถ้ามี node ที่ต้องการเฉพาะ
+            // label 'docker-agent'
         }
     }
 
@@ -105,8 +107,7 @@ pipeline {
             echo '❌ Pipeline failed! Please check the logs.'
         }
         always {
-            echo '🧹 Cleaning up workspace...'
-            cleanWs()
+            echo '🧹 Cleanup completed'
         }
     }
 }
