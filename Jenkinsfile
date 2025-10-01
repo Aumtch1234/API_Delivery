@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'nikolaik/python-nodejs:python3.10-nodejs22' // ✅ image นี้มี Node + npm + git พร้อม
-            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock' // ✅ mount docker socket เพื่อใช้ docker CLI ได้
+            image 'nikolaik/python-nodejs:python3.10-nodejs22'
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -14,30 +14,36 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'aum', url: 'https://github.com/aumtch1234/Api_Delivery.git'
+                echo '🔄 Checking out source code...'
+                git branch: 'aum', 
+                    url: 'https://github.com/aumtch1234/Api_Delivery.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
+                echo '📦 Installing npm dependencies...'
                 sh 'npm install'
             }
         }
 
         stage('Build Docker Image') {
             steps {
+                echo '🐳 Building Docker image...'
                 sh 'docker build -t $DOCKER_HUB_USER/$DOCKER_IMAGE:latest .'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push to Docker Hub') {
             steps {
+                echo '⬆️ Pushing image to Docker Hub...'
                 withCredentials([string(credentialsId: 'dockerhub-password', variable: 'DOCKER_PASS')]) {
                     sh '''
                         echo $DOCKER_PASS | docker login -u $DOCKER_HUB_USER --password-stdin
                         docker push $DOCKER_HUB_USER/$DOCKER_IMAGE:latest
+                        docker logout
                     '''
                 }
             }
@@ -45,18 +51,62 @@ pipeline {
 
         stage('Deploy to Server') {
             steps {
+                echo '🚀 Deploying to production server...'
                 sshagent(['server-ssh']) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ubuntu@$VM_IP "
+                          echo '📍 Navigating to project directory...'
                           cd /home/ubuntu/Api_Delivery &&
+                          
+                          echo '⬇️ Pulling latest code...'
                           git pull origin aum &&
+                          
+                          echo '🛑 Stopping containers...'
                           docker compose down &&
+                          
+                          echo '🔄 Pulling latest images...'
                           docker compose pull &&
-                          docker compose up -d --build
+                          
+                          echo '✅ Starting containers...'
+                          docker compose up -d --build &&
+                          
+                          echo '🎉 Deployment completed!'
                         "
                     '''
                 }
             }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo '🏥 Performing health check...'
+                script {
+                    sleep(time: 10, unit: 'SECONDS')
+                    def response = sh(
+                        script: "curl -s -o /dev/null -w '%{http_code}' http://${VM_IP}:4000 || echo '000'",
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (response == '200' || response == '404') {
+                        echo "✅ API is responding (HTTP ${response})"
+                    } else {
+                        echo "⚠️ API might not be ready yet (HTTP ${response})"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed! Please check the logs.'
+        }
+        always {
+            echo '🧹 Cleaning up workspace...'
+            cleanWs()
         }
     }
 }
