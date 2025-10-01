@@ -236,14 +236,14 @@ exports.assignRider = async (req, res) => {
         const currentOrder = checkResult.rows[0];
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
 
-        if (currentOrder.status === 'waiting') {
-            console.log(`❌ Order ${order_id} not yet confirmed by shop`);
-            return res.status(400).json({
-                success: false,
-                error: "Order not yet confirmed by shop",
-                current_status: currentOrder.status
-            });
-        }
+        // if (currentOrder.status === 'waiting') {
+        //     console.log(`❌ Order ${order_id} not yet confirmed by shop`);
+        //     return res.status(400).json({
+        //         success: false,
+        //         error: "Order not yet confirmed by shop",
+        //         current_status: currentOrder.status
+        //     });
+        // }
 
         if (currentOrder.rider_id !== null) {
             console.log(`❌ Order ${order_id} already has rider: ${currentOrder.rider_id}`);

@@ -48,7 +48,7 @@ exports.assignRider = async (req, res) => {
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
 
         // Allow assignment for confirmed orders
-        if (!['confirmed', 'accepted', 'preparing', 'ready_for_pickup'].includes(currentOrder.status)) {
+        if (!['waiting', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup'].includes(currentOrder.status)) {
             console.log(`❌ Order ${order_id} status not eligible for rider assignment: ${currentOrder.status}`);
             return res.status(400).json({
                 success: false,
@@ -350,7 +350,8 @@ exports.getOrdersWithItems = async (req, res) => {
 
         if (rider_id) {
             // แสดงออเดอร์ของ rider หรือออเดอร์ที่ยังไม่มีใครรับ
-            conditions.push(`(o.rider_id = $${valueIndex++} OR (o.status IN ('confirmed', 'accepted', 'preparing', 'ready_for_pickup') AND o.rider_id IS NULL))`);
+            // conditions.push(`(o.rider_id = $${valueIndex++} OR (o.status IN ('confirmed', 'accepted', 'preparing', 'ready_for_pickup') AND o.rider_id IS NULL))`);
+            conditions.push(`(o.rider_id = $${valueIndex++} OR (o.status IN ('awaiting','confirmed', 'accepted', 'preparing', 'ready_for_pickup') AND o.rider_id IS NULL))`);
             values.push(rider_id);
         }
 
@@ -369,7 +370,7 @@ exports.getOrdersWithItems = async (req, res) => {
                     ca.id, ca.name, ca.phone, ca.address, ca.district, ca.city, ca.postal_code, ca.notes, ca.latitude, ca.longitude, ca.location_text
             ORDER BY 
                 CASE 
-                    WHEN o.rider_id IS NULL AND o.status IN ('confirmed', 'accepted', 'preparing', 'ready_for_pickup') THEN 0
+                    WHEN o.rider_id IS NULL AND o.status IN ('awaiting', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup') THEN 0
                     ELSE 1 
                 END,
                 o.created_at DESC
