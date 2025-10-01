@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'nikolaik/python-nodejs:python3.10-nodejs22' // ✅ image นี้มี Node + npm + git พร้อม
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock' // ✅ mount docker socket เพื่อใช้ docker CLI ได้
+        }
+    }
 
     environment {
         DOCKER_HUB_USER = "zoro01569"
