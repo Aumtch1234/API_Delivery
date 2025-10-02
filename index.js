@@ -1,6 +1,7 @@
 // index.js  (single-file server + socket.io)
 require('dotenv').config();
 const express = require('express');
+const path = require("path");
 const cors = require('cors');
 const cron = require('node-cron');
 const http = require('http');           // ⬅️ เพิ่ม
@@ -41,6 +42,9 @@ app.use('/chat/rider', RiderChatRoutes);
 app.use('/chat/customer', CustomerChatRoutes);
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);
+app.use("/uploads/chat-images", express.static(path.join(__dirname, "uploads/chat-images")));
+
+
 
 
 // HTTP + Socket.IO
