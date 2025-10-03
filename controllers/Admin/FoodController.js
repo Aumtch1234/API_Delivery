@@ -82,28 +82,47 @@ exports.getFoodsByMarketId = async (req, res) => {
   }
 };
 
-
 exports.createCategory = async (req, res) => {
-  const {
-    category_name,
-  } = req.body;
+  const { category_name } = req.body;
+  const imageFile = req.file; // ได้จาก multer + cloudinary storage
+
+  if (!category_name) {
+    return res.status(400).json({ message: "กรุณาใส่ชื่อหมวดหมู่ !" });
+  }
+
+  else if(!imageFile) {
+    return res.status(400).json({ message: "กรุณาอัปโหลดรูปภาพ !" });
+  }
 
   try {
-    const query = `
-      INSERT INTO categorys
-        (name)
-      VALUES
-        ($1);
+    // ✅ 1. ตรวจสอบชื่อซ้ำ
+    const checkQuery = `SELECT * FROM categorys WHERE name = $1`;
+    const checkResult = await pool.query(checkQuery, [category_name]);
+
+    if (checkResult.rows.length > 0) {
+      return res.status(409).json({ message: "ชื่อหมวดหมู่นี้มีอยู่แล้ว" });
+    }
+
+    // ✅ 2. ได้ URL จาก Cloudinary
+    let imageUrl = null;
+    if (imageFile) {
+      imageUrl = imageFile.path; // path จะเป็น URL ของรูปที่อัปโหลดขึ้น Cloudinary แล้ว
+    }
+
+    // ✅ 3. เพิ่มข้อมูลใหม่ลงใน DB
+    const insertQuery = `
+      INSERT INTO categorys (name, cate_image_url)
+      VALUES ($1, $2)
+      RETURNING *;
     `;
-    const result = await pool.query(query, [category_name]);
+    const result = await pool.query(insertQuery, [category_name, imageUrl]);
 
     return res.status(201).json({
-      message: "เพิ่มร้านอาหารสำเร็จ",
-      Category: result.rows[0],
+      message: "เพิ่มหมวดหมู่สำเร็จ",
+      category: result.rows[0],
     });
-
   } catch (err) {
-    console.error("Error creating Category:", err);
+    console.error("Error creating category:", err);
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
