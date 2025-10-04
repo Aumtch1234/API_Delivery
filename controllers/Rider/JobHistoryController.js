@@ -1,7 +1,7 @@
 const pool = require('../../config/db');
 
 /**
- * ระบบประวัติงานสำหรับไรเดอร์
+ * ระบบประวัติงานสำหรับไรเดอร์ รายได้ และ gp ที่หักรวมอยู่ในไฟล์นี้
  * 
  * ฟังก์ชันต่าง ๆ:
  * - getJobHistory: ดูประวัติงานที่เสร็จแล้ว (completed, cancelled)
@@ -47,6 +47,7 @@ exports.getJobHistory = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
@@ -69,9 +70,11 @@ exports.getJobHistory = async (req, res) => {
                 COUNT(*) as total_jobs,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_jobs,
                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_jobs,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as delivery_fee,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as total_earnings_noBonus,
                 COALESCE(SUM(CASE WHEN status = 'completed' THEN bonus ELSE 0 END), 0) as total_bonus,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE 0 END), 0) as total_earnings
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE 0 END), 0) as total_earnings,
+                COALESCE(AVG(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE NULL END), 0) as avg_earnings_per_job,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance
             FROM orders 
             WHERE rider_id = $1 AND status IN ('completed', 'cancelled')`,
             [rider_id]
@@ -134,6 +137,7 @@ exports.getTodayJobHistory = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
@@ -156,8 +160,10 @@ exports.getTodayJobHistory = async (req, res) => {
                 COUNT(*) as total_jobs_today,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_jobs_today,
                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_jobs_today,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as today_earnings,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_today
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as today_earnings_noBonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN bonus ELSE 0 END), 0) as today_bonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE 0 END), 0) as total_earnings_today,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_today 
             FROM orders 
             WHERE rider_id = $1 
                 AND status IN ('completed', 'cancelled')
@@ -224,6 +230,7 @@ exports.getThisMonthJobHistory = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
@@ -246,9 +253,11 @@ exports.getThisMonthJobHistory = async (req, res) => {
                 COUNT(*) as total_jobs_this_month,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_jobs_this_month,
                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_jobs_this_month,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as month_earnings,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_month,
-                COALESCE(AVG(CASE WHEN status = 'completed' THEN delivery_fee ELSE NULL END), 0) as avg_earnings_per_job
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as month_earnings_noBonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN bonus ELSE 0 END), 0) as month_bonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE 0 END), 0) as total_earnings_month,
+                COALESCE(AVG(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE NULL END), 0) as avg_earnings_per_job,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_month
             FROM orders 
             WHERE rider_id = $1 
                 AND status IN ('completed', 'cancelled')
@@ -332,6 +341,7 @@ exports.getThisYearJobHistory = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
@@ -354,9 +364,11 @@ exports.getThisYearJobHistory = async (req, res) => {
                 COUNT(*) as total_jobs_this_year,
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_jobs_this_year,
                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_jobs_this_year,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as year_earnings,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_year,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee ELSE 0 END), 0) as year_earnings_noBonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN bonus ELSE 0 END), 0) as year_bonus,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN delivery_fee + bonus ELSE 0 END), 0) as total_earnings_year,
                 COALESCE(AVG(CASE WHEN status = 'completed' THEN delivery_fee ELSE NULL END), 0) as avg_earnings_per_job,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE 0 END), 0) as total_distance_year,
                 COALESCE(AVG(CASE WHEN status = 'completed' THEN CAST(distance_km as DECIMAL) ELSE NULL END), 0) as avg_distance_per_job
             FROM orders 
             WHERE rider_id = $1 
@@ -443,6 +455,7 @@ exports.getActiveOrders = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
@@ -530,6 +543,7 @@ exports.getAllOrdersAssigned = async (req, res) => {
                 o.total_price,
                 o.status,
                 o.shop_status,
+                o.rider_required_gp,
                 o.created_at,
                 o.updated_at,
                 m.shop_name,
