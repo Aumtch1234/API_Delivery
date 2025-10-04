@@ -31,6 +31,13 @@ const {
     getRiderTopUpStatus
 } = require('../../controllers/Rider/rider-topup_Controller');
 
+const { 
+    getJobHistory,
+    getTodayJobHistory,
+    getThisMonthJobHistory,
+    getThisYearJobHistory
+} = require('../../controllers/Rider/JobHistoryController');
+
 // Import middleware
 const {
     verifyRiderToken,
@@ -127,10 +134,19 @@ router.get('/topup-history', verifyRiderToken, getRiderTopUpHistory);
 // GET /rider/topup/:topup_id/status - ดูสถานะการเติมเงินรายการเดียว
 router.get('/topup/:topup_id/status', verifyRiderToken, getRiderTopUpStatus);
 
-// Routes สำหรับ rider ที่ได้รับการอนุมัติแล้ว
-// (เตรียมไว้สำหรับฟีเจอร์อนาคต เช่น รับงาน, อัปเดตสถานะ, ฯลฯ)
 
+// Job History Routes (ต้องการ authentication)
+// GET /rider/job-history/all - ดูประวัติการทำงานของไรเดอร์ทั้งหมด
+router.get('/job-history/all', verifyRiderToken, getJobHistory);
 
+// GET /rider/job-history/today - ดูประวัติการทำงานของไรเดอร์วันนี้
+router.get('/job-history/today', verifyRiderToken, getTodayJobHistory);
+
+// GET /rider/job-history/this-month - ดูประวัติการทำงานของไรเดอร์เดือนนี้
+router.get('/job-history/this-month', verifyRiderToken, getThisMonthJobHistory);
+
+// GET /rider/job-history/this-year - ดูประวัติการทำงานของไรเดอร์ปีนี้
+router.get('/job-history/this-year', verifyRiderToken, getThisYearJobHistory);
 
 // GET /rider/approved-only-test - ทดสอบ route ที่ต้องการ rider ที่อนุมัติแล้ว
 router.get('/approved-only-test', 

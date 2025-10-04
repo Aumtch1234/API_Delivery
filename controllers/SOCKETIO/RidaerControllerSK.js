@@ -162,9 +162,12 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         console.log(`🔄 Updating order ${order_id} status to ${status}`);
 
-        // Get current order data
+        // Get current order data including market owner_id and shop_status
         const currentResult = await pool.query(
-            "SELECT * FROM orders WHERE order_id = $1",
+            `SELECT o.*, m.owner_id as market_owner_id 
+             FROM orders o 
+             LEFT JOIN markets m ON o.market_id = m.market_id 
+             WHERE o.order_id = $1`,
             [order_id]
         );
 
@@ -176,6 +179,76 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const currentOrder = currentResult.rows[0];
+        console.log(`📋 Updating order ${order_id}: ${currentOrder.status} -> ${status}`);
+
+        // ⭐ เพิ่มเงื่อนไขตรวจสอบสำหรับไรเดอร์
+        const riderStatuses = ['going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'];
+        
+        if (riderStatuses.includes(status)) {
+            // ตรวจสอบว่าออเดอร์มีไรเดอร์แล้ว
+            if (!currentOrder.rider_id) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Order has no assigned rider",
+                    current_status: currentOrder.status
+                });
+            }
+
+            // ⭐ เช็คเงื่อนไข: ร้านทั่วไปต้องรอ confirmed ก่อน going_to_shop
+            if (status === 'going_to_shop') {
+                const isAdminShop = currentOrder.market_owner_id === null;
+                const needsConfirmation = !isAdminShop;
+                
+                if (needsConfirmation && currentOrder.status === 'rider_assigned') {
+                    return res.status(409).json({
+                        success: false,
+                        error: "Shop must confirm order before rider can go to shop",
+                        current_status: currentOrder.status,
+                        shop_type: isAdminShop ? "admin_shop" : "regular_shop",
+                        hint: "รอร้านยืนยันออเดอร์ก่อน (status: confirmed)"
+                    });
+                }
+                
+                console.log(`🏪 Shop check: ${isAdminShop ? 'Admin shop' : 'Regular shop'} - ${needsConfirmation ? 'Needs confirmation' : 'No confirmation needed'}`);
+            }
+
+            // ⭐ กฎสำคัญ: ห้าม picked_up ถ้าร้านยังไม่ ready_for_pickup (ยกเว้นร้านแอดมิน)
+            if (status === 'picked_up') {
+                const isAdminShop = currentOrder.market_owner_id === null;
+                
+                // ร้านแอดมินไม่ต้องรอ ready_for_pickup, ร้านทั่วไปต้องรอ
+                if (!isAdminShop && currentOrder.shop_status !== 'ready_for_pickup') {
+                    return res.status(409).json({
+                        success: false,
+                        error: "Shop is not ready for pickup yet",
+                        shop_status: currentOrder.shop_status || null,
+                        shop_type: "regular_shop",
+                        hint: "รอร้านเปลี่ยนเป็น ready_for_pickup ก่อน"
+                    });
+                }
+                
+                console.log(`📦 Pickup check: ${isAdminShop ? 'Admin shop - no wait needed' : 'Regular shop - checked ready_for_pickup'}`);
+            }
+
+            // ⭐ ตรวจสอบ status progression logic สำหรับไรเดอร์
+            const statusProgression = [
+                'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
+                'picked_up', 'delivering', 'arrived_at_customer', 'completed'
+            ];
+            
+            const currentIndex = statusProgression.indexOf(currentOrder.status);
+            const newIndex = statusProgression.indexOf(status);
+            
+            if (currentIndex !== -1 && newIndex !== -1 && newIndex <= currentIndex) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Invalid status progression",
+                    current_status: currentOrder.status,
+                    requested_status: status,
+                    hint: "สถานะต้องเดินหน้าตามลำดับ"
+                });
+            }
+        }
 
         // Update order status
         const updateResult = await pool.query(
@@ -187,33 +260,23 @@ exports.updateOrderStatus = async (req, res) => {
             [order_id, status]
         );
 
-        // Calculate earnings if completed
-        let riderEarning = null;
-        if (status === 'completed' && currentOrder.delivery_fee) {
-            riderEarning = calculateRiderEarning(currentOrder.delivery_fee);
-
-            // Update rider's balance
-            if (currentOrder.rider_id) {
-                await pool.query(
-                    `UPDATE rider_profiles 
-                     SET gp_balance = COALESCE(gp_balance, 0) + $2
-                     WHERE rider_id = $1`,
-                    [currentOrder.rider_id, riderEarning]
-                );
-                console.log(`💰 Added ฿${riderEarning} to rider ${currentOrder.rider_id} balance`);
-            }
-        }
-
         // Send socket event
         const updateData = {
             order_id: parseInt(order_id),
+            user_id: currentOrder.user_id,
+            market_id: currentOrder.market_id,
             status: status,
+            shop_status: updateResult.rows[0].shop_status,
             hasShop: true,
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
-            market_id: currentOrder.market_id,
-            rider_earning: riderEarning,
+            market_owner_id: currentOrder.market_owner_id,
+            shop_type: currentOrder.market_owner_id === null ? "admin_shop" : "regular_shop",
+            can_go_to_shop: status === 'rider_assigned' ? 
+                (currentOrder.market_owner_id === null || currentOrder.status === 'confirmed') : true,
             timestamp: new Date().toISOString(),
+            action: 'status_updated',
+            old_status: currentOrder.status,
             ...additional_data
         };
 
@@ -227,8 +290,12 @@ exports.updateOrderStatus = async (req, res) => {
                 order_id: parseInt(order_id),
                 old_status: currentOrder.status,
                 new_status: status,
-                rider_earning: riderEarning,
-                updated_at: updateResult.rows[0].updated_at
+                shop_status: updateResult.rows[0].shop_status,
+                shop_type: currentOrder.market_owner_id === null ? "admin_shop" : "regular_shop",
+                can_go_to_shop: status === 'rider_assigned' ? 
+                    (currentOrder.market_owner_id === null || currentOrder.status === 'confirmed') : true,
+                updated_at: updateResult.rows[0].updated_at,
+                ...updateData
             }
         };
 
@@ -274,6 +341,7 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.user_id,
                 o.market_id,
                 m.shop_name,
+                m.owner_id as market_owner_id,
                 o.rider_id,
                 o.address,
                 o.address_id,  
@@ -284,6 +352,7 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.delivery_fee,
                 o.total_price,
                 o.status,
+                o.shop_status,
                 o.created_at,
                 o.updated_at,
                 
@@ -366,11 +435,11 @@ exports.getOrdersWithItems = async (req, res) => {
 
         query += `
             GROUP BY o.order_id, o.address_id,
-                    m.market_id, m.shop_name, m.latitude, m.longitude, m.address, m.phone,
+                    m.market_id, m.shop_name, m.owner_id, m.latitude, m.longitude, m.address, m.phone,
                     ca.id, ca.name, ca.phone, ca.address, ca.district, ca.city, ca.postal_code, ca.notes, ca.latitude, ca.longitude, ca.location_text
             ORDER BY 
                 CASE 
-                    WHEN o.rider_id IS NULL AND o.status IN ('awaiting', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup') THEN 0
+                    WHEN o.rider_id IS NULL AND o.status IN ('waiting', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup') THEN 0
                     ELSE 1 
                 END,
                 o.created_at DESC
@@ -387,7 +456,9 @@ exports.getOrdersWithItems = async (req, res) => {
         const enhancedData = result.rows.map(order => ({
             ...order,
             delivery_fee: order.delivery_fee,
-            rider_earning: null
+            shop_type: order.market_owner_id === null ? 'admin_shop' : 'regular_shop',
+            can_go_to_shop: order.status === 'rider_assigned' ? 
+                (order.market_owner_id === null || order.status === 'confirmed') : true
         }));
 
         const responseData = {
@@ -517,8 +588,7 @@ exports.getOrderById = async (orderId) => {
             success: true,
             data: {
                 ...order,
-                delivery_fee: order.delivery_fee,
-                rider_earning: null
+                delivery_fee: order.delivery_fee
             }
         };
     } catch (error) {
