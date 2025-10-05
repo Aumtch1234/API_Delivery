@@ -33,9 +33,13 @@ const {
 
 const { 
     getJobHistory,
-    getTodayJobHistory,
-    getThisMonthJobHistory,
-    getThisYearJobHistory
+    // getTodayJobHistory,
+    // getThisMonthJobHistory,
+    // getThisYearJobHistory,
+    getJobHistoryByDate,
+    getJobHistoryByDateRange,
+    getJobHistoryByMonth,
+    getJobHistoryByYear
 } = require('../../controllers/Rider/JobHistoryController');
 
 // Import middleware
@@ -140,13 +144,23 @@ router.get('/topup/:topup_id/status', verifyRiderToken, getRiderTopUpStatus);
 router.get('/job-history/all', verifyRiderToken, getJobHistory);
 
 // GET /rider/job-history/today - ดูประวัติการทำงานของไรเดอร์วันนี้
-router.get('/job-history/today', verifyRiderToken, getTodayJobHistory);
-
+// router.get('/job-history/today', verifyRiderToken, getTodayJobHistory);
 // GET /rider/job-history/this-month - ดูประวัติการทำงานของไรเดอร์เดือนนี้
-router.get('/job-history/this-month', verifyRiderToken, getThisMonthJobHistory);
-
+// router.get('/job-history/this-month', verifyRiderToken, getThisMonthJobHistory);
 // GET /rider/job-history/this-year - ดูประวัติการทำงานของไรเดอร์ปีนี้
-router.get('/job-history/this-year', verifyRiderToken, getThisYearJobHistory);
+// router.get('/job-history/this-year', verifyRiderToken, getThisYearJobHistory);
+
+// GET /rider/job-history/bydate?date=2025-10-02 - ดูประวัติการทำงานของไรเดอร์ในวันที่ระบุ (รูปแบบ YYYY-MM-DD)
+router.get('/job-history/bydate', verifyRiderToken, getJobHistoryByDate);
+
+// GET /rider/job-history/bydate-range - ดูประวัติการทำงานของไรเดอร์ในช่วงวันที่ระบุ
+router.get('/job-history/bydate-range', verifyRiderToken, getJobHistoryByDateRange);
+
+// GET /rider/job-history/by-month?month=10&year=2025 - ดูประวัติการทำงานของไรเดอร์ในเดือนที่เลือก
+router.get('/job-history/by-month', verifyRiderToken, getJobHistoryByMonth);
+
+// GET /rider/job-history/by-year?year=2025 - ดูประวัติการทำงานของไรเดอร์ในปีที่เลือก
+router.get('/job-history/by-year', verifyRiderToken, getJobHistoryByYear);
 
 // GET /rider/approved-only-test - ทดสอบ route ที่ต้องการ rider ที่อนุมัติแล้ว
 router.get('/approved-only-test', 
