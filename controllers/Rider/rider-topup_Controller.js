@@ -213,6 +213,21 @@ exports.getRiderTopUpHistory = async (req, res) => {
     const user_id = req.user.user_id; // ดึง user_id จาก JWT token
 
     try {
+        // ดึง rider_id จาก rider_profiles ก่อน
+        const riderResult = await pool.query(
+            'SELECT rider_id FROM rider_profiles WHERE user_id = $1',
+            [user_id]
+        );
+
+        if (riderResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'ไม่พบข้อมูลไรเดอร์ในระบบ'
+            });
+        }
+
+        const rider_id = riderResult.rows[0].rider_id;
+
         // ดึงประวัติการเติมเงินของไรเดอร์ (มี rider_id ในตารางแล้ว)
         const result = await pool.query(
             `SELECT 
@@ -232,6 +247,23 @@ exports.getRiderTopUpHistory = async (req, res) => {
             [user_id]
         );
 
+        // ดึงข้อมูลการหักเครดิตจากการรับงาน (rider_required_gp)
+        const jobDeductions = await pool.query(
+            `SELECT 
+                o.order_id,
+                o.rider_required_gp,
+                o.status,
+                o.created_at,
+                m.shop_name
+             FROM orders o
+             LEFT JOIN markets m ON o.market_id = m.market_id
+             WHERE o.rider_id = $1 
+               AND o.rider_required_gp > 0
+               AND o.status IN ('completed', 'cancelled')
+             ORDER BY o.created_at DESC`,
+            [rider_id]
+        );
+
         // สรุปสถิติการเติมเงิน
         const stats = await pool.query(
             `SELECT 
@@ -245,11 +277,31 @@ exports.getRiderTopUpHistory = async (req, res) => {
             [user_id]
         );
 
+        // สรุปสถิติการหักเครดิต
+        const deductionStats = await pool.query(
+            `SELECT 
+                COUNT(*) as total_jobs_with_deduction,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_jobs_with_deduction,
+                COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_jobs_with_deduction,
+                COALESCE(SUM(rider_required_gp), 0) as total_gp_deducted
+             FROM orders 
+             WHERE rider_id = $1 
+                AND rider_required_gp > 0
+                AND status IN ('completed', 'cancelled')`,
+            [rider_id]
+        );
+
         res.json({
             success: true,
             data: {
+                rider_id: rider_id,
+                user_id: user_id,
                 topup_history: result.rows,
-                statistics: stats.rows[0]
+                job_deductions: jobDeductions.rows,
+                statistics: {
+                    ...stats.rows[0],
+                    ...deductionStats.rows[0]
+                }
             }
         });
     } catch (err) {

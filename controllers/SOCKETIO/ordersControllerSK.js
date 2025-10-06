@@ -36,6 +36,7 @@ exports.getOrderStatus = async (req, res) => {
                 delivery_fee,
                 total_price,
                 status, 
+                shop_status,
                 created_at,
                 updated_at
             FROM orders 
@@ -61,6 +62,7 @@ exports.getOrderStatus = async (req, res) => {
                 user_id: order.user_id,
                 market_id: order.market_id,
                 status: order.status,
+                shop_status: order.shop_status,
                 hasShop: !['waiting'].includes(order.status), // มี shop เมื่อไม่ใช่ waiting
                 hasRider: order.rider_id !== null,
                 rider_id: order.rider_id,
@@ -236,14 +238,14 @@ exports.assignRider = async (req, res) => {
         const currentOrder = checkResult.rows[0];
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
 
-        if (currentOrder.status === 'waiting') {
-            console.log(`❌ Order ${order_id} not yet confirmed by shop`);
-            return res.status(400).json({
-                success: false,
-                error: "Order not yet confirmed by shop",
-                current_status: currentOrder.status
-            });
-        }
+        // if (currentOrder.status === 'waiting') {
+        //     console.log(`❌ Order ${order_id} not yet confirmed by shop`);
+        //     return res.status(400).json({
+        //         success: false,
+        //         error: "Order not yet confirmed by shop",
+        //         current_status: currentOrder.status
+        //     });
+        // }
 
         if (currentOrder.rider_id !== null) {
             console.log(`❌ Order ${order_id} already has rider: ${currentOrder.rider_id}`);
@@ -341,7 +343,11 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         // Get current order info including user_id
         const currentResult = await pool.query(
-            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
+            // "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
+            `SELECT o.status, o.rider_id, o.market_id, o.user_id, m.owner_id as market_owner_id 
+             FROM orders o 
+             LEFT JOIN markets m ON o.market_id = m.market_id 
+             WHERE o.order_id = $1`,
             [order_id]
         );
 
@@ -375,6 +381,7 @@ exports.updateOrderStatus = async (req, res) => {
             hasShop: !['waiting'].includes(status), // มี shop เมื่อไม่ใช่ waiting
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
+            market_owner_id: currentOrder.market_owner_id, // เพิ่ม market_owner_id
             timestamp: new Date().toISOString(),
             action: 'status_updated',
             old_status: currentOrder.status,
@@ -406,6 +413,14 @@ exports.updateOrderStatus = async (req, res) => {
                 new_status: status,
                 updated_at: updateResult.rows[0].updated_at,
                 ...updateData
+            },
+            order: {
+                id: parseInt(order_id),
+                status: status,
+                market_owner_id: currentOrder.market_owner_id, // ส่งข้อมูลนี้ให้ Flutter
+                marketLocation: {
+                    owner_id: currentOrder.market_owner_id // สำหรับ backward compatibility
+                }
             }
         };
 
@@ -531,7 +546,11 @@ exports.updatePreparationStatus = async (req, res) => {
     try {
         // ตรวจสอบว่าออเดอร์อยู่ในสถานะที่เหมาะสม
         const checkResult = await pool.query(
-            "SELECT status, market_id, user_id, rider_id FROM orders WHERE order_id = $1",
+            // "SELECT status, market_id, user_id, rider_id FROM orders WHERE order_id = $1",
+            `SELECT o.status, o.market_id, o.user_id, o.rider_id, m.owner_id as market_owner_id 
+             FROM orders o 
+             LEFT JOIN markets m ON o.market_id = m.market_id 
+             WHERE o.order_id = $1`,
             [order_id]
         );
 
@@ -545,21 +564,33 @@ exports.updatePreparationStatus = async (req, res) => {
         const currentOrder = checkResult.rows[0];
         
         // ตรวจสอบว่าสามารถอัปเดตสถานะการเตรียมได้หรือไม่
-        const validCurrentStatuses = ['confirmed', 'preparing', 'ready_for_pickup'];
-        if (!validCurrentStatuses.includes(currentOrder.status)) {
-            return res.status(400).json({
-                success: false,
-                error: "Cannot update preparation status from current order status",
-                current_status: currentOrder.status
-            });
+        // const validCurrentStatuses = ['confirmed', 'preparing', 'ready_for_pickup'];
+        // if (!validCurrentStatuses.includes(currentOrder.status)) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         error: "Cannot update preparation status from current order status",
+        //         current_status: currentOrder.status
+        //     });
+        // }
+        // อนุญาตให้อัปเดต shop_status ระหว่างที่งานเดินอยู่ (confirmed → arrived_at_shop)
+        const okFrom = new Set(['confirmed','rider_assigned','going_to_shop','arrived_at_shop','picked_up','delivering','arrived_at_customer']);
+        if (!okFrom.has(currentOrder.status)) {
+            return res.status(400).json({ success:false, error: 'Cannot set preparation status from current order status', current_status: currentOrder.status });
         }
 
         // อัปเดตสถานะ
-        const updateResult = await pool.query(
-            `UPDATE orders 
-             SET status = $2, updated_at = NOW()
-             WHERE order_id = $1
-             RETURNING *`,
+        // const updateResult = await pool.query(
+        //     `UPDATE orders 
+        //      SET status = $2, updated_at = NOW()
+        //      WHERE order_id = $1
+        //      RETURNING *`,
+        //     [order_id, status]
+        // );
+        const upd = await pool.query(
+            `UPDATE orders
+            SET shop_status = $2, updated_at = NOW()
+            WHERE order_id = $1
+            RETURNING *`,
             [order_id, status]
         );
 
@@ -570,9 +601,11 @@ exports.updatePreparationStatus = async (req, res) => {
             user_id: currentOrder.user_id,
             market_id: currentOrder.market_id,
             status: status,
+            shop_status: upd.rows[0].shop_status,
             hasShop: true,
             hasRider: currentOrder.rider_id !== null,
             rider_id: currentOrder.rider_id,
+            market_owner_id: currentOrder.market_owner_id, // เพิ่ม market_owner_id
             timestamp: new Date().toISOString(),
             action: 'preparation_status_updated',
             old_status: currentOrder.status
@@ -584,7 +617,16 @@ exports.updatePreparationStatus = async (req, res) => {
         res.json({
             success: true,
             message: `Order preparation status updated to ${status}`,
-            data: updateData
+            data: updateData,
+            order: {
+                id: parseInt(order_id),
+                status: currentOrder.status,
+                shop_status: upd.rows[0].shop_status,
+                market_owner_id: currentOrder.market_owner_id, // ส่งข้อมูลนี้ให้ Flutter
+                marketLocation: {
+                    owner_id: currentOrder.market_owner_id // สำหรับ backward compatibility
+                }
+            }
         });
 
     } catch (err) {
@@ -598,102 +640,137 @@ exports.updatePreparationStatus = async (req, res) => {
 };
 
 // API: ไรเดอร์อัปเดตสถานะตำแหน่ง
-exports.updateRiderLocation = async (req, res) => {
-    const { order_id, status } = req.body; // status: 'going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'
-    logAPICall('/update_rider_location', 'POST', req.ip, req.body);
+// exports.updateRiderLocation = async (req, res) => {
+//     const { order_id, status } = req.body; // status: 'going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'
+//     logAPICall('/update_rider_location', 'POST', req.ip, req.body);
 
-    const validRiderStatuses = ['going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'];
-    if (!order_id || !status || !validRiderStatuses.includes(status)) {
-        return res.status(400).json({
-            success: false,
-            error: "order_id and valid rider status are required",
-            valid_statuses: validRiderStatuses
-        });
-    }
+//     const validRiderStatuses = ['going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'];
+//     if (!order_id || !status || !validRiderStatuses.includes(status)) {
+//         return res.status(400).json({
+//             success: false,
+//             error: "order_id and valid rider status are required",
+//             valid_statuses: validRiderStatuses
+//         });
+//     }
 
-    try {
-        const checkResult = await pool.query(
-            "SELECT status, rider_id, market_id, user_id FROM orders WHERE order_id = $1",
-            [order_id]
-        );
+//     try {
+//         const checkResult = await pool.query(
+//             `SELECT o.status, o.rider_id, o.market_id, o.user_id, o.shop_status, m.owner_id as market_owner_id 
+//              FROM orders o 
+//              LEFT JOIN markets m ON o.market_id = m.market_id 
+//              WHERE o.order_id = $1`,
+//             [order_id]
+//         );
 
-        if (checkResult.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                error: "Order not found"
-            });
-        }
+//         if (checkResult.rows.length === 0) {
+//             return res.status(404).json({
+//                 success: false,
+//                 error: "Order not found"
+//             });
+//         }
 
-        const currentOrder = checkResult.rows[0];
+//         const currentOrder = checkResult.rows[0];
 
-        // ตรวจสอบว่าออเดอร์มีไรเดอร์แล้ว
-        if (!currentOrder.rider_id) {
-            return res.status(400).json({
-                success: false,
-                error: "Order has no assigned rider"
-            });
-        }
+//         // ตรวจสอบว่าออเดอร์มีไรเดอร์แล้ว
+//         if (!currentOrder.rider_id) {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: "Order has no assigned rider"
+//             });
+//         }
 
-        // ตรวจสอบ status progression logic
-        const statusProgression = [
-            'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
-            'picked_up', 'delivering', 'arrived_at_customer', 'completed'
-        ];
+//         // ⭐ เช็คเงื่อนไขสำคัญ: ร้านทั่วไปต้องรอ confirmed ก่อน going_to_shop
+//         if (status === 'going_to_shop') {
+//             const isAdminShop = currentOrder.market_owner_id === null;
+//             const needsConfirmation = !isAdminShop;
+            
+//             if (needsConfirmation && currentOrder.status === 'rider_assigned') {
+//                 // ร้านทั่วไปต้องยืนยันออเดอร์ก่อน (waiting → confirmed)
+//                 return res.status(409).json({
+//                     success: false,
+//                     error: "Shop must confirm order before rider can go to shop",
+//                     current_status: currentOrder.status,
+//                     shop_type: isAdminShop ? "admin_shop" : "regular_shop",
+//                     hint: "รอร้านยืนยันออเดอร์ก่อน (status: confirmed)"
+//                 });
+//             }
+            
+//             console.log(`🏪 Shop check: ${isAdminShop ? 'Admin shop' : 'Regular shop'} - ${needsConfirmation ? 'Needs confirmation' : 'No confirmation needed'}`);
+//         }
+
+//         // ตรวจสอบ status progression logic
+//         const statusProgression = [
+//             'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
+//             'picked_up', 'delivering', 'arrived_at_customer', 'completed'
+//         ];
         
-        const currentIndex = statusProgression.indexOf(currentOrder.status);
-        const newIndex = statusProgression.indexOf(status);
+//         const currentIndex = statusProgression.indexOf(currentOrder.status);
+//         const newIndex = statusProgression.indexOf(status);
         
-        if (currentIndex === -1 || newIndex === -1 || newIndex <= currentIndex) {
-            return res.status(400).json({
-                success: false,
-                error: "Invalid status progression",
-                current_status: currentOrder.status,
-                requested_status: status
-            });
-        }
+//         if (currentIndex === -1 || newIndex === -1 || newIndex <= currentIndex) {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: "Invalid status progression",
+//                 current_status: currentOrder.status,
+//                 requested_status: status
+//             });
+//         }
 
-        // อัปเดตสถานะ
-        const updateResult = await pool.query(
-            `UPDATE orders 
-             SET status = $2, updated_at = NOW()
-             WHERE order_id = $1
-             RETURNING *`,
-            [order_id, status]
-        );
+//         // กฎสำคัญ: ห้าม picked_up ถ้าร้านยังไม่ ready_for_pickup
+//         if (status === 'picked_up' && currentOrder.shop_status !== 'ready_for_pickup') {
+//             return res.status(409).json({
+//                 success:false,
+//                 error:'Shop is not ready for pickup yet',
+//                 shop_status: currentOrder.shop_status || null,
+//                 hint: "รอร้านเปลี่ยนเป็น ready_for_pickup ก่อน"
+//             });
+//         }
 
-        console.log(`✅ Rider location for order ${order_id} updated to: ${status}`);
+//         // อัปเดตสถานะ อนุญาต going_to_shop/arrived_at_shop ได้โดยไม่ต้องรอ shop_status
+//         const updateResult = await pool.query(
+//             `UPDATE orders 
+//              SET status = $2, updated_at = NOW()
+//              WHERE order_id = $1
+//              RETURNING *`,
+//             [order_id, status]
+//         );
 
-        const updateData = {
-            order_id: parseInt(order_id),
-            user_id: currentOrder.user_id,
-            market_id: currentOrder.market_id,
-            status: status,
-            hasShop: true,
-            hasRider: true,
-            rider_id: currentOrder.rider_id,
-            timestamp: new Date().toISOString(),
-            action: 'rider_location_updated',
-            old_status: currentOrder.status
-        };
+//         console.log(`✅ Rider location for order ${order_id} updated to: ${status}`);
 
-        // ส่ง socket event
-        emitOrderUpdate(order_id, updateData);
+//         const updateData = {
+//             order_id: parseInt(order_id),
+//             user_id: currentOrder.user_id,
+//             market_id: currentOrder.market_id,
+//             status: status,
+//             shop_status: updateResult.rows[0].shop_status, // เพิ่ม shop_status
+//             hasShop: true,
+//             hasRider: true,
+//             rider_id: currentOrder.rider_id,
+//             market_owner_id: currentOrder.market_owner_id, // เพิ่ม market_owner_id สำคัญมาก!
 
-        res.json({
-            success: true,
-            message: `Rider location updated to ${status}`,
-            data: updateData
-        });
+//             timestamp: new Date().toISOString(),
+//             action: 'rider_location_updated',
+//             old_status: currentOrder.status
+//         };
 
-    } catch (err) {
-        console.error("❌ updateRiderLocation error:", err);
-        res.status(500).json({
-            success: false,
-            error: "Database error",
-            message: err.message
-        });
-    }
-};
+//         // ส่ง socket event
+//         emitOrderUpdate(order_id, updateData);
+
+//         res.json({
+//             success: true,
+//             message: `Rider location updated → ${status}`,
+//             data: updateData
+//         });
+
+//     } catch (err) {
+//         console.error("❌ updateRiderLocation error:", err);
+//         res.status(500).json({
+//             success: false,
+//             error: "Database error",
+//             message: err.message
+//         });
+//     }
+// };
 
 // API: ปิดงาน (complete order)
 exports.completeOrder = async (req, res) => {
@@ -806,6 +883,8 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.market_id,
                 m.shop_name, 
                 o.rider_id,
+                ca.name AS customer_name,
+                ca.phone AS customer_phone,
                 o.address,
                 o.delivery_type,
                 o.payment_method,
@@ -814,6 +893,7 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.delivery_fee,
                 o.total_price,
                 o.status,
+                o.shop_status,
                 o.created_at,
                 o.updated_at,
                 COALESCE(
@@ -827,6 +907,7 @@ exports.getOrdersWithItems = async (req, res) => {
                             'subtotal', oi.subtotal,
                             'selected_options', oi.selected_options,
                             'original_price', oi.original_price,
+                            'additional_notes', oi.additional_notes,
                             'original_subtotal', oi.original_subtotal,
                             'original_options', oi.original_options
                         )
@@ -836,6 +917,7 @@ exports.getOrdersWithItems = async (req, res) => {
             FROM orders o
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             LEFT JOIN markets m ON o.market_id = m.market_id
+            LEFT JOIN client_addresses ca ON o.address_id = ca.id
         `;
 
         const conditions = [];
@@ -871,7 +953,7 @@ exports.getOrdersWithItems = async (req, res) => {
         }
 
         query += `
-            GROUP BY o.order_id, m.shop_name
+            GROUP BY o.order_id, m.shop_name, ca.name, ca.phone, o.shop_status
             ORDER BY o.created_at DESC
             LIMIT $${valueIndex++} OFFSET $${valueIndex++}
         `;

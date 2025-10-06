@@ -15,7 +15,10 @@ router.post('/assign_rider', socketController.assignRider);
 // อัปเดตสถานะออเดอร์ทั่วไป
 router.put('/update_order_status', socketController.updateOrderStatus);
 
-// อัปเดตสถานะออเดอร์ (Socket API)
+// อัปเดตตำแหน่งไรเดอร์ (Socket API) อันใหม่นี้
+// router.post('/update_rider_location', socketController.updateRiderLocation);
+
+// อัปเดตสถานะออเดอร์ (Socket API) 
 router.post('/update_preparation_status', socketController.updatePreparationStatus);
 
 // ยกเลิกออเดอร์

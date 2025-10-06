@@ -151,6 +151,7 @@ async function getCurrentOrderStatus(orderId, socket) {
         delivery_fee,
         total_price,
         status, 
+        shop_status,
         created_at,
         updated_at
       FROM orders 
@@ -165,6 +166,7 @@ async function getCurrentOrderStatus(orderId, socket) {
         user_id: order.user_id,
         market_id: order.market_id,
         status: order.status,
+        shop_status: order.shop_status,
         hasShop: order.status !== "waiting",
         hasRider: order.rider_id !== null,
         rider_id: order.rider_id,

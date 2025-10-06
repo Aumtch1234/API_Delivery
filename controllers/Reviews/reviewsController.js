@@ -110,25 +110,38 @@ exports.upsertRiderReview = async (req, res) => {
 
 // ================ List Reviews Market =================
 exports.listMarketReviews = async (req, res) => {
-  const marketId = parseInt(req.params.marketId, 10);
+  const { user_id } = req.user || {};
+  if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
+  
+  // ใช้ marketId จาก middleware ที่ดึงจาก token
+  const marketId = req.marketId;
   const { limit, offset } = parsePage(req);
 
   const sql = `
-    SELECT r.review_id, r.rating, r.comment, r.created_at,
+    SELECT o.order_id, r.review_id, r.rating, r.comment, r.created_at,
            u.display_name AS reviewer_name, u.photo_url AS reviewer_photo, r.user_id
     FROM public.market_reviews r
     JOIN public.users u ON u.user_id = r.user_id
+    JOIN public.orders o ON o.order_id = r.order_id AND o.market_id = r.market_id
     WHERE r.market_id = $1
     ORDER BY r.created_at DESC
     LIMIT $2 OFFSET $3
   `;
 
-    // ดึงสรุปของ market
+    // ดึงสรุปของ market เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
     let summary;
     try {
         summary = await pool.query(
-            `SELECT market_id, shop_name, rating AS rating_avg, reviews_count
-             FROM public.markets WHERE market_id = $1`,
+            `SELECT m.market_id, m.shop_name, m.rating AS rating_avg, m.reviews_count,
+              COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
+              COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
+              COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
+              COUNT(*) FILTER (WHERE r.rating = 2) AS rating_2,
+              COUNT(*) FILTER (WHERE r.rating = 1) AS rating_1
+             FROM public.markets m
+              LEFT JOIN public.market_reviews r ON r.market_id = m.market_id
+              WHERE m.market_id = $1
+              GROUP BY m.market_id, m.shop_name, m.rating, m.reviews_count`,
             [marketId]
         );
     } catch (err) {
@@ -137,7 +150,13 @@ exports.listMarketReviews = async (req, res) => {
 
   try {
     const { rows } = await pool.query(sql, [marketId, limit, offset]);
-    return res.json({ ok: true, market_summary: summary.rows[0], items: rows, paging: { limit, offset } });
+    return res.json({ 
+      ok: true, 
+      market_summary: summary.rows[0], 
+      items: rows, 
+      paging: { limit, offset },
+      authenticated_user: user_id
+    });
   } catch (err) {
     return res.status(400).json({ error: 'Cannot list market reviews', detail: err.message });
   }
@@ -145,27 +164,39 @@ exports.listMarketReviews = async (req, res) => {
 
 // ================ List Reviews Rider =================
 exports.listRiderReviews = async (req, res) => {
-  const riderId = parseInt(req.params.riderId, 10);
+  const { user_id } = req.user || {};
+  if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
+  
+  // ใช้ riderId จาก middleware ที่ดึงจาก token
+  const riderId = req.riderId;
   const { limit, offset } = parsePage(req);
 
   const sql = `
-    SELECT r.review_id, r.rating, r.comment, r.created_at,
+    SELECT o.order_id, r.review_id, r.rating, r.comment, r.created_at,
            u.display_name AS reviewer_name, u.photo_url AS reviewer_photo, r.user_id
     FROM public.rider_reviews r
     JOIN public.users u ON u.user_id = r.user_id
+    JOIN public.orders o ON o.order_id = r.order_id AND o.rider_id = r.rider_id
     WHERE r.rider_id = $1
     ORDER BY r.created_at DESC
     LIMIT $2 OFFSET $3
   `;
 
-    // ดึงสรุปของ rider
+    // ดึงสรุปของ rider เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
     let summary;
     try {
         summary = await pool.query(
-            `SELECT rp.rider_id, u.display_name AS rider_name, rp.rating AS rating_avg, rp.reviews_count
+            `SELECT rp.rider_id, u.display_name AS rider_name, rp.rating AS rating_avg, rp.reviews_count,
+              COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
+              COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
+              COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
+              COUNT(*) FILTER (WHERE r.rating = 2) AS rating_2,
+              COUNT(*) FILTER (WHERE r.rating = 1) AS rating_1
              FROM public.rider_profiles rp
-             JOIN public.users u ON u.user_id = rp.user_id
-             WHERE rp.rider_id = $1`,
+              JOIN public.users u ON u.user_id = rp.user_id
+              LEFT JOIN public.rider_reviews r ON r.rider_id = rp.rider_id
+              WHERE rp.rider_id = $1
+              GROUP BY rp.rider_id, u.display_name, rp.rating, rp.reviews_count`,
             [riderId]
         );
     } catch (err) {
@@ -174,7 +205,13 @@ exports.listRiderReviews = async (req, res) => {
 
   try {
     const { rows } = await pool.query(sql, [riderId, limit, offset]);
-    return res.json({ ok: true, rider_summary: summary.rows[0], items: rows, paging: { limit, offset } });
+    return res.json({ 
+      ok: true, 
+      rider_summary: summary.rows[0], 
+      items: rows, 
+      paging: { limit, offset },
+      authenticated_user: user_id
+    });
   } catch (err) {
     return res.status(400).json({ error: 'Cannot list rider reviews', detail: err.message });
   }
