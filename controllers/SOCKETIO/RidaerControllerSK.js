@@ -67,22 +67,106 @@ exports.assignRider = async (req, res) => {
         }
 
         console.log(`🔄 Assigning rider ${rider_id} to order ${order_id}...`);
-        const updateResult = await pool.query(
-            `UPDATE orders 
-             SET status = 'rider_assigned', 
-                 rider_id = $2, 
-                 updated_at = NOW()
-             WHERE order_id = $1
-             RETURNING *`,
-            [order_id, rider_id]
-        );
-
-        if (updateResult.rows.length === 0) {
-            console.log(`❌ Failed to assign rider to order ${order_id}`);
-            return res.status(500).json({
-                success: false,
-                error: "Failed to update order"
-            });
+        
+        // ประกาศตัวแปรนอก transaction block
+        let currentCredit, requiredCredit, newBalance, updateResult;
+        
+        // ⭐ ตรวจสอบเครดิตและหักเครดิตในการทำธุรกรรม
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // ดึงข้อมูลเครดิตของไรเดอร์และค่าใช้จ่ายของออเดอร์
+            const riderCreditResult = await client.query(
+                'SELECT gp_balance FROM rider_profiles WHERE rider_id = $1',
+                [rider_id]
+            );
+            
+            const orderCostResult = await client.query(
+                'SELECT rider_required_gp FROM orders WHERE order_id = $1',
+                [order_id]
+            );
+            
+            if (riderCreditResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                console.log(`❌ Rider profile not found: ${rider_id}`);
+                return res.status(404).json({
+                    success: false,
+                    error: "Rider profile not found"
+                });
+            }
+            
+            if (orderCostResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                console.log(`❌ Order cost data not found: ${order_id}`);
+                return res.status(404).json({
+                    success: false,
+                    error: "Order cost data not found"
+                });
+            }
+            
+            currentCredit = parseFloat(riderCreditResult.rows[0].gp_balance || 0);
+            requiredCredit = parseFloat(orderCostResult.rows[0].rider_required_gp || 0);
+            newBalance = currentCredit - requiredCredit;
+            
+            console.log(`💳 Credit check - Current: ${currentCredit}, Required: ${requiredCredit}, New Balance: ${newBalance}`);
+            
+            // ตรวจสอบว่าเครดิตเพียงพอหรือไม่
+            if (newBalance < 0) {
+                await client.query('ROLLBACK');
+                console.log(`❌ Insufficient credit for rider ${rider_id}. Required: ${requiredCredit}, Available: ${currentCredit}`);
+                return res.status(400).json({
+                    success: false,
+                    error: "Insufficient credit",
+                    required_credit: requiredCredit,
+                    available_credit: currentCredit,
+                    shortage: Math.abs(newBalance)
+                });
+            }
+            
+            // อัปเดทออเดอร์
+            updateResult = await client.query(
+                `UPDATE orders 
+                 SET status = 'rider_assigned', 
+                     rider_id = $2, 
+                     updated_at = NOW()
+                 WHERE order_id = $1
+                 RETURNING *`,
+                [order_id, rider_id]
+            );
+            
+            // หักเครดิตจากไรเดอร์
+            const creditUpdateResult = await client.query(
+                'UPDATE rider_profiles SET gp_balance = $1 WHERE rider_id = $2 RETURNING gp_balance',
+                [newBalance, rider_id]
+            );
+            
+            if (updateResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                console.log(`❌ Failed to assign rider to order ${order_id}`);
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to update order"
+                });
+            }
+            
+            if (creditUpdateResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                console.log(`❌ Failed to update rider credit for rider ${rider_id}`);
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to update rider credit"
+                });
+            }
+            
+            await client.query('COMMIT');
+            console.log(`✅ Rider ${rider_id} accepted order ${order_id}. Credit deducted: ${requiredCredit}, New balance: ${newBalance}`);
+            
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
         }
 
         console.log(`✅ Rider ${rider_id} accepted order ${order_id}`);
@@ -95,7 +179,11 @@ exports.assignRider = async (req, res) => {
             hasRider: true,
             rider_id: parseInt(rider_id),
             market_id: currentOrder.market_id,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            credit_info: {
+                credit_deducted: requiredCredit,
+                new_balance: newBalance
+            }
         };
 
         console.log(`📡 Emitting socket event:`, updateData);
@@ -108,7 +196,12 @@ exports.assignRider = async (req, res) => {
                 order_id: parseInt(order_id),
                 status: "rider_assigned",
                 rider_id: parseInt(rider_id),
-                assigned_at: updateResult.rows[0].updated_at
+                assigned_at: updateResult.rows[0].updated_at,
+                credit_transaction: {
+                    previous_balance: currentCredit,
+                    credit_deducted: requiredCredit,
+                    new_balance: newBalance
+                }
             }
         };
 
@@ -350,7 +443,10 @@ exports.getOrdersWithItems = async (req, res) => {
                 o.note,
                 o.distance_km,
                 o.delivery_fee,
+                o.bonus,
                 o.total_price,
+                o.original_total_price,
+                o.rider_required_gp,
                 o.status,
                 o.shop_status,
                 o.created_at,

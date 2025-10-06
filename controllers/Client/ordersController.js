@@ -96,8 +96,8 @@ exports.PostOrders = async (req, res) => {
       // 2) เตรียม insert order_items
       const insertItemSQL = `
         INSERT INTO order_items
-          (order_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+          (order_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options, additional_notes)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
       `;
 
       let calculatedOriginalTotal = 0; //รวมต้นทุนของออเดอร์นี้
@@ -105,6 +105,18 @@ exports.PostOrders = async (req, res) => {
 
       // 3) loop สินค้าแต่ละชิ้น
       for (const item of items) {
+        // ดึงข้อมูล note จาก carts ก่อน (ถ้ามี cart_id)
+        let cartNote = '';
+        if (item.cart_id) {
+          const cartRes = await client.query(
+            'SELECT note FROM carts WHERE cart_id = $1',
+            [item.cart_id]
+          );
+          if (cartRes.rows.length > 0) {
+            cartNote = cartRes.rows[0].note || '';
+          }
+        }
+
         // ดึงต้นทุนจาก foods
         const foodRes = await client.query(
           'SELECT price, options FROM foods WHERE food_id = $1',
@@ -171,7 +183,8 @@ exports.PostOrders = async (req, res) => {
           JSON.stringify(selectedOptionsArr ?? []), // เก็บราคาขายของ option ที่เลือกใน selected_options
           money(baseOriginalPrice),                    // original_price = ฐานต้นทุน/หน่วย (ไม่รวม option)
           originalSubtotal,                     // original_subtotal = รวมต้นทุนทั้งบรรทัด
-          JSON.stringify(originalOptionsPicked) // original_options (เฉพาะที่เลือก + ต้นทุน)
+          JSON.stringify(originalOptionsPicked), // original_options (เฉพาะที่เลือก + ต้นทุน)
+          cartNote || item.additional_notes || ''  // ใช้ note จาก carts หรือ additional_notes จาก client
         ]);
       }
 
@@ -287,7 +300,7 @@ exports.getOrderStatus = async (req, res) => {
     }
 
     const itemsRes = await pool.query(
-      `SELECT item_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options
+      `SELECT item_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options, additional_notes
        FROM order_items
        WHERE order_id = $1`,
       [order_id]
@@ -340,7 +353,7 @@ exports.getOrdersByCustomer = async (req, res) => {
     const orders = [];
     for (const order of ordersRes.rows) {
       const itemsRes = await pool.query(
-        `SELECT item_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options
+        `SELECT item_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options, additional_notes
          FROM order_items
          WHERE order_id = $1`,
         [order.order_id]

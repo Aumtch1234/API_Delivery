@@ -907,6 +907,7 @@ exports.getOrdersWithItems = async (req, res) => {
                             'subtotal', oi.subtotal,
                             'selected_options', oi.selected_options,
                             'original_price', oi.original_price,
+                            'additional_notes', oi.additional_notes,
                             'original_subtotal', oi.original_subtotal,
                             'original_options', oi.original_options
                         )
