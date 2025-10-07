@@ -121,7 +121,7 @@ exports.getAddresses = async (req, res) => {
       `SELECT id, name, phone, address, district, city, postal_code, notes, latitude, longitude, location_text, set_address
        FROM client_addresses
        WHERE user_id = $1
-       ORDER BY id DESC`, // เอาล่าสุดขึ้นก่อน
+       ORDER BY set_address DESC, id DESC`, // set_address = true แสดงก่อน แล้วเอาล่าสุดขึ้นก่อน
       [user_id]
     );
 
