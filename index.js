@@ -25,6 +25,11 @@ const CustomerChatRoutes = require('./SocketRoutes/Chats/CustomerChatRoutes');
 // Socket handlers (ใช้ io เดียวกัน)
 const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // ฟังก์ชันรับ io (order / status updates)
 
+const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
+
+
+
+
 
 const app = express();
 app.use(cors());
@@ -41,6 +46,7 @@ app.use('/chat/rider', RiderChatRoutes);
 app.use('/chat/customer', CustomerChatRoutes);
 app.use('/dashboard/sales', DashboardSaleRoutes); 
 app.use('/reviews', ReviewsRoutes);
+app.use('/client/categories', FoodCategoryRoutes); // ✅ ใช้งาน path
 
 
 // HTTP + Socket.IO
@@ -115,7 +121,7 @@ cron.schedule('*/1 * * * *', async () => {
 // Listen
 const PORT = process.env.PORT || 4000;
 
-const HOST = '192.168.1.129';
+const HOST = '192.168.1.113';
 
 
 
