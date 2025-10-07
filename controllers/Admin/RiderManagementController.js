@@ -174,12 +174,13 @@ exports.approveRider = async (req, res) => {
             });
         }
 
-        // อัปเดตสถานะเป็น approved
+        // อัปเดตสถานะเป็น approved และเพิ่มเครดิตเริ่มต้น 100.00 บาท
         await client.query(`
             UPDATE rider_profiles 
             SET approval_status = 'approved',
                 approved_by = $1,
                 approved_at = CURRENT_TIMESTAMP,
+                gp_balance = 100.00,
                 updated_at = CURRENT_TIMESTAMP
             WHERE rider_id = $2
         `, [admin_id, rider_id]);
@@ -196,9 +197,10 @@ exports.approveRider = async (req, res) => {
         await client.query('COMMIT');
 
         res.json({ 
-            message: 'อนุมัติไรเดอร์สำเร็จ',
+            message: 'อนุมัติไรเดอร์สำเร็จ และได้รับเครดิตเริ่มต้น 100.00 บาท',
             rider_id: rider_id,
-            status: 'approved'
+            status: 'approved',
+            initial_credit: 100.00
         });
 
     } catch (error) {
