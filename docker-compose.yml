@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  # ✅ PostgreSQL Database
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: delivery
+    ports:
+      - "5432:5432"
+    # volumes:
+    #   - ./pgdata:/var/lib/postgresql/data
+
+  # ✅ pgAdmin (GUI จัดการ DB)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+
+  # ✅ API Delivery (Node.js Backend)
+  api:
+    build: .
+    container_name: delivery-api
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: delivery
+      DB_PORT: 5432
+    depends_on:
+      - postgres

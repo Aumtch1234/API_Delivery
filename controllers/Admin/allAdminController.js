@@ -19,12 +19,21 @@ exports.verifyAdmin = async (req, res) => {
 
 exports.getPendingAdmins = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, username, role FROM admins ORDER BY id ASC'
-    );
+    const result = await pool.query(`
+      SELECT id, username, role 
+      FROM admins
+      ORDER BY 
+        CASE 
+          WHEN role = 'm_admin' THEN 1
+          WHEN role = 'admin' THEN 2
+          WHEN role = 'user' THEN 3
+          ELSE 4
+        END,
+        id ASC
+    `);
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching pending admins:', err);
+    console.error('Error fetching all admins:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

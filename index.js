@@ -1,6 +1,7 @@
 // index.js  (single-file server + socket.io)
 require('dotenv').config();
 const express = require('express');
+const path = require("path");
 const cors = require('cors');
 const cron = require('node-cron');
 const http = require('http');           // ⬅️ เพิ่ม
@@ -39,8 +40,11 @@ app.use('/socket', SocketRoutes);
 app.use('/riders/socket', RiderSocketRoutes);
 app.use('/chat/rider', RiderChatRoutes);
 app.use('/chat/customer', CustomerChatRoutes);
-app.use('/dashboard/sales', DashboardSaleRoutes); 
+app.use('/dashboard/sales', DashboardSaleRoutes);
 app.use('/reviews', ReviewsRoutes);
+app.use("/uploads/chat-images", express.static(path.join(__dirname, "uploads/chat-images")));
+
+
 
 
 // HTTP + Socket.IO
@@ -50,7 +54,7 @@ const server = http.createServer(app);  // ⬅️ ใช้ server แทน app
 const { Server } = require("socket.io");
 const attachChatHandlers = require('./SocketRoutes/Events/ChatEvents');
 const io = new Server(server, {
-  cors: { origin: "*", methods: ['GET','POST','PUT','DELETE'] }
+  cors: { origin: "*", methods: ['GET', 'POST', 'PUT', 'DELETE'] }
 });
 
 // ให้ io เข้าถึงใน controller เผื่อ controller ฝั่ง HTTP ต้องการ emit ผ่าน req.app.get('io'
@@ -60,42 +64,59 @@ app.set('io', io);
 initSocket(io);          // order / rider / shop events
 attachChatHandlers(io);
 
-// Cron job ทุก 1 นาที
-cron.schedule('*/1 * * * *', async () => {
+// Cron job ทุก 1 วิ
+cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
+
     const result = await pool.query(
       'SELECT market_id, open_time, close_time, is_open, is_manual_override, override_until FROM markets'
     );
 
     for (const market of result.rows) {
-      if (!market.open_time || !market.close_time) continue;
+      if (!market.open_time || !market.close_time) {
+        // console.log(`[Cron] ร้าน ${market.market_id} ไม่มีเวลาเปิด/ปิด`);
+        continue;
+      }
 
       let skipUpdate = false;
 
+      // ตรวจสอบ override manual
       if (market.is_manual_override) {
         if (market.override_until && now > new Date(market.override_until)) {
           await pool.query(
             'UPDATE markets SET is_manual_override = false, override_until = NULL WHERE market_id = $1',
             [market.market_id]
           );
+          // console.log(`[Cron] ยกเลิก override ร้าน ${market.market_id} (หมดเวลา)`);
         } else {
           skipUpdate = true;
+          // console.log(`[Cron] ร้าน ${market.market_id} override อยู่ ข้าม`);
         }
       }
 
       if (!skipUpdate) {
+        // แปลงเวลาเปิด/ปิดจาก string "HH:mm" เป็น Date
         const [openHour, openMinute] = market.open_time.split(':').map(Number);
         const [closeHour, closeMinute] = market.close_time.split(':').map(Number);
 
-        const openDate = new Date(now); openDate.setHours(openHour, openMinute, 0, 0);
-        const closeDate = new Date(now); closeDate.setHours(closeHour, closeMinute, 0, 0);
+        const openDate = new Date(now);
+        openDate.setHours(openHour, openMinute, 0, 0);
+
+        const closeDate = new Date(now);
+        closeDate.setHours(closeHour, closeMinute, 0, 0);
 
         let shouldOpen = false;
+
         if (closeDate <= openDate) {
-          if (now >= openDate || now <= closeDate) shouldOpen = true;
+          // ข้ามคืน
+          if (now >= openDate || now <= closeDate) {
+            shouldOpen = true;
+          }
         } else {
-          if (now >= openDate && now <= closeDate) shouldOpen = true;
+          if (now >= openDate && now <= closeDate) {
+            shouldOpen = true;
+          }
         }
 
         if (market.is_open !== shouldOpen) {
@@ -103,11 +124,14 @@ cron.schedule('*/1 * * * *', async () => {
             shouldOpen,
             market.market_id,
           ]);
+          // console.log(`[Cron] ร้าน ${market.market_id} อัปเดต is_open เป็น ${shouldOpen}`);
         }
       }
     }
+
+    // console.log(`[Cron] ✅ จบรอบเวลา: ${now.toISOString()}\n`);
   } catch (error) {
-    console.error("Cron error:", error);
+    console.error(`[Cron] ❌ เกิดข้อผิดพลาด:`, error);
   }
 });
 
