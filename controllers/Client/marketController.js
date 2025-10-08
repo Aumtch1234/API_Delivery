@@ -53,7 +53,17 @@ exports.marketsController = async (req, res) => {
 
 exports.updateMarketController = async (req, res) => {
   const { id } = req.params;
-  const { shop_name, shop_description, open_time, close_time } = req.body;
+  const {
+    shop_name,
+    shop_description,
+    open_time,
+    close_time,
+    address,
+    phone,
+    latitude,
+    longitude
+  } = req.body;
+
   const shop_logo_url = req.file?.path;
 
   if (!shop_name || !shop_description || !open_time || !close_time) {
@@ -61,25 +71,36 @@ exports.updateMarketController = async (req, res) => {
   }
 
   try {
-    const updateFields = [
-      `shop_name='${shop_name}'`,
-      `shop_description='${shop_description}'`,
-      `open_time='${open_time}'`,
-      `close_time='${close_time}'`
-    ];
+    const result = await pool.query(
+      `UPDATE markets
+       SET shop_name = $1,
+           shop_description = $2,
+           open_time = $3,
+           close_time = $4,
+           address = $5,
+           phone = $6,
+           latitude = $7,
+           longitude = $8,
+           shop_logo_url = COALESCE($9, shop_logo_url) -- ✅ อัปเดตเฉพาะถ้าส่งรูปมา
+       WHERE market_id = $10
+       RETURNING *`,
+      [
+        shop_name,
+        shop_description,
+        open_time,
+        close_time,
+        address,
+        phone,
+        latitude,
+        longitude,
+        shop_logo_url, // ถ้าไม่ส่งรูปมาจะไม่เปลี่ยน
+        id
+      ]
+    );
 
-    if (shop_logo_url) {
-      updateFields.push(`shop_logo_url='${shop_logo_url}'`);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'ไม่พบร้านค้านี้' });
     }
-
-    const updateQuery = `
-      UPDATE markets
-      SET ${updateFields.join(', ')}
-      WHERE market_id=$1
-      RETURNING *
-    `;
-
-    const result = await pool.query(updateQuery, [id]);
 
     res.status(200).json({
       message: 'อัปเดตร้านค้าสำเร็จ',
@@ -91,6 +112,7 @@ exports.updateMarketController = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: error.message });
   }
 };
+
 
 exports.getMyMarket = async (req, res) => {
   const userId = req.user?.user_id;
@@ -144,15 +166,15 @@ exports.addFood = async (req, res) => {
     const sellPrice = market.owner_id
       ? Math.ceil(price * 1.15) // +15% แล้วปัดขึ้น
       : Math.ceil(price * 1.20); // +20% แล้วปัดขึ้น
-      
-      // ✅ คำนวณราคา options +15% ของสมาชิก หรือ +20% ของแอดมิน ถ้ามี
+
+    // ✅ คำนวณราคา options +15% ของสมาชิก หรือ +20% ของแอดมิน ถ้ามี
     const sellOptions = options.map(option => {
-  const optPriceNum = Number(option.extraPrice || option.price) || 0;
-  const optionPrice = market.owner_id
-    ? Math.ceil(optPriceNum * 1.15)
-    : Math.ceil(optPriceNum * 1.20);
-  return { ...option, extraPrice: optionPrice };
-});
+      const optPriceNum = Number(option.extraPrice || option.price) || 0;
+      const optionPrice = market.owner_id
+        ? Math.ceil(optPriceNum * 1.15)
+        : Math.ceil(optPriceNum * 1.20);
+      return { ...option, extraPrice: optionPrice };
+    });
 
     const result = await pool.query(
       `INSERT INTO foods (market_id, food_name, price, sell_price, image_url, options, sell_options)
@@ -305,8 +327,8 @@ exports.updateFood = async (req, res) => {
         return { ...option, extraPrice: optionPrice };
       });
     }
-      console.log('Parsed options:', parsedOptions);
-      console.log('Calculated sell_options:', sellOptions);
+    console.log('Parsed options:', parsedOptions);
+    console.log('Calculated sell_options:', sellOptions);
 
     // ✅ สร้าง query dynamic
     let updateQuery = 'UPDATE foods SET food_name = $1, price = $2, sell_price = $3';
@@ -321,7 +343,7 @@ exports.updateFood = async (req, res) => {
 
     // เพิ่ม options และ sell_options ถ้ามี
     if (options) {
-       updateQuery += `, options = $${paramIndex}`;
+      updateQuery += `, options = $${paramIndex}`;
       params.push(JSON.stringify(parsedOptions));
       paramIndex++;
 

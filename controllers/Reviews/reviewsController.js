@@ -112,7 +112,7 @@ exports.upsertRiderReview = async (req, res) => {
 exports.listMarketReviews = async (req, res) => {
   const { user_id } = req.user || {};
   if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
-  
+
   // ใช้ marketId จาก middleware ที่ดึงจาก token
   const marketId = req.marketId;
   const { limit, offset } = parsePage(req);
@@ -128,11 +128,11 @@ exports.listMarketReviews = async (req, res) => {
     LIMIT $2 OFFSET $3
   `;
 
-    // ดึงสรุปของ market เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
-    let summary;
-    try {
-        summary = await pool.query(
-            `SELECT m.market_id, m.shop_name, m.rating AS rating_avg, m.reviews_count,
+  // ดึงสรุปของ market เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
+  let summary;
+  try {
+    summary = await pool.query(
+      `SELECT m.market_id, m.shop_name, m.rating AS rating_avg, m.reviews_count,
               COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
               COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
               COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
@@ -142,18 +142,18 @@ exports.listMarketReviews = async (req, res) => {
               LEFT JOIN public.market_reviews r ON r.market_id = m.market_id
               WHERE m.market_id = $1
               GROUP BY m.market_id, m.shop_name, m.rating, m.reviews_count`,
-            [marketId]
-        );
-    } catch (err) {
-        return res.status(400).json({ error: 'Cannot fetch market summary', detail: err.message });
-    }
+      [marketId]
+    );
+  } catch (err) {
+    return res.status(400).json({ error: 'Cannot fetch market summary', detail: err.message });
+  }
 
   try {
     const { rows } = await pool.query(sql, [marketId, limit, offset]);
-    return res.json({ 
-      ok: true, 
-      market_summary: summary.rows[0], 
-      items: rows, 
+    return res.json({
+      ok: true,
+      market_summary: summary.rows[0],
+      items: rows,
       paging: { limit, offset },
       authenticated_user: user_id
     });
@@ -166,7 +166,7 @@ exports.listMarketReviews = async (req, res) => {
 exports.listRiderReviews = async (req, res) => {
   const { user_id } = req.user || {};
   if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
-  
+
   // ใช้ riderId จาก middleware ที่ดึงจาก token
   const riderId = req.riderId;
   const { limit, offset } = parsePage(req);
@@ -182,11 +182,11 @@ exports.listRiderReviews = async (req, res) => {
     LIMIT $2 OFFSET $3
   `;
 
-    // ดึงสรุปของ rider เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
-    let summary;
-    try {
-        summary = await pool.query(
-            `SELECT rp.rider_id, u.display_name AS rider_name, rp.rating AS rating_avg, rp.reviews_count,
+  // ดึงสรุปของ rider เพิ่มการดึงรีวิวแต่ละดาว 1-5 มีกี่รีวิว
+  let summary;
+  try {
+    summary = await pool.query(
+      `SELECT rp.rider_id, u.display_name AS rider_name, rp.rating AS rating_avg, rp.reviews_count,
               COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
               COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
               COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
@@ -197,18 +197,18 @@ exports.listRiderReviews = async (req, res) => {
               LEFT JOIN public.rider_reviews r ON r.rider_id = rp.rider_id
               WHERE rp.rider_id = $1
               GROUP BY rp.rider_id, u.display_name, rp.rating, rp.reviews_count`,
-            [riderId]
-        );
-    } catch (err) {
-        return res.status(400).json({ error: 'Cannot fetch rider summary', detail: err.message });
-    }
+      [riderId]
+    );
+  } catch (err) {
+    return res.status(400).json({ error: 'Cannot fetch rider summary', detail: err.message });
+  }
 
   try {
     const { rows } = await pool.query(sql, [riderId, limit, offset]);
-    return res.json({ 
-      ok: true, 
-      rider_summary: summary.rows[0], 
-      items: rows, 
+    return res.json({
+      ok: true,
+      rider_summary: summary.rows[0],
+      items: rows,
       paging: { limit, offset },
       authenticated_user: user_id
     });
@@ -222,7 +222,7 @@ exports.listRiderReviews = async (req, res) => {
 exports.getOrderReviewsByUser = async (req, res) => {
   const { user_id } = req.user || {};
   if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
-  
+
   const orderId = parseInt(req.params.orderId, 10);
 
   const sql = `
@@ -240,5 +240,202 @@ exports.getOrderReviewsByUser = async (req, res) => {
     return res.json({ ok: true, items: rows });
   } catch (err) {
     return res.status(400).json({ error: 'Cannot fetch order reviews', detail: err.message });
+  }
+};
+
+exports.getAllMarketReviews = async (req, res) => {
+  const marketId = parseInt(req.params.marketId, 10);
+  if (isNaN(marketId)) {
+    return res.status(400).json({ error: 'Invalid or missing marketId' });
+  }
+
+  const { limit, offset } = parsePage(req);
+
+  try {
+    // 📌 ดึงรายการรีวิวทั้งหมดของร้าน
+    const { rows: reviews } = await pool.query(`
+      SELECT 
+        r.review_id, 
+        r.rating, 
+        r.comment, 
+        r.created_at,
+        u.display_name AS reviewer_name, 
+        u.photo_url AS reviewer_photo
+      FROM public.market_reviews r
+      JOIN public.users u ON u.user_id = r.user_id
+      WHERE r.market_id = $1
+      ORDER BY r.created_at DESC
+      LIMIT $2 OFFSET $3
+    `, [marketId, limit, offset]);
+
+    // 📌 ดึงข้อมูลร้าน + สรุปรีวิว + จำนวนรีวิวแต่ละดาว
+    const { rows: summaryRows } = await pool.query(`
+      SELECT 
+        m.market_id,
+        m.owner_id,
+        m.shop_name,
+        m.shop_description,
+        m.shop_logo_url,
+        m.created_at,
+        m.latitude,
+        m.longitude,
+        m.open_time,
+        m.close_time,
+        m.is_open,
+        m.is_manual_override,
+        m.override_until,
+        m.rating AS rating_avg,
+        m.address,
+        m.phone,
+        m.approve,
+        m.admin_id,
+        m.is_admin,
+        m.reviews_count,
+        COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
+        COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
+        COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
+        COUNT(*) FILTER (WHERE r.rating = 2) AS rating_2,
+        COUNT(*) FILTER (WHERE r.rating = 1) AS rating_1
+      FROM public.markets m
+      LEFT JOIN public.market_reviews r ON r.market_id = m.market_id
+      WHERE m.market_id = $1
+      GROUP BY 
+        m.market_id, m.owner_id, m.shop_name, m.shop_description, m.shop_logo_url, m.created_at,
+        m.latitude, m.longitude, m.open_time, m.close_time, m.is_open, m.is_manual_override, 
+        m.override_until, m.rating, m.address, m.phone, m.approve, m.admin_id, m.is_admin, m.reviews_count
+    `, [marketId]);
+
+    return res.json({
+      ok: true,
+      market: summaryRows[0] || null, // ✅ ตอนนี้จะเป็น object market พร้อมข้อมูลครบ
+      reviews: reviews,
+      paging: { limit, offset }
+    });
+
+  } catch (err) {
+    console.error('❌ getAllMarketReviews error:', err);
+    return res.status(400).json({ error: 'Cannot fetch reviews', detail: err.message });
+  }
+};
+
+// ================ Food Reviews =================
+exports.upsertFoodReviews = async (req, res) => {
+  const { user_id } = req.user || {};
+  const { order_id, reviews } = req.body;
+
+  if (!user_id) return res.status(401).json({ error: 'Invalid token' });
+  if (!order_id || !Array.isArray(reviews)) {
+    return res.status(400).json({ error: 'order_id and reviews[] are required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (const r of reviews) {
+      const { order_item_id, food_id, rating, comment } = r;
+
+      // ✅ ดึง market_id จาก order_items (ไม่ต้องให้ client ส่งมาเอง)
+      const { rows: orderRows } = await client.query(
+        `SELECT o.market_id 
+         FROM public.orders o
+         JOIN public.order_items oi ON oi.order_id = o.order_id
+         WHERE oi.item_id = $1 AND o.order_id = $2`,
+        [order_item_id, order_id]
+      );
+
+      if (orderRows.length === 0) {
+        throw new Error(`Order item ${order_item_id} not found or does not belong to order ${order_id}`);
+      }
+
+      const market_id = orderRows[0].market_id;
+
+      await client.query(
+        `
+        INSERT INTO public.food_reviews (
+          order_id, order_item_id, user_id, market_id, food_id, rating, comment
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7
+        )
+        ON CONFLICT (order_item_id, user_id) DO UPDATE
+        SET rating = EXCLUDED.rating,
+            comment = EXCLUDED.comment,
+            updated_at = NOW()
+        RETURNING *;
+        `,
+        [
+          order_id,       // ✅ ใช้ order_id จาก req.body
+          order_item_id,  // ✅ ใช้ตัวแปรจาก r
+          user_id,        // ✅ ใช้ user_id จาก token
+          market_id,      // ✅ ดึงจาก DB
+          food_id,
+          rating,
+          comment || null
+        ]
+      );
+    }
+
+    await client.query('COMMIT');
+    return res.json({ ok: true, message: 'Food reviews saved successfully' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ upsertFoodReviews error:', err);
+    return res.status(400).json({ error: 'Cannot save reviews', detail: err.message });
+  } finally {
+    client.release();
+  }
+};
+
+
+
+// ================ List Reviews Food =================
+exports.listFoodReviews = async (req, res) => {
+  const foodId = parseInt(req.params.foodId);
+  if (isNaN(foodId)) return res.status(400).json({ error: 'Invalid or missing foodId' });
+
+  const { limit, offset } = parsePage(req);
+
+  const sql = `
+    SELECT r.review_id, r.rating, r.comment, r.created_at, r.updated_at,
+           u.display_name AS reviewer_name, u.photo_url AS reviewer_photo, r.user_id
+    FROM public.food_reviews r
+    JOIN public.users u ON u.user_id = r.user_id
+    WHERE r.food_id = $1
+    ORDER BY r.created_at DESC
+    LIMIT $2 OFFSET $3
+  `;
+
+  // 📊 ดึงสรุปรีวิวของอาหาร
+  let summary;
+  try {
+    summary = await pool.query(
+      `SELECT f.food_id, f.food_name,
+              ROUND(AVG(r.rating)::numeric, 2) AS rating_avg,
+              COUNT(r.*) AS reviews_count,
+              COUNT(*) FILTER (WHERE r.rating = 5) AS rating_5,
+              COUNT(*) FILTER (WHERE r.rating = 4) AS rating_4,
+              COUNT(*) FILTER (WHERE r.rating = 3) AS rating_3,
+              COUNT(*) FILTER (WHERE r.rating = 2) AS rating_2,
+              COUNT(*) FILTER (WHERE r.rating = 1) AS rating_1
+       FROM public.foods f
+       LEFT JOIN public.food_reviews r ON r.food_id = f.food_id
+       WHERE f.food_id = $1
+       GROUP BY f.food_id, f.food_name`,
+      [foodId]
+    );
+  } catch (err) {
+    return res.status(400).json({ error: 'Cannot fetch food summary', detail: err.message });
+  }
+
+  try {
+    const { rows } = await pool.query(sql, [foodId, limit, offset]);
+    return res.json({
+      ok: true,
+      food_summary: summary.rows[0],
+      items: rows,
+      paging: { limit, offset },
+    });
+  } catch (err) {
+    return res.status(400).json({ error: 'Cannot list food reviews', detail: err.message });
   }
 };
