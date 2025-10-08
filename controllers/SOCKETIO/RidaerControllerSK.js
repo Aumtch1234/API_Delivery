@@ -298,7 +298,7 @@ exports.updateOrderStatus = async (req, res) => {
                         error: "Shop must confirm order before rider can go to shop",
                         current_status: currentOrder.status,
                         shop_type: isAdminShop ? "admin_shop" : "regular_shop",
-                        hint: "รอร้านยืนยันออเดอร์ก่อน (status: confirmed)"
+                        hint: "รอร้านยืนยันออเดอร์ก่อน"
                     });
                 }
                 
@@ -316,7 +316,7 @@ exports.updateOrderStatus = async (req, res) => {
                         error: "Shop is not ready for pickup yet",
                         shop_status: currentOrder.shop_status || null,
                         shop_type: "regular_shop",
-                        hint: "รอร้านเปลี่ยนเป็น ready_for_pickup ก่อน"
+                        hint: "รอร้านทำอาหารให้เสร็จ"
                     });
                 }
                 
@@ -487,7 +487,8 @@ exports.getOrdersWithItems = async (req, res) => {
                             'base_price', f.price,
                             'sell_price', oi.sell_price,
                             'subtotal', oi.subtotal,
-                            'selected_options', oi.selected_options
+                            'selected_options', oi.selected_options,
+                            'additional_notes', oi.additional_notes
                         )
                     ) FILTER (WHERE oi.item_id IS NOT NULL),
                     '[]'
