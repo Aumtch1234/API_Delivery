@@ -78,11 +78,6 @@ router.post('/orders', authenticateJWT, OrdersController.PostOrders)
 router.post('/markets/info', authenticateJWT, OrdersController.getMarketsInfo);
 
 // Socket
-
 router.post('/distance', authenticateJWT, GoogleMapController.Distance);
-
-
-
-
 
 module.exports = router;

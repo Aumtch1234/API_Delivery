@@ -119,7 +119,7 @@ exports.acceptOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
-        
+
         if (currentOrder.status !== 'waiting') {
             return res.status(400).json({
                 success: false,
@@ -168,19 +168,19 @@ exports.acceptOrder = async (req, res) => {
         };
 
         console.log(`📡 Broadcasting order confirmation to all parties:`, updateData);
-        
+
         // Emit socket event ไปทุก room ที่เกี่ยวข้อง
         emitOrderUpdate(order_id, updateData);
-        
+
         // เพิ่ม explicit broadcast เพื่อให้แน่ใจ
         const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
-        
+
         // ส่งไปทุก room พร้อมกัน
         io.to(`order:${order_id}`).emit("order:updated", updateData);
         io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
         io.to(`shop:${market_id}`).emit("order:updated", updateData);
-        
+
         console.log(`📡 Explicit broadcast sent to order:${order_id}, customer:${currentOrder.user_id}, shop:${market_id}`);
 
         const responseData = {
@@ -327,9 +327,9 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     const validStatuses = [
-        'waiting', 'confirmed', 'preparing', 'ready_for_pickup', 
-        'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
-        'picked_up', 'delivering', 'arrived_at_customer', 
+        'waiting', 'confirmed', 'preparing', 'ready_for_pickup',
+        'rider_assigned', 'going_to_shop', 'arrived_at_shop',
+        'picked_up', 'delivering', 'arrived_at_customer',
         'completed', 'cancelled'
     ];
     if (!validStatuses.includes(status)) {
@@ -389,14 +389,14 @@ exports.updateOrderStatus = async (req, res) => {
         };
 
         console.log(`📡 Broadcasting status update to all parties:`, updateData);
-        
+
         // Emit socket event ไปทุก room
         emitOrderUpdate(order_id, updateData);
-        
+
         // เพิ่ม explicit broadcast
         const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
-        
+
         io.to(`order:${order_id}`).emit("order:updated", updateData);
         io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
         io.to(`shop:${currentOrder.market_id}`).emit("order:updated", updateData);
@@ -433,8 +433,7 @@ exports.updateOrderStatus = async (req, res) => {
             message: err.message
         });
     }
-};
-// API: ยกเลิกออเดอร์
+};// API: ยกเลิกออเดอร์
 exports.cancelOrder = async (req, res) => {
     const { order_id, reason } = req.body;
     logAPICall('/cancel_order', 'POST', req.ip, req.body);
@@ -460,6 +459,14 @@ exports.cancelOrder = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
+
+        // ตรวจสอบว่ามีไรเดอร์รับงานแล้วหรือไม่
+        if (currentOrder.rider_id !== null) {
+            return res.status(400).json({
+                success: false,
+                error: "Cannot cancel order: Rider has already accepted this order"
+            });
+        }
 
         const nonCancellableStatuses = ['completed', 'cancelled'];
         if (nonCancellableStatuses.includes(currentOrder.status)) {
@@ -500,11 +507,11 @@ exports.cancelOrder = async (req, res) => {
 
         // Emit ไปทุก room
         emitOrderUpdate(order_id, updateData);
-        
+
         // เพิ่ม explicit broadcast
         const { getIO } = require("../../SocketRoutes/Events/socketEvents");
         const io = getIO();
-        
+
         io.to(`order:${order_id}`).emit("order:updated", updateData);
         io.to(`customer:${currentOrder.user_id}`).emit("order:updated", updateData);
         io.to(`shop:${currentOrder.market_id}`).emit("order:updated", updateData);
@@ -562,7 +569,7 @@ exports.updatePreparationStatus = async (req, res) => {
         }
 
         const currentOrder = checkResult.rows[0];
-        
+
         // ตรวจสอบว่าสามารถอัปเดตสถานะการเตรียมได้หรือไม่
         // const validCurrentStatuses = ['confirmed', 'preparing', 'ready_for_pickup'];
         // if (!validCurrentStatuses.includes(currentOrder.status)) {
@@ -573,9 +580,9 @@ exports.updatePreparationStatus = async (req, res) => {
         //     });
         // }
         // อนุญาตให้อัปเดต shop_status ระหว่างที่งานเดินอยู่ (confirmed → arrived_at_shop)
-        const okFrom = new Set(['confirmed','rider_assigned','going_to_shop','arrived_at_shop','picked_up','delivering','arrived_at_customer']);
+        const okFrom = new Set(['confirmed', 'rider_assigned', 'going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer']);
         if (!okFrom.has(currentOrder.status)) {
-            return res.status(400).json({ success:false, error: 'Cannot set preparation status from current order status', current_status: currentOrder.status });
+            return res.status(400).json({ success: false, error: 'Cannot set preparation status from current order status', current_status: currentOrder.status });
         }
 
         // อัปเดตสถานะ
@@ -683,7 +690,7 @@ exports.updatePreparationStatus = async (req, res) => {
 //         if (status === 'going_to_shop') {
 //             const isAdminShop = currentOrder.market_owner_id === null;
 //             const needsConfirmation = !isAdminShop;
-            
+
 //             if (needsConfirmation && currentOrder.status === 'rider_assigned') {
 //                 // ร้านทั่วไปต้องยืนยันออเดอร์ก่อน (waiting → confirmed)
 //                 return res.status(409).json({
@@ -694,7 +701,7 @@ exports.updatePreparationStatus = async (req, res) => {
 //                     hint: "รอร้านยืนยันออเดอร์ก่อน (status: confirmed)"
 //                 });
 //             }
-            
+
 //             console.log(`🏪 Shop check: ${isAdminShop ? 'Admin shop' : 'Regular shop'} - ${needsConfirmation ? 'Needs confirmation' : 'No confirmation needed'}`);
 //         }
 
@@ -703,10 +710,10 @@ exports.updatePreparationStatus = async (req, res) => {
 //             'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
 //             'picked_up', 'delivering', 'arrived_at_customer', 'completed'
 //         ];
-        
+
 //         const currentIndex = statusProgression.indexOf(currentOrder.status);
 //         const newIndex = statusProgression.indexOf(status);
-        
+
 //         if (currentIndex === -1 || newIndex === -1 || newIndex <= currentIndex) {
 //             return res.status(400).json({
 //                 success: false,
