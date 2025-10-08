@@ -106,72 +106,66 @@ class CustomerChatController {
 
   // ✅ 2) ข้อความในห้อง (รองรับ after + limit)
   static async getChatMessages(req, res) {
-    try {
-      const { roomId } = req.params;
-      const { after, limit = 200 } = req.query;
-      const customerId = req.user?.user_id;
+  try {
+    const { roomId } = req.params;
+    const { after, limit = 200 } = req.query;
+    const customerId = req.user?.user_id;
 
-      if (!customerId) return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
-
-      const roomCheck = await pool.query(
-        `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
-        [roomId, customerId]
-      );
-      if (roomCheck.rowCount === 0) {
-        return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงห้องนี้' });
-      }
-
-      const params = [roomId];
-      let sql = `
-        SELECT 
-          cm.message_id,
-          cm.room_id,
-          cm.sender_id,
-          cm.sender_type,
-          cm.message_text,
-          cm.message_type,
-          cm.image_url,
-          cm.latitude,
-          cm.longitude,
-          cm.is_read,
-          cm.created_at,
-          CASE 
-            WHEN cm.sender_type = 'customer' THEN 
-              (SELECT u.display_name FROM users u WHERE u.user_id = cm.sender_id)
-            WHEN cm.sender_type = 'rider' THEN 
-              (SELECT u.display_name FROM users u 
-              JOIN rider_profiles rp ON u.user_id = rp.user_id 
-              WHERE rp.rider_id = cm.sender_id)
-            ELSE 'Unknown'
-          END AS sender_name,
-          CASE 
-            WHEN cm.sender_type = 'customer' THEN 
-              (SELECT u.photo_url FROM users u WHERE u.user_id = cm.sender_id)
-            WHEN cm.sender_type = 'rider' THEN 
-              (SELECT u.photo_url FROM users u 
-              JOIN rider_profiles rp ON u.user_id = rp.user_id 
-              WHERE rp.rider_id = cm.sender_id)
-            ELSE NULL
-          END AS sender_photo
-        FROM chat_messages cm
-        WHERE cm.room_id = $1
-      `;
-
-      if (after) {
-        params.push(after);
-        sql += ` AND cm.created_at > $2`;
-      }
-
-      sql += ` ORDER BY cm.created_at ASC LIMIT ${Math.min(parseInt(limit, 10) || 200, 500)}`;
-
-      const result = await pool.query(sql, params);
-      res.json({ success: true, messages: result.rows });
-
-    } catch (e) {
-      console.error('❌ Error getChatMessages:', e);
-      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อความ' });
+    if (!customerId) {
+      return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
     }
+
+    // ตรวจสอบสิทธิ์
+    const roomCheck = await pool.query(
+      `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
+      [roomId, customerId]
+    );
+    if (roomCheck.rowCount === 0) {
+      return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงห้องนี้' });
+    }
+
+    // ✅ ดึง messages + join users
+    const params = [roomId];
+    let sql = `
+      SELECT 
+        cm.message_id,
+        cm.room_id,
+        cm.sender_id,
+        u.role as sender_type,
+        cm.message_text,
+        cm.message_type,
+        cm.image_url,
+        cm.latitude,
+        cm.longitude,
+        cm.is_read,
+        cm.created_at,
+        u.display_name as sender_name,
+        u.photo_url as sender_photo
+      FROM chat_messages cm
+      JOIN users u ON u.user_id = cm.sender_id
+      WHERE cm.room_id = $1
+    `;
+
+    if (after) {
+      params.push(after);
+      sql += ` AND cm.created_at > $2`;
+    }
+
+    sql += ` ORDER BY cm.created_at ASC LIMIT ${Math.min(parseInt(limit, 10) || 200, 500)}`;
+
+    const result = await pool.query(sql, params);
+
+    console.log('📨 Query Messages:', result.rowCount);
+    console.log('🔍 Sample:', result.rows[0]);
+
+    res.json({ success: true, messages: result.rows });
+
+  } catch (e) {
+    console.error('❌ Error getChatMessages:', e);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อความ' });
   }
+}
+
 
   // ✅ 3) เข้าร่วมห้อง
   static async joinChatRoom(req, res) {
