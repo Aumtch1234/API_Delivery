@@ -1,0 +1,55 @@
+const pool = require('../../config/db'); // ✅ ใช้ require แทน import
+
+const searchFoodsAndCategories = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ success: false, message: "กรุณาระบุคำค้นหา (q)" });
+    }
+
+    const query = `
+      SELECT 
+        f.food_id,
+        f.food_name,
+        f.price,
+        f.sell_price,
+        f.rating,
+        f.image_url,
+        m.shop_name,
+        m.owner_id,
+        m.is_admin,
+        m.approve,
+        c.name AS category_name
+      FROM foods f
+      JOIN markets m ON f.market_id = m.market_id
+      JOIN categorys c ON f.category_id = c.id
+      WHERE 
+        f.food_name ILIKE $1 
+        OR c.name ILIKE $1 
+        OR m.shop_name ILIKE $1
+      ORDER BY 
+        CASE 
+          WHEN m.owner_id IS NOT NULL THEN 1  -- ✅ ร้านสมาชิกมาก่อน
+          ELSE 2                              -- ✅ ร้าน admin ทีหลัง
+        END,
+        f.rating DESC; -- ✅ เรียงตามเรตติ้ง
+    `;
+
+    const result = await pool.query(query, [`%${q}%`]);
+
+    res.status(200).json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error in searchFoodsAndCategories:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { searchFoodsAndCategories };
