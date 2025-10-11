@@ -1,6 +1,174 @@
 const pool = require('../../config/db');
 const { getIO } = require("../../SocketRoutes/Events/socketEvents"); // ✅ import ฟังก์ชันดึง io instance
 
+// ✅ ตรวจสอบสถานะร้านค้าก่อนสั่งซื้อ - เวอร์ชันสมบูรณ์
+// ✅ ตรวจสอบสถานะร้านค้าก่อนสั่งซื้อ - ตรงตามโครงสร้างตาราง markets
+exports.checkStoresStatus = async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+    const { cart_ids } = req.body;
+
+    console.log('🔍 Check Stores Request:', {
+      user_id,
+      cart_ids,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!cart_ids || cart_ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาเลือกสินค้าที่ต้องการสั่งซื้อ'
+      });
+    }
+
+    // ✅ JOIN: carts → foods → markets (ใช้ชื่อฟิลด์ที่ถูกต้อง)
+    const cartQuery = await pool.query(
+      `SELECT DISTINCT 
+         m.market_id,
+         m.shop_name,
+         m.is_open,
+         m.open_time,
+         m.close_time,
+         m.is_manual_override,
+         m.override_until
+       FROM carts c
+       JOIN foods f ON c.food_id = f.food_id
+       JOIN markets m ON f.market_id = m.market_id
+       WHERE c.cart_id = ANY($1) AND c.user_id = $2
+       ORDER BY m.shop_name`,
+      [cart_ids, user_id]
+    );
+
+    console.log('📊 Found markets:', cartQuery.rows);
+
+    if (cartQuery.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลร้านค้า'
+      });
+    }
+
+    // ตรวจสอบสถานะร้านค้า
+    const closedStores = [];
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    const currentTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+
+    console.log('⏰ Current time:', currentTimeString);
+
+    for (const store of cartQuery.rows) {
+      console.log(`🏪 Checking store: ${store.shop_name}`, {
+        is_open: store.is_open,
+        open_time: store.open_time,
+        close_time: store.close_time,
+        is_manual_override: store.is_manual_override,
+        override_until: store.override_until
+      });
+
+      // ✅ ตรวจสอบ manual override ก่อน
+      if (store.is_manual_override && store.override_until) {
+        const overrideUntil = new Date(store.override_until);
+        if (currentTime < overrideUntil) {
+          // ยังอยู่ในช่วง override
+          if (!store.is_open) {
+            closedStores.push({
+              market_id: store.market_id,
+              market_name: store.shop_name || 'ไม่ระบุชื่อร้าน',
+              reason: 'ร้านปิดให้บริการชั่วคราว (ตั้งค่าโดยเจ้าของร้าน)',
+              opening_time: store.open_time,
+              closing_time: store.close_time
+            });
+            console.log(`❌ Store ${store.shop_name} is manually closed until ${overrideUntil}`);
+            continue;
+          }
+        }
+      }
+
+      // ✅ ตรวจสอบสถานะร้าน
+      if (!store.is_open) {
+        closedStores.push({
+          market_id: store.market_id,
+          market_name: store.shop_name || 'ไม่ระบุชื่อร้าน',
+          reason: 'ร้านปิดให้บริการชั่วคราว',
+          opening_time: store.open_time,
+          closing_time: store.close_time
+        });
+        console.log(`❌ Store ${store.shop_name} is closed`);
+        continue;
+      }
+
+      // ✅ ตรวจสอบเวลาทำการ (open_time และ close_time เป็น TEXT)
+      if (store.open_time && store.close_time) {
+        const openTime = store.open_time;
+        const closeTime = store.close_time;
+
+        let isOutsideHours = false;
+
+        // กรณีร้านเปิดข้ามวัน (เช่น 22:00 - 02:00)
+        if (openTime > closeTime) {
+          // ถ้าเวลาปัจจุบันอยู่ระหว่าง closeTime ถึง openTime = นอกเวลาทำการ
+          if (currentTimeString > closeTime && currentTimeString < openTime) {
+            isOutsideHours = true;
+          }
+        } else {
+          // กรณีปกติ (เช่น 08:00 - 20:00)
+          if (currentTimeString < openTime || currentTimeString > closeTime) {
+            isOutsideHours = true;
+          }
+        }
+
+        if (isOutsideHours) {
+          closedStores.push({
+            market_id: store.market_id,
+            market_name: store.shop_name || 'ไม่ระบุชื่อร้าน',
+            reason: 'นอกเวลาทำการ',
+            opening_time: openTime,
+            closing_time: closeTime
+          });
+          console.log(`⏰ Store ${store.shop_name} outside hours (${openTime} - ${closeTime})`);
+        } else {
+          console.log(`✅ Store ${store.shop_name} is open (${openTime} - ${closeTime})`);
+        }
+      } else {
+        console.log(`✅ Store ${store.shop_name} is open (no time restrictions)`);
+      }
+    }
+
+    // ส่ง response
+    if (closedStores.length > 0) {
+      console.log('❌ Some stores are closed:', closedStores);
+      return res.status(400).json({
+        success: false,
+        message: 'มีร้านค้าที่ปิดทำการ',
+        closed_stores: closedStores,
+        error_type: 'STORE_CLOSED'
+      });
+    }
+
+    console.log('✅ All stores are open');
+    res.json({
+      success: true,
+      message: 'ร้านค้าทั้งหมดเปิดทำการ',
+      stores: cartQuery.rows.map(store => ({
+        market_id: store.market_id,
+        market_name: store.shop_name,
+        is_open: store.is_open,
+        opening_time: store.open_time,
+        closing_time: store.close_time
+      }))
+    });
+
+  } catch (err) {
+    console.error('❌ Check Stores Status Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
 exports.PostOrders = async (req, res) => {
   const {
     basket,
