@@ -15,7 +15,7 @@ const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateM
 const { refreshToken } = require('../../controllers/Client/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
 const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder } = require('../../controllers/Client/FoodsController');
-
+const foodCategoryController = require('../../controllers/Client/FoodCategoryController');
 const cartsController = require('../../controllers/Client/cartsController');
 const profileController = require('../../controllers/Client/userController');
 const GoogleMapController = require('../../controllers/Client/GoogleMapController');
@@ -56,6 +56,9 @@ router.post('/food/add', authenticateJWT, upload.single('image'), addFood);
 router.get('/my-foods', authenticateJWT, getMyFoods);
 router.delete("/food/delete/:food_id", authenticateJWT, deleteFood);
 router.put('/food/update/:id', authenticateJWT, upload.single('image'), updateFood);
+
+//categorys
+router.get('/getCategorys', foodCategoryController.getAllCategories);
 
 //Main Market Food 
 router.get('/foods', getAllFoods);

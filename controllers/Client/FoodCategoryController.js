@@ -3,14 +3,27 @@ const pool = require('../../config/db');
 // ✅ หมวดหมู่ทั้งหมด
 exports.getAllCategories = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM categorys ORDER BY id ASC');
+    // ✅ SELECT ให้ชัดเจนว่า column ไหนเป็น ID หลัก
+    const result = await pool.query(
+      `SELECT 
+        id,
+        name,
+        cate_image_url
+       FROM categorys 
+       ORDER BY id ASC`
+    );
+    
     res.status(200).json({
       success: true,
       data: result.rows
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error',
+      error: error.message 
+    });
   }
 };
 
