@@ -1,3 +1,6 @@
+const multer = require("multer");
+const path = require('path');
+const fs = require('fs');
 const pool = require("../../config/db");
 const { emitOrderUpdate } = require("../../SocketRoutes/Events/socketEvents");
 const axios = require('axios');
@@ -16,7 +19,37 @@ const logAPICall = (endpoint, method, ip, body = null, query = null) => {
     console.log('─'.repeat(50));
 };
 
-// API: ไรเดอร์รับงาน
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/delivery_photos';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const filename = `delivery_${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(7)}${ext}`;
+        cb(null, filename);
+    },
+});
+
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        const allowed = /jpeg|jpg|png|webp/;
+        const extname = allowed.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowed.test(file.mimetype);
+        if (extname && mimetype) return cb(null, true);
+        cb(new Error('ไฟล์ต้องเป็น jpeg, jpg, png หรือ webp เท่านั้น'));
+    },
+});
+
+
+// API: ไรเดอร์รับงาน (เพิ่มการตรวจสอบงานที่ยังไม่เสร็จ)
 exports.assignRider = async (req, res) => {
     const { order_id, rider_id } = req.body;
     logAPICall('/assign_rider', 'POST', req.ip, req.body);
@@ -47,7 +80,7 @@ exports.assignRider = async (req, res) => {
         const currentOrder = checkResult.rows[0];
         console.log(`📋 Current order - status: ${currentOrder.status}, rider_id: ${currentOrder.rider_id}, market_id: ${currentOrder.market_id}`);
 
-        // Allow assignment for confirmed orders
+        // ✅ 1. ตรวจว่ารับงานได้เฉพาะออเดอร์ที่พร้อม
         if (!['waiting', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup'].includes(currentOrder.status)) {
             console.log(`❌ Order ${order_id} status not eligible for rider assignment: ${currentOrder.status}`);
             return res.status(400).json({
@@ -57,6 +90,7 @@ exports.assignRider = async (req, res) => {
             });
         }
 
+        // ✅ 2. ตรวจว่าออเดอร์นี้มีไรเดอร์อยู่แล้วหรือยัง
         if (currentOrder.rider_id !== null) {
             console.log(`❌ Order ${order_id} already has rider: ${currentOrder.rider_id}`);
             return res.status(400).json({
@@ -66,27 +100,58 @@ exports.assignRider = async (req, res) => {
             });
         }
 
+        // ✅ 3. ตรวจว่าไรเดอร์มีงานที่ยังไม่เสร็จอยู่หรือไม่
+        console.log(`🔍 Checking if rider ${rider_id} has any active orders...`);
+        const activeCheck = await pool.query(
+            `SELECT order_id, status 
+             FROM orders 
+             WHERE rider_id = $1 
+             AND status IN (
+                 'rider_assigned', 
+                 'going_to_shop', 
+                 'arrived_at_shop', 
+                 'picked_up', 
+                 'delivering', 
+                 'arrived_at_customer'
+             )`,
+            [rider_id]
+        );
+
+        if (activeCheck.rows.length > 0) {
+            console.log(`🚫 Rider ${rider_id} already has an active job: order ${activeCheck.rows[0].order_id} (${activeCheck.rows[0].status})`);
+            return res.status(400).json({
+                success: false,
+                error: "Rider already has an active order",
+                active_order: {
+                    order_id: activeCheck.rows[0].order_id,
+                    status: activeCheck.rows[0].status
+                },
+                hint: "กรุณาทำงานปัจจุบันให้เสร็จก่อน (completed หรือ cancelled)"
+            });
+        }
+
+        console.log(`✅ Rider ${rider_id} has no active orders. Proceeding with assignment...`);
         console.log(`🔄 Assigning rider ${rider_id} to order ${order_id}...`);
-        
+
         // ประกาศตัวแปรนอก transaction block
         let currentCredit, requiredCredit, newBalance, updateResult;
-        
+
         // ⭐ ตรวจสอบเครดิตและหักเครดิตในการทำธุรกรรม
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
-            
+
             // ดึงข้อมูลเครดิตของไรเดอร์และค่าใช้จ่ายของออเดอร์
             const riderCreditResult = await client.query(
                 'SELECT gp_balance FROM rider_profiles WHERE rider_id = $1',
                 [rider_id]
             );
-            
+
             const orderCostResult = await client.query(
                 'SELECT rider_required_gp FROM orders WHERE order_id = $1',
                 [order_id]
             );
-            
+
             if (riderCreditResult.rows.length === 0) {
                 await client.query('ROLLBACK');
                 console.log(`❌ Rider profile not found: ${rider_id}`);
@@ -95,7 +160,7 @@ exports.assignRider = async (req, res) => {
                     error: "Rider profile not found"
                 });
             }
-            
+
             if (orderCostResult.rows.length === 0) {
                 await client.query('ROLLBACK');
                 console.log(`❌ Order cost data not found: ${order_id}`);
@@ -104,13 +169,13 @@ exports.assignRider = async (req, res) => {
                     error: "Order cost data not found"
                 });
             }
-            
+
             currentCredit = parseFloat(riderCreditResult.rows[0].gp_balance || 0);
             requiredCredit = parseFloat(orderCostResult.rows[0].rider_required_gp || 0);
             newBalance = currentCredit - requiredCredit;
-            
+
             console.log(`💳 Credit check - Current: ${currentCredit}, Required: ${requiredCredit}, New Balance: ${newBalance}`);
-            
+
             // ตรวจสอบว่าเครดิตเพียงพอหรือไม่
             if (newBalance < 0) {
                 await client.query('ROLLBACK');
@@ -123,7 +188,7 @@ exports.assignRider = async (req, res) => {
                     shortage: Math.abs(newBalance)
                 });
             }
-            
+
             // อัปเดทออเดอร์
             updateResult = await client.query(
                 `UPDATE orders 
@@ -134,13 +199,13 @@ exports.assignRider = async (req, res) => {
                  RETURNING *`,
                 [order_id, rider_id]
             );
-            
+
             // หักเครดิตจากไรเดอร์
             const creditUpdateResult = await client.query(
                 'UPDATE rider_profiles SET gp_balance = $1 WHERE rider_id = $2 RETURNING gp_balance',
                 [newBalance, rider_id]
             );
-            
+
             if (updateResult.rows.length === 0) {
                 await client.query('ROLLBACK');
                 console.log(`❌ Failed to assign rider to order ${order_id}`);
@@ -149,7 +214,7 @@ exports.assignRider = async (req, res) => {
                     error: "Failed to update order"
                 });
             }
-            
+
             if (creditUpdateResult.rows.length === 0) {
                 await client.query('ROLLBACK');
                 console.log(`❌ Failed to update rider credit for rider ${rider_id}`);
@@ -158,10 +223,10 @@ exports.assignRider = async (req, res) => {
                     error: "Failed to update rider credit"
                 });
             }
-            
+
             await client.query('COMMIT');
             console.log(`✅ Rider ${rider_id} accepted order ${order_id}. Credit deducted: ${requiredCredit}, New balance: ${newBalance}`);
-            
+
         } catch (err) {
             await client.query('ROLLBACK');
             throw err;
@@ -218,9 +283,12 @@ exports.assignRider = async (req, res) => {
 };
 
 // API: อัพเดทสถานะออเดอร์
+// API: อัพเดทสถานะออเดอร์
 exports.updateOrderStatus = async (req, res) => {
     const { order_id, status, additional_data = {} } = req.body;
-    logAPICall('/update_order_status', 'PUT', req.ip, req.body);
+    const photoFile = req.file; // จาก multer middleware
+
+    console.log(`🔄 Update request - order_id: ${order_id}, status: ${status}, has_photo: ${!!photoFile}`);
 
     if (!order_id || !status) {
         return res.status(400).json({
@@ -252,10 +320,19 @@ exports.updateOrderStatus = async (req, res) => {
         });
     }
 
+    // ⭐ ตรวจสอบว่าต้องมีรูปภาพสำหรับสถานะ completed
+    if (status === 'completed' && !photoFile) {
+        return res.status(400).json({
+            success: false,
+            error: "Delivery photo is required for completed status",
+            hint: "กรุณาถ่ายรูปหลักฐานการส่งของก่อนทำเครื่องหมายว่าเสร็จสิ้น"
+        });
+    }
+
     try {
         console.log(`🔄 Updating order ${order_id} status to ${status}`);
 
-        // Get current order data including market owner_id and shop_status
+        // Get current order data
         const currentResult = await pool.query(
             `SELECT o.*, m.owner_id as market_owner_id 
              FROM orders o 
@@ -265,6 +342,12 @@ exports.updateOrderStatus = async (req, res) => {
         );
 
         if (currentResult.rows.length === 0) {
+            // ลบไฟล์ถ้าอัพโหลดแล้วแต่ไม่เจอออเดอร์
+            if (photoFile) {
+                await fs.unlink(photoFile.path).catch(err =>
+                    console.error('Error deleting uploaded file:', err)
+                );
+            }
             return res.status(404).json({
                 success: false,
                 error: "Order not found"
@@ -276,10 +359,10 @@ exports.updateOrderStatus = async (req, res) => {
 
         // ⭐ เพิ่มเงื่อนไขตรวจสอบสำหรับไรเดอร์
         const riderStatuses = ['going_to_shop', 'arrived_at_shop', 'picked_up', 'delivering', 'arrived_at_customer'];
-        
+
         if (riderStatuses.includes(status)) {
-            // ตรวจสอบว่าออเดอร์มีไรเดอร์แล้ว
             if (!currentOrder.rider_id) {
+                if (photoFile) await fs.unlink(photoFile.path).catch(err => console.error(err));
                 return res.status(400).json({
                     success: false,
                     error: "Order has no assigned rider",
@@ -287,12 +370,13 @@ exports.updateOrderStatus = async (req, res) => {
                 });
             }
 
-            // ⭐ เช็คเงื่อนไข: ร้านทั่วไปต้องรอ confirmed ก่อน going_to_shop
+            // เช็คเงื่อนไข: ร้านต้อง confirm ก่อน going_to_shop
             if (status === 'going_to_shop') {
                 const isAdminShop = currentOrder.market_owner_id === null;
                 const needsConfirmation = !isAdminShop;
-                
+
                 if (needsConfirmation && currentOrder.status === 'rider_assigned') {
+                    if (photoFile) await fs.unlink(photoFile.path).catch(err => console.error(err));
                     return res.status(409).json({
                         success: false,
                         error: "Shop must confirm order before rider can go to shop",
@@ -301,16 +385,14 @@ exports.updateOrderStatus = async (req, res) => {
                         hint: "รอร้านยืนยันออเดอร์ก่อน"
                     });
                 }
-                
-                console.log(`🏪 Shop check: ${isAdminShop ? 'Admin shop' : 'Regular shop'} - ${needsConfirmation ? 'Needs confirmation' : 'No confirmation needed'}`);
             }
 
-            // ⭐ กฎสำคัญ: ห้าม picked_up ถ้าร้านยังไม่ ready_for_pickup (ยกเว้นร้านแอดมิน)
+            // กฎ: ห้าม picked_up ถ้าร้านยังไม่ ready_for_pickup
             if (status === 'picked_up') {
                 const isAdminShop = currentOrder.market_owner_id === null;
-                
-                // ร้านแอดมินไม่ต้องรอ ready_for_pickup, ร้านทั่วไปต้องรอ
+
                 if (!isAdminShop && currentOrder.shop_status !== 'ready_for_pickup') {
+                    if (photoFile) await fs.unlink(photoFile.path).catch(err => console.error(err));
                     return res.status(409).json({
                         success: false,
                         error: "Shop is not ready for pickup yet",
@@ -319,20 +401,19 @@ exports.updateOrderStatus = async (req, res) => {
                         hint: "รอร้านทำอาหารให้เสร็จ"
                     });
                 }
-                
-                console.log(`📦 Pickup check: ${isAdminShop ? 'Admin shop - no wait needed' : 'Regular shop - checked ready_for_pickup'}`);
             }
 
-            // ⭐ ตรวจสอบ status progression logic สำหรับไรเดอร์
+            // ตรวจสอบ status progression
             const statusProgression = [
-                'rider_assigned', 'going_to_shop', 'arrived_at_shop', 
+                'rider_assigned', 'going_to_shop', 'arrived_at_shop',
                 'picked_up', 'delivering', 'arrived_at_customer', 'completed'
             ];
-            
+
             const currentIndex = statusProgression.indexOf(currentOrder.status);
             const newIndex = statusProgression.indexOf(status);
-            
+
             if (currentIndex !== -1 && newIndex !== -1 && newIndex <= currentIndex) {
+                if (photoFile) await fs.unlink(photoFile.path).catch(err => console.error(err));
                 return res.status(400).json({
                     success: false,
                     error: "Invalid status progression",
@@ -343,18 +424,59 @@ exports.updateOrderStatus = async (req, res) => {
             }
         }
 
-        // Update order status
+        // ⭐ สร้าง Full Photo URL ก่อนถ้ามีไฟล์
+        let fullPhotoURL = null;
+        if (photoFile) {
+            const photoPath = `/uploads/delivery_photos/${photoFile.filename}`;
+            fullPhotoURL = `${req.protocol}://${req.get('host')}${photoPath}`;
+            console.log(`📸 Photo uploaded: ${fullPhotoURL}`);
+        }
+
+        // ⭐ Prepare update data with full photo URL (ไม่ใช่ relative path)
+        const updateData = {
+            status: status,
+            delivery_photo: fullPhotoURL // บันทึก full URL แทน relative path
+        };
+
+        // ⭐ Build dynamic update query
+        const updateFields = Object.keys(updateData)
+            .map((key, index) => `${key} = $${index + 2}`)
+            .join(', ');
+
+        const updateValues = Object.keys(updateData).map(key => updateData[key]);
+
+        // Update order status with full photo URL
         const updateResult = await pool.query(
             `UPDATE orders 
-             SET status = $2, 
-                 updated_at = NOW()
+             SET ${updateFields}, updated_at = NOW()
              WHERE order_id = $1
              RETURNING *`,
-            [order_id, status]
+            [order_id, ...updateValues]
         );
 
+        // ⭐ ถ้าเป็น completed ให้คืนเครดิตให้ไรเดอร์
+        if (status === 'completed' && currentOrder.rider_id) {
+            try {
+                const creditResult = await pool.query(
+                    `UPDATE rider_profiles 
+                     SET gp_balance = gp_balance + $1 
+                     WHERE rider_id = $2
+                     RETURNING gp_balance`,
+                    [currentOrder.rider_required_gp, currentOrder.rider_id]
+                );
+
+                if (creditResult.rows.length > 0) {
+                    console.log(`💰 Refunded ${currentOrder.rider_required_gp} GP to rider ${currentOrder.rider_id}`);
+                    console.log(`💳 New balance: ${creditResult.rows[0].gp_balance}`);
+                }
+            } catch (creditError) {
+                console.error('❌ Failed to refund credit:', creditError);
+                // ไม่ fail ทั้ง transaction แต่ log error
+            }
+        }
+
         // Send socket event
-        const updateData = {
+        const socketData = {
             order_id: parseInt(order_id),
             user_id: currentOrder.user_id,
             market_id: currentOrder.market_id,
@@ -365,16 +487,15 @@ exports.updateOrderStatus = async (req, res) => {
             rider_id: currentOrder.rider_id,
             market_owner_id: currentOrder.market_owner_id,
             shop_type: currentOrder.market_owner_id === null ? "admin_shop" : "regular_shop",
-            can_go_to_shop: status === 'rider_assigned' ? 
-                (currentOrder.market_owner_id === null || currentOrder.status === 'confirmed') : true,
+            delivery_photo: fullPhotoURL, // ✅ ใช้ full URL
             timestamp: new Date().toISOString(),
             action: 'status_updated',
             old_status: currentOrder.status,
             ...additional_data
         };
 
-        console.log(`📡 Emitting status update:`, updateData);
-        emitOrderUpdate(order_id, updateData);
+        console.log(`📡 Emitting status update:`, socketData);
+        emitOrderUpdate(order_id, socketData);
 
         const responseData = {
             success: true,
@@ -385,18 +506,27 @@ exports.updateOrderStatus = async (req, res) => {
                 new_status: status,
                 shop_status: updateResult.rows[0].shop_status,
                 shop_type: currentOrder.market_owner_id === null ? "admin_shop" : "regular_shop",
-                can_go_to_shop: status === 'rider_assigned' ? 
-                    (currentOrder.market_owner_id === null || currentOrder.status === 'confirmed') : true,
+                delivery_photo: fullPhotoURL, // ✅ Full URL ในตอบกลับ
+                photo_url: fullPhotoURL, // ✅ Full URL ในตอบกลับ
                 updated_at: updateResult.rows[0].updated_at,
-                ...updateData
+                credit_refunded: status === 'completed' ? currentOrder.rider_required_gp : null,
+                ...socketData
             }
         };
 
-        console.log(`📤 Status update response:`, JSON.stringify(responseData, null, 2));
+        console.log(`✅ Status updated successfully with${photoFile ? '' : 'out'} photo`);
         res.json(responseData);
 
     } catch (err) {
         console.error("❌ updateOrderStatus error:", err);
+
+        // ลบไฟล์ที่อัพโหลดถ้ามี error
+        if (photoFile) {
+            await fs.unlink(photoFile.path).catch(unlinkErr =>
+                console.error('Error deleting file after error:', unlinkErr)
+            );
+        }
+
         res.status(500).json({
             success: false,
             error: "Database error",
@@ -499,7 +629,7 @@ exports.getOrdersWithItems = async (req, res) => {
             LEFT JOIN foods f ON f.food_id = oi.food_id
             LEFT JOIN client_addresses ca ON ca.id = o.address_id
         `;
-// เพิ่ม join ตาราง foods ดึง price ในfoods
+        // เพิ่ม join ตาราง foods ดึง price ในfoods
         const conditions = [];
         const values = [];
         let valueIndex = 1;
@@ -554,7 +684,7 @@ exports.getOrdersWithItems = async (req, res) => {
             ...order,
             delivery_fee: order.delivery_fee,
             shop_type: order.market_owner_id === null ? 'admin_shop' : 'regular_shop',
-            can_go_to_shop: order.status === 'rider_assigned' ? 
+            can_go_to_shop: order.status === 'rider_assigned' ?
                 (order.market_owner_id === null || order.status === 'confirmed') : true
         }));
 
@@ -697,3 +827,5 @@ exports.getOrderById = async (orderId) => {
         };
     }
 };
+
+exports.uploadDeliveryPhoto = upload.single('photo');
