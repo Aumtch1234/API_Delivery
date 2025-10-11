@@ -10,30 +10,11 @@ router.get('/orders', RiderSocketController.getOrdersWithItems);
 router.post('/assign_rider', RiderSocketController.assignRider);
 
 // PUT /riders/update_order_status - Update order status
-router.put('/update_order_status', async (req, res) => {
-    const { order_id, status, additional_data } = req.body;
-    
-    if (!order_id || !status) {
-        return res.status(400).json({
-            success: false,
-            error: "order_id and status are required"
-        });
-    }
-
-    try {
-        // You'll need to implement this in your RiderSocketController
-        // For now, let's create a simple implementation
-        const result = await RiderSocketController.updateOrderStatus(req, res);
-        return result;
-    } catch (error) {
-        console.error('❌ Update order status error:', error);
-        return res.status(500).json({
-            success: false,
-            error: "Failed to update order status",
-            message: error.message
-        });
-    }
-});
+router.put(
+  '/update_order_status',
+  RiderSocketController.uploadDeliveryPhoto, // Middleware สำหรับรับรูป
+  RiderSocketController.updateOrderStatus
+);
 
 // GET /riders/orders/:orderId - Get specific order details
 router.get('/orders/:orderId', async (req, res) => {

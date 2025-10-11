@@ -48,7 +48,7 @@ app.use('/chat/customer', CustomerChatRoutes);
 app.use('/dashboard/sales', DashboardSaleRoutes);
 app.use('/reviews', ReviewsRoutes);
 app.use("/uploads/chat-images", express.static(path.join(__dirname, "uploads/chat-images")));
-
+app.use("/uploads/delivery_photos", express.static(path.join(__dirname, "uploads/delivery_photos")));
 
 app.use('/client/categories', FoodCategoryRoutes); // ✅ ใช้งาน path
 
