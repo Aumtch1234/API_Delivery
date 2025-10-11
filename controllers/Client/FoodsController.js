@@ -68,17 +68,19 @@ exports.getAllFoodForMarketID = async (req, res) => {
 exports.getAllMarket = async (req, res) => {
   try {
     const query = `
-      SELECT * FROM markets m 
+      SELECT *
+      FROM markets m
+      WHERE m.is_admin = false
     `;
     const result = await pool.query(query);
 
     res.status(200).json({
       success: true,
-      message: 'Foods retrieved successfully',
+      message: 'Markets retrieved successfully',
       data: result.rows,
     });
   } catch (error) {
-    console.error('Error fetching foods:', error);
+    console.error('Error fetching markets:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -86,6 +88,7 @@ exports.getAllMarket = async (req, res) => {
     });
   }
 };
+
 exports.getFoodFromIDForOrder = async (req, res) => {
   try {
     const { foodId } = req.params;
