@@ -20,6 +20,9 @@ const cartsController = require('../../controllers/Client/cartsController');
 const profileController = require('../../controllers/Client/userController');
 const GoogleMapController = require('../../controllers/Client/GoogleMapController');
 const OrdersController = require('../../controllers/Client/ordersController');
+const ClientComplaintRoutes = require("./ComplaintsRoute");
+
+
 
 
 //Login and Register Routes
@@ -80,6 +83,8 @@ router.post('/markets/info', authenticateJWT, OrdersController.getMarketsInfo);
 // Socket
 
 router.post('/distance', authenticateJWT, GoogleMapController.Distance);
+router.use("/complaints", ClientComplaintRoutes);
+
 
 
 
