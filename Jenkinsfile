@@ -151,22 +151,6 @@ pipeline {
       }
     }
 
-    stage('Run Database Migrations') {
-      steps {
-        echo '🔄 Running database migrations (if available)...'
-        sh '''
-          # ถ้า API รองรับ migration commands ให้เพิ่มที่นี่
-          # ตัวอย่าง:
-          # docker exec delivery-api npm run migrate
-          # docker exec delivery-api npx prisma migrate deploy
-          # docker exec delivery-api npx sequelize-cli db:migrate
-          
-          echo "⚠️  Skipping migrations - not configured"
-          echo "💡 If your API has migrations, uncomment the appropriate command above"
-        '''
-      }
-    }
-
     stage('Build Docker Images') {
       steps {
         echo '🔨 Building Docker images...'
@@ -181,30 +165,119 @@ pipeline {
       steps {
         echo '🚀 Starting API and pgAdmin...'
         sh '''
+          echo "📋 Starting all services with docker-compose..."
           docker-compose -f $DOCKER_COMPOSE up -d
-          echo "⏳ Waiting for services to start..."
+          
+          echo ""
+          echo "⏳ Waiting for services to initialize..."
           sleep 5
-          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo ""
+          echo "📋 Container status:"
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          echo ""
+          echo "📋 Checking for any failed containers..."
+          FAILED=$(docker ps -a --filter "status=exited" --format "{{.Names}}" | grep -E "delivery-api|postgres|pgadmin" || true)
+          
+          if [ ! -z "$FAILED" ]; then
+            echo "❌ Some containers failed to start: $FAILED"
+            echo ""
+            for container in $FAILED; do
+              echo "📋 Logs for $container:"
+              docker logs $container
+              echo ""
+            done
+            exit 1
+          fi
+          
+          echo "✅ All services started successfully"
         '''
       }
     }
 
     stage('Wait for API to Start') {
       steps {
-        echo '⏳ Waiting for Express API to respond...'
+        echo '⏳ Waiting for API to be ready...'
         sh '''
-          echo "📋 Checking container status..."
-          docker ps | grep delivery-api
+          # Get PORT from .env file
+          PORT=$(grep "^port=" .env | cut -d'=' -f2)
+          if [ -z "$PORT" ]; then
+            PORT=$(grep "^PORT=" .env | cut -d'=' -f2)
+          fi
+          PORT=${PORT:-4000}
+          
+          echo "🔍 Checking all containers status..."
+          docker ps -a
           
           echo ""
-          echo "📋 Container logs:"
+          echo "📋 Checking if delivery-api container exists..."
+          if docker ps -a | grep -q "delivery-api"; then
+            echo "✅ delivery-api container exists"
+            
+            # Check if it's running
+            if docker ps | grep -q "delivery-api"; then
+              echo "✅ delivery-api container is RUNNING"
+            else
+              echo "❌ delivery-api container EXISTS but NOT RUNNING"
+              echo ""
+              echo "📋 Container exit code and status:"
+              docker ps -a --filter "name=delivery-api" --format "table {{.Names}}\t{{.Status}}"
+              echo ""
+              echo "📋 Full container logs:"
+              docker logs delivery-api
+              exit 1
+            fi
+          else
+            echo "❌ delivery-api container DOES NOT EXIST"
+            echo ""
+            echo "📋 All containers:"
+            docker ps -a
+            echo ""
+            echo "📋 Docker compose logs:"
+            docker-compose -f $DOCKER_COMPOSE logs --tail=100
+            exit 1
+          fi
+          
+          echo ""
+          echo "📋 Container logs (last 50 lines):"
           docker logs --tail=50 delivery-api
           
           echo ""
-          echo "⏳ Waiting 10 seconds for API to stabilize..."
-          sleep 10
+          echo "🔍 Waiting for API on port: $PORT"
           
-          echo "✅ API container is running"
+          MAX_ATTEMPTS=20
+          ATTEMPT=0
+          
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            # Try /health endpoint
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/health 2>/dev/null || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ API health check passed! (HTTP $HTTP_CODE)"
+              
+              # Show health check response
+              echo "📋 Health check response:"
+              curl -s http://localhost:$PORT/health | head -n 20
+              break
+            elif [ "$HTTP_CODE" = "503" ]; then
+              echo "⚠️  API responding but database not ready (HTTP $HTTP_CODE)"
+            elif [ "$HTTP_CODE" != "000" ]; then
+              echo "⚠️  API responding with HTTP $HTTP_CODE"
+            fi
+            
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "⏳ Waiting for API... ($ATTEMPT/$MAX_ATTEMPTS)"
+            sleep 3
+          done
+          
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "❌ API health check failed after $MAX_ATTEMPTS attempts"
+            echo ""
+            echo "📋 Final container logs:"
+            docker logs delivery-api
+            exit 1
+          fi
         '''
       }
     }
@@ -233,7 +306,7 @@ pipeline {
           docker exec postgres psql -U postgres -d "$POSTGRES_DB" -c "SELECT NOW();" || echo "Unable to connect"
 
           echo "=== API Health ==="
-          curl -s -o /dev/null -w "Status: %{http_code}\\n" http://localhost:$PORT/ || echo "Not responding"
+          curl -s http://localhost:$PORT/health | head -n 10 || echo "Not responding"
         '''
       }
     }
