@@ -5,6 +5,12 @@ pipeline {
     DOCKER_COMPOSE = 'docker-compose.yml'
     PROJECT_NAME = 'delivery-api'
     DB_NAME = 'delivery'
+
+
+    POSTGRES_USER = credentials('api_env')     // username
+    POSTGRES_PASSWORD = credentials('api_env') // password
+    PGADMIN_DEFAULT_EMAIL = credentials('api_env')
+    PGADMIN_DEFAULT_PASSWORD = credentials('api_env')
   }
 
   stages {

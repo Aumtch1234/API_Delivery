@@ -61,9 +61,3 @@ Thumbs.db
 *.swp
 *.swo
 *.bak
-
-# =========================
-# 🐋 Docker Config Files
-# =========================
-Dockerfile
-docker-compose.yml
