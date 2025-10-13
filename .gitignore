@@ -39,8 +39,8 @@ coverage/
 pg_data/
 pgdata/
 docker-data/
-*.sql
-*.dump
+# *.sql
+# *.dump
 
 # =========================
 # 📁 User Uploads
