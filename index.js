@@ -27,7 +27,6 @@ const CustomerChatRoutes = require('./SocketRoutes/Chats/CustomerChatRoutes');
 const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // ฟังก์ชันรับ io (order / status updates)
 
 const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
-const path = require("path");
 const clientRoutes = require("./routes/Client/ClientAPIsRoute");
 
 
