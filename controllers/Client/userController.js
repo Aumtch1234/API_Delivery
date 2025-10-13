@@ -6,7 +6,6 @@ exports.getProfile = async (req, res) => {
   const userResult = await pool.query('SELECT * FROM users WHERE user_id = $1', [user_id]);
   res.json(userResult.rows[0]);
 };
-
 exports.getOrderHistory = async (req, res) => {
   try {
     const user_id = req.user?.user_id;
@@ -22,29 +21,67 @@ exports.getOrderHistory = async (req, res) => {
       SELECT 
         o.order_id,
         o.market_id,
+        o.rider_id,
         m.shop_name,
-        SUM(oi.subtotal) AS subtotal,      -- ✅ รวมยอด subtotal ทั้งออเดอร์
+        u.display_name AS rider_name,
+        
+        SUM(oi.subtotal) AS subtotal,
         o.delivery_fee,
         o.status,
         o.created_at,
         o.updated_at,
+
+        -- ✅ 1. ตรวจสอบเมนูที่ยังไม่ได้รีวิว
+        BOOL_OR(oi.is_reviewed = FALSE) AS has_unreviewed_items,
+
+        -- ✅ 2. ตรวจสอบว่ายังไม่ได้รีวิวร้านไหม
+        (NOT COALESCE(o.is_market_reviewed, FALSE)) AS has_unreviewed_market,
+
+        -- ✅ 3. ตรวจสอบว่ายังไม่ได้รีวิวไรเดอร์ไหม
+        (NOT COALESCE(o.is_rider_reviewed, FALSE)) AS has_unreviewed_rider,
+
+        -- ✅ รวมสถานะใหญ่สุด ว่ายังมีรีวิวบางประเภทที่ยังไม่ได้ทำ
+        (
+          BOOL_OR(oi.is_reviewed = FALSE)
+          OR NOT COALESCE(o.is_market_reviewed, FALSE)
+          OR NOT COALESCE(o.is_rider_reviewed, FALSE)
+        ) AS has_any_unreviewed,
+
         json_agg(
           json_build_object(
+            'order_item_id', oi.item_id,
+            'food_id', oi.food_id,
             'food_name', oi.food_name,
             'quantity', oi.quantity,
             'sell_price', oi.sell_price,
             'subtotal', oi.subtotal,
-            'selected_options', oi.selected_options
+            'selected_options', oi.selected_options,
+            'image_url', f.image_url,
+            'is_reviewed', oi.is_reviewed
           )
-        ) AS items                         -- ✅ รายการอาหารในออเดอร์ (array)
+          ORDER BY oi.is_reviewed ASC
+        ) AS items
+
       FROM orders o
       JOIN markets m ON o.market_id = m.market_id
       JOIN order_items oi ON o.order_id = oi.order_id
+      LEFT JOIN foods f ON oi.food_id = f.food_id
+      LEFT JOIN rider_profiles rp ON o.rider_id = rp.rider_id
+      LEFT JOIN users u ON rp.user_id = u.user_id
+
       WHERE o.user_id = $1
-      AND o.status IN ('completed', 'cancelled')
+        AND o.status IN ('completed', 'cancelled')
+
       GROUP BY 
-        o.order_id, m.shop_name, o.delivery_fee, o.status, o.created_at, o.updated_at
-      ORDER BY o.updated_at DESC;
+        o.order_id, o.market_id, o.rider_id,
+        m.shop_name, u.display_name,
+        o.delivery_fee, o.status,
+        o.created_at, o.updated_at,
+        o.is_market_reviewed, o.is_rider_reviewed
+
+      ORDER BY 
+        has_any_unreviewed DESC,   -- ✅ ออเดอร์ที่ยังรีวิวไม่ครบขึ้นก่อน
+        o.updated_at DESC;
       `,
       [user_id]
     );
@@ -62,8 +99,6 @@ exports.getOrderHistory = async (req, res) => {
     });
   }
 };
-
-
 
 exports.updateProfile = async (req, res) => {
   try {

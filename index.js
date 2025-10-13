@@ -41,7 +41,6 @@ app.use(cors());
 app.use(express.json());
 
 // HTTP Routes
-// mount routes
 app.use('/client', ClientRoutes);
 app.use('/admin', AdminRoutes);
 app.use('/rider', RiderRoutes);

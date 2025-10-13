@@ -316,77 +316,100 @@ exports.getAllMarketReviews = async (req, res) => {
     console.error('❌ getAllMarketReviews error:', err);
     return res.status(400).json({ error: 'Cannot fetch reviews', detail: err.message });
   }
-};
-
-// ================ Food Reviews =================
+};// ================ Food Reviews =================
 exports.upsertFoodReviews = async (req, res) => {
   const { user_id } = req.user || {};
   const { order_id, reviews } = req.body;
 
-  if (!user_id) return res.status(401).json({ error: 'Invalid token' });
+  if (!user_id) return res.status(401).json({ error: "Invalid token" });
   if (!order_id || !Array.isArray(reviews)) {
-    return res.status(400).json({ error: 'order_id and reviews[] are required' });
+    return res
+      .status(400)
+      .json({ error: "order_id and reviews[] are required" });
   }
 
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     for (const r of reviews) {
       const { order_item_id, food_id, rating, comment } = r;
 
-      // ✅ ดึง market_id จาก order_items (ไม่ต้องให้ client ส่งมาเอง)
+      // ✅ ตรวจสอบข้อมูลขั้นต่ำ
+      if (!order_item_id || !food_id || !rating) {
+        throw new Error(
+          `Missing required field in review: ${JSON.stringify(r)}`
+        );
+      }
+
+      // ✅ ดึง market_id จาก order_items
       const { rows: orderRows } = await client.query(
-        `SELECT o.market_id 
-         FROM public.orders o
-         JOIN public.order_items oi ON oi.order_id = o.order_id
-         WHERE oi.item_id = $1 AND o.order_id = $2`,
+        `
+        SELECT o.market_id 
+        FROM public.orders o
+        JOIN public.order_items oi ON oi.order_id = o.order_id
+        WHERE oi.item_id = $1 AND o.order_id = $2
+        `,
         [order_item_id, order_id]
       );
 
       if (orderRows.length === 0) {
-        throw new Error(`Order item ${order_item_id} not found or does not belong to order ${order_id}`);
+        throw new Error(
+          `Order item ${order_item_id} not found or not linked to order ${order_id}`
+        );
       }
 
       const market_id = orderRows[0].market_id;
 
+      // ✅ Insert or Update review ใน food_reviews
       await client.query(
         `
         INSERT INTO public.food_reviews (
-          order_id, order_item_id, user_id, market_id, food_id, rating, comment
+          order_id, order_item_id, user_id, market_id, food_id, rating, comment, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7
+          $1, $2, $3, $4, $5, $6, $7, NOW()
         )
-        ON CONFLICT (order_item_id, user_id) DO UPDATE
-        SET rating = EXCLUDED.rating,
-            comment = EXCLUDED.comment,
-            updated_at = NOW()
-        RETURNING *;
+        ON CONFLICT (order_item_id, user_id)
+        DO UPDATE SET
+          rating = EXCLUDED.rating,
+          comment = EXCLUDED.comment,
+          updated_at = NOW();
         `,
         [
-          order_id,       // ✅ ใช้ order_id จาก req.body
-          order_item_id,  // ✅ ใช้ตัวแปรจาก r
-          user_id,        // ✅ ใช้ user_id จาก token
-          market_id,      // ✅ ดึงจาก DB
+          order_id,
+          order_item_id,
+          user_id,
+          market_id,
           food_id,
           rating,
-          comment || null
+          comment || null,
         ]
+      );
+
+      // ✅ อัปเดตสถานะใน order_items ว่าถูกรีวิวแล้ว
+      await client.query(
+        `
+        UPDATE public.order_items
+        SET is_reviewed = TRUE
+        WHERE item_id = $1;
+        `,
+        [order_item_id]
       );
     }
 
-    await client.query('COMMIT');
-    return res.json({ ok: true, message: 'Food reviews saved successfully' });
+    await client.query("COMMIT");
+    return res.json({ ok: true, message: "Food reviews saved successfully" });
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('❌ upsertFoodReviews error:', err);
-    return res.status(400).json({ error: 'Cannot save reviews', detail: err.message });
+    await client.query("ROLLBACK");
+    console.error("❌ upsertFoodReviews error:", err);
+    return res.status(400).json({
+      error: "Cannot save reviews",
+      detail: err.message,
+    });
   } finally {
     client.release();
   }
 };
-
-
 
 // ================ List Reviews Food =================
 exports.listFoodReviews = async (req, res) => {

@@ -22,9 +22,6 @@ const GoogleMapController = require('../../controllers/Client/GoogleMapControlle
 const OrdersController = require('../../controllers/Client/ordersController');
 const ClientComplaintRoutes = require("./ComplaintsRoute");
 
-
-
-
 //Login and Register Routes
 router.post('/google-login', googleLogin);
 router.post('/login', loginController.loginUser);
@@ -88,6 +85,9 @@ router.post('/markets/info', authenticateJWT, OrdersController.getMarketsInfo);
 
 // Socket
 router.post('/distance', authenticateJWT, GoogleMapController.Distance);
+
+
+//ClientComplaints
 router.use("/complaints", ClientComplaintRoutes);
 
 
