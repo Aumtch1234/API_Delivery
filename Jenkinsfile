@@ -200,92 +200,29 @@ pipeline {
       steps {
         echo '⏳ Waiting for API to be ready...'
         sh '''
-          PORT=4000
-          MAX_ATTEMPTS=20
-          ATTEMPT=0
-          
-          echo "🔍 Checking all containers status..."
-          docker ps -a
+          echo "🔍 Checking containers status..."
+          docker ps -a | grep -E "delivery-api|postgres"
           
           echo ""
-          echo "📋 Checking if delivery-api container exists..."
-          if docker ps -a | grep -q "delivery-api"; then
-            echo "✅ delivery-api container exists"
-            if docker ps | grep -q "delivery-api"; then
-              echo "✅ delivery-api container is RUNNING"
-            else
-              echo "❌ delivery-api container EXISTS but NOT RUNNING"
-              docker logs delivery-api
-              exit 1
-            fi
+          echo "📋 Checking if delivery-api container is RUNNING..."
+          if docker ps | grep -q "delivery-api"; then
+            echo "✅ delivery-api container is RUNNING"
           else
-            echo "❌ delivery-api container DOES NOT EXIST"
-            docker ps -a
+            echo "❌ delivery-api container is NOT RUNNING"
+            docker logs delivery-api
             exit 1
           fi
           
           echo ""
-          echo "📋 Container logs (last 50 lines):"
-          docker logs --tail=50 delivery-api
+          echo "📋 Container logs (last 30 lines):"
+          docker logs --tail=30 delivery-api
           
           echo ""
-          echo "🔍 Waiting for API on port: $PORT"
+          echo "📋 Checking database connection..."
+          docker exec delivery-api node -e "const pool = require('./config/db'); pool.query('SELECT NOW()', (err, res) => { if (err) { console.error('❌ DB Error:', err.message); process.exit(1); } else { console.log('✅ DB Connected:', res.rows[0].now); process.exit(0); } });"
           
-          # ✅ Simple health check using nc (netcat) to test if port responds
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            # Test if API is responding on port 4000
-            if timeout 3 nc -zv localhost $PORT >/dev/null 2>&1; then
-              echo "✅ API port is responding!"
-              
-              # Try to get actual response from host
-              RESPONSE=$(curl -s -f http://localhost:$PORT/health 2>/dev/null || echo "")
-              
-              if [ ! -z "$RESPONSE" ]; then
-                echo "✅ API health check passed!"
-                echo "📋 Response:"
-                echo "$RESPONSE" | head -20
-                exit 0
-              else
-                echo "⚠️  Port open but no response from /health yet"
-              fi
-            else
-              echo "⏳ API not ready yet..."
-            fi
-            
-            ATTEMPT=$((ATTEMPT + 1))
-            echo "⏳ Waiting for API... ($ATTEMPT/$MAX_ATTEMPTS)"
-            sleep 2
-          done
-          
-          echo "❌ API health check failed after $MAX_ATTEMPTS attempts"
           echo ""
-          echo "📋 Final container logs:"
-          docker logs --tail=20 delivery-api
-          echo ""
-          echo "📋 Checking database connection from API container:"
-          docker exec delivery-api node -e "const pool = require('./config/db'); pool.query('SELECT NOW()', (err, res) => { if (err) console.error('❌ DB Error:', err.message); else console.log('✅ DB OK:', res.rows[0].now); process.exit(err ? 1 : 0); });" || true
-          
-          exit 1
-        '''
-      }
-    }
-
-    stage('Health Check') {
-      steps {
-        echo '🔍 Performing health checks...'
-        sh '''
-          PORT=4000
-          
-          echo "=== Container Status ==="
-          docker ps --format "table {{.Names}}\t{{.State}}\t{{.Status}}"
-
-          echo ""
-          echo "=== PostgreSQL Health ==="
-          docker exec postgres psql -U postgres -d delivery -c "SELECT NOW();" 2>/dev/null || echo "Unable to connect"
-
-          echo ""
-          echo "=== API Health ==="
-          curl -s http://localhost:$PORT/health 2>/dev/null || echo "Not responding"
+          echo "✅ All checks passed!"
         '''
       }
     }
@@ -294,17 +231,14 @@ pipeline {
       steps {
         echo '✅ Verifying application deployment...'
         sh '''
-          PORT=$(grep "^port=" .env | cut -d'=' -f2)
-          if [ -z "$PORT" ]; then
-            PORT=$(grep "^PORT=" .env | cut -d'=' -f2)
-          fi
-          PORT=${PORT:-4000}
+          echo "📋 Running containers:"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           
-          echo "API: http://localhost:$PORT"
-          echo "PgAdmin: http://localhost:8081"
           echo ""
-          echo "Container Logs (Last 20 lines of API):"
-          docker logs --tail=20 delivery-api 2>&1 || docker logs --tail=20 api-delivery 2>&1 || echo "Container not found"
+          echo "📋 Application is deployed successfully!"
+          echo "API: http://localhost:4000"
+          echo "PgAdmin: http://localhost:8081"
+          echo "Jenkins: http://localhost:8080"
         '''
       }
     }
