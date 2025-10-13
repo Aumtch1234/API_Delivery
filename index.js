@@ -27,12 +27,17 @@ const CustomerChatRoutes = require('./SocketRoutes/Chats/CustomerChatRoutes');
 const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // ฟังก์ชันรับ io (order / status updates)
 
 const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
+const path = require("path");
+const clientRoutes = require("./routes/Client/ClientAPIsRoute");
+
+
 
 
 
 
 
 const app = express();
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(cors());
 app.use(express.json());
 
@@ -51,6 +56,8 @@ app.use("/uploads/chat-images", express.static(path.join(__dirname, "uploads/cha
 app.use("/uploads/delivery_photos", express.static(path.join(__dirname, "uploads/delivery_photos")));
 
 app.use('/client/categories', FoodCategoryRoutes); // ✅ ใช้งาน path
+app.use("/rider", clientRoutes);
+
 
 
 // HTTP + Socket.IO
