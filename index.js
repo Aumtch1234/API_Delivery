@@ -29,6 +29,10 @@ const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // ฟ�
 const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
 const clientRoutes = require("./routes/Client/ClientAPIsRoute");
 
+const app = express();
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(cors());
+app.use(express.json());
 
 // ✅ Health Check Endpoint (เพิ่มตรงนี้)
 app.get('/health', async (req, res) => {
@@ -67,10 +71,6 @@ app.get('/', (req, res) => {
   });
 });
 
-const app = express();
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(cors());
-app.use(express.json());
 
 // HTTP Routes
 app.use('/client', ClientRoutes);
