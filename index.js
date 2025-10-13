@@ -30,10 +30,42 @@ const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
 const clientRoutes = require("./routes/Client/ClientAPIsRoute");
 
 
+// ✅ Health Check Endpoint (เพิ่มตรงนี้)
+app.get('/health', async (req, res) => {
+  try {
+    // ตรวจสอบการเชื่อมต่อ database
+    const result = await pool.query('SELECT NOW()');
+    
+    res.status(200).json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error.message
+    });
+  }
+});
 
-
-
-
+// ✅ Root Endpoint (สำหรับ basic check)
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Delivery API is running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      client: '/client',
+      admin: '/admin',
+      rider: '/rider'
+    }
+  });
+});
 
 const app = express();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
