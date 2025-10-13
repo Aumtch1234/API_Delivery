@@ -200,12 +200,9 @@ pipeline {
       steps {
         echo '⏳ Waiting for API to be ready...'
         sh '''
-          # Get PORT from .env file
-          PORT=$(grep "^port=" .env | cut -d'=' -f2)
-          if [ -z "$PORT" ]; then
-            PORT=$(grep "^PORT=" .env | cut -d'=' -f2)
-          fi
-          PORT=${PORT:-4000}
+          PORT=4000
+          MAX_ATTEMPTS=20
+          ATTEMPT=0
           
           echo "🔍 Checking all containers status..."
           docker ps -a
@@ -214,28 +211,16 @@ pipeline {
           echo "📋 Checking if delivery-api container exists..."
           if docker ps -a | grep -q "delivery-api"; then
             echo "✅ delivery-api container exists"
-            
-            # Check if it's running
             if docker ps | grep -q "delivery-api"; then
               echo "✅ delivery-api container is RUNNING"
             else
               echo "❌ delivery-api container EXISTS but NOT RUNNING"
-              echo ""
-              echo "📋 Container exit code and status:"
-              docker ps -a --filter "name=delivery-api" --format "table {{.Names}}\t{{.Status}}"
-              echo ""
-              echo "📋 Full container logs:"
               docker logs delivery-api
               exit 1
             fi
           else
             echo "❌ delivery-api container DOES NOT EXIST"
-            echo ""
-            echo "📋 All containers:"
             docker ps -a
-            echo ""
-            echo "📋 Docker compose logs:"
-            docker-compose -f $DOCKER_COMPOSE logs --tail=100
             exit 1
           fi
           
@@ -246,48 +231,41 @@ pipeline {
           echo ""
           echo "🔍 Waiting for API on port: $PORT"
           
-          MAX_ATTEMPTS=20
-          ATTEMPT=0
-          
+          # ✅ Simple health check using nc (netcat) to test if port responds
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            # ✅ FIX: Use docker exec to test from inside container network
-            HTTP_CODE=$(docker exec delivery-api curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/health 2>/dev/null || echo "000")
-            
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ API health check passed! (HTTP $HTTP_CODE)"
+            # Test if API is responding on port 4000
+            if timeout 3 nc -zv localhost $PORT >/dev/null 2>&1; then
+              echo "✅ API port is responding!"
               
-              # Show health check response
-              echo "📋 Health check response:"
-              docker exec delivery-api curl -s http://localhost:$PORT/health | head -n 20
-              break
-            elif [ "$HTTP_CODE" = "503" ]; then
-              echo "⚠️  API responding but database not ready (HTTP $HTTP_CODE)"
-            elif [ "$HTTP_CODE" != "000" ]; then
-              echo "⚠️  API responding with HTTP $HTTP_CODE"
+              # Try to get actual response from host
+              RESPONSE=$(curl -s -f http://localhost:$PORT/health 2>/dev/null || echo "")
+              
+              if [ ! -z "$RESPONSE" ]; then
+                echo "✅ API health check passed!"
+                echo "📋 Response:"
+                echo "$RESPONSE" | head -20
+                exit 0
+              else
+                echo "⚠️  Port open but no response from /health yet"
+              fi
+            else
+              echo "⏳ API not ready yet..."
             fi
             
             ATTEMPT=$((ATTEMPT + 1))
             echo "⏳ Waiting for API... ($ATTEMPT/$MAX_ATTEMPTS)"
-            sleep 3
+            sleep 2
           done
           
-          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-            echo "❌ API health check failed after $MAX_ATTEMPTS attempts"
-            echo ""
-            echo "📋 Final container logs:"
-            docker logs delivery-api
-            echo ""
-            echo "📋 Checking database connection from API container:"
-            docker exec delivery-api node -e "
-              const pool = require('./config/db');
-              pool.query('SELECT NOW()', (err, res) => {
-                if (err) console.error('❌ DB Connection Error:', err.message);
-                else console.log('✅ DB Connected:', res.rows[0].now);
-                process.exit(err ? 1 : 0);
-              });
-            " || echo "Database connection check failed"
-            exit 1
-          fi
+          echo "❌ API health check failed after $MAX_ATTEMPTS attempts"
+          echo ""
+          echo "📋 Final container logs:"
+          docker logs --tail=20 delivery-api
+          echo ""
+          echo "📋 Checking database connection from API container:"
+          docker exec delivery-api node -e "const pool = require('./config/db'); pool.query('SELECT NOW()', (err, res) => { if (err) console.error('❌ DB Error:', err.message); else console.log('✅ DB OK:', res.rows[0].now); process.exit(err ? 1 : 0); });" || true
+          
+          exit 1
         '''
       }
     }
@@ -296,29 +274,18 @@ pipeline {
       steps {
         echo '🔍 Performing health checks...'
         sh '''
-          # Get values from .env (try both cases)
-          POSTGRES_DB=$(grep "^postgres_db=" .env | cut -d'=' -f2)
-          if [ -z "$POSTGRES_DB" ]; then
-            POSTGRES_DB=$(grep "^POSTGRES_DB=" .env | cut -d'=' -f2)
-          fi
-          POSTGRES_DB=${POSTGRES_DB:-delivery}
-          
-          PORT=$(grep "^port=" .env | cut -d'=' -f2)
-          if [ -z "$PORT" ]; then
-            PORT=$(grep "^PORT=" .env | cut -d'=' -f2)
-          fi
-          PORT=${PORT:-4000}
+          PORT=4000
           
           echo "=== Container Status ==="
           docker ps --format "table {{.Names}}\t{{.State}}\t{{.Status}}"
 
           echo ""
           echo "=== PostgreSQL Health ==="
-          docker exec postgres psql -U postgres -d "$POSTGRES_DB" -c "SELECT NOW();" || echo "Unable to connect"
+          docker exec postgres psql -U postgres -d delivery -c "SELECT NOW();" 2>/dev/null || echo "Unable to connect"
 
           echo ""
-          echo "=== API Health (from inside container) ==="
-          docker exec delivery-api curl -s http://localhost:$PORT/health | head -n 10 || echo "Not responding"
+          echo "=== API Health ==="
+          curl -s http://localhost:$PORT/health 2>/dev/null || echo "Not responding"
         '''
       }
     }
