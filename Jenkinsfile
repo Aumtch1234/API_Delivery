@@ -84,7 +84,7 @@ pipeline {
           docker-compose -f $DOCKER_COMPOSE down -v
           
           # Force remove specific containers if they still exist
-          docker rm -f postgres delivery-api pgadmin 2>/dev/null || true
+          docker rm -f postgres delivery-api pgadmin api-delivery 2>/dev/null || true
           
           # Clean up unused resources
           docker image prune -f
@@ -183,6 +183,24 @@ pipeline {
           PORT=${PORT:-4000}
           
           echo "🔍 Checking API on port: $PORT"
+          echo "📋 Current containers:"
+          docker ps -a
+          
+          echo ""
+          echo "📋 Checking if delivery-api container is running..."
+          if docker ps | grep -q "delivery-api"; then
+            echo "✅ delivery-api container is running"
+            echo "📋 Container logs (last 30 lines):"
+            docker logs --tail=30 delivery-api
+          else
+            echo "❌ delivery-api container is NOT running!"
+            echo "📋 All containers status:"
+            docker ps -a
+            if docker ps -a | grep -q "delivery-api"; then
+              echo "📋 delivery-api exists but not running. Logs:"
+              docker logs delivery-api
+            fi
+          fi
           
           MAX_ATTEMPTS=20
           ATTEMPT=0
@@ -199,7 +217,8 @@ pipeline {
 
           if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
             echo "❌ API did not respond in time"
-            docker logs api-delivery
+            echo "📋 Container logs:"
+            docker logs delivery-api 2>&1 || docker logs api-delivery 2>&1 || echo "Container not found"
             exit 1
           fi
         '''
@@ -249,7 +268,7 @@ pipeline {
           echo "PgAdmin: http://localhost:8081"
           echo ""
           echo "Container Logs (Last 20 lines of API):"
-          docker logs --tail=20 api-delivery || true
+          docker logs --tail=20 delivery-api 2>&1 || docker logs --tail=20 api-delivery 2>&1 || echo "Container not found"
         '''
       }
     }
