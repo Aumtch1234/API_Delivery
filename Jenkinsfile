@@ -6,7 +6,6 @@ pipeline {
     PROJECT_NAME = 'delivery-api'
     DB_NAME = 'delivery'
 
-
     POSTGRES_USER = credentials('api_env')     // username
     POSTGRES_PASSWORD = credentials('api_env') // password
     PGADMIN_DEFAULT_EMAIL = credentials('api_env')
@@ -51,7 +50,7 @@ pipeline {
         echo '🧹 Cleaning old containers and volumes...'
         sh '''
           set +e
-          docker compose -f $DOCKER_COMPOSE down -v
+          docker-compose -f $DOCKER_COMPOSE down -v
           docker image prune -f
           docker volume prune -f
           set -e
@@ -63,7 +62,7 @@ pipeline {
       steps {
         echo '🗄️ Starting PostgreSQL only...'
         sh '''
-          docker compose -f $DOCKER_COMPOSE up -d postgres
+          docker-compose -f $DOCKER_COMPOSE up -d postgres
 
           echo "⏳ Waiting for PostgreSQL to be ready..."
           MAX_ATTEMPTS=30
@@ -107,7 +106,7 @@ pipeline {
       steps {
         echo '🔨 Building Docker images...'
         sh '''
-          docker compose -f $DOCKER_COMPOSE build --no-cache
+          docker-compose -f $DOCKER_COMPOSE build --no-cache
           echo "✅ Build completed successfully"
         '''
       }
@@ -117,7 +116,7 @@ pipeline {
       steps {
         echo '🚀 Starting API and pgAdmin...'
         sh '''
-          docker compose -f $DOCKER_COMPOSE up -d
+          docker-compose -f $DOCKER_COMPOSE up -d
           echo "⏳ Waiting for services to start..."
           sleep 5
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -194,7 +193,7 @@ pipeline {
         echo "=== Debug Information ==="
         docker ps -a
         echo "=== Last Docker Logs ==="
-        docker compose -f $DOCKER_COMPOSE logs --tail=100 || true
+        docker-compose -f $DOCKER_COMPOSE logs --tail=100 || true
       '''
     }
     always {
