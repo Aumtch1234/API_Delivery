@@ -20,6 +20,9 @@ const cartsController = require('../../controllers/Client/cartsController');
 const profileController = require('../../controllers/Client/userController');
 const GoogleMapController = require('../../controllers/Client/GoogleMapController');
 const OrdersController = require('../../controllers/Client/ordersController');
+const ClientComplaintRoutes = require("./ComplaintsRoute");
+
+
 
 
 //Login and Register Routes
@@ -37,6 +40,8 @@ router.get('/address', authenticateJWT, profileController.getAddresses);
 router.get('/address/default', authenticateJWT, profileController.GetDefaultAddress);
 router.put('/update/address/:id', authenticateJWT, profileController.updateAddress);
 router.delete('/delete/address/:id', authenticateJWT, profileController.deleteAddress);
+router.get("/history", authenticateJWT, profileController.getOrderHistory);
+
 
 //refreshTokenAPI
 router.post('/refresh-token', authenticateJWT, refreshToken);
@@ -83,5 +88,7 @@ router.post('/markets/info', authenticateJWT, OrdersController.getMarketsInfo);
 
 // Socket
 router.post('/distance', authenticateJWT, GoogleMapController.Distance);
+router.use("/complaints", ClientComplaintRoutes);
+
 
 module.exports = router;
