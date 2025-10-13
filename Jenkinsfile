@@ -6,6 +6,8 @@ pipeline {
     PROJECT_NAME = 'delivery-api'
     DB_NAME = 'delivery'
 
+    POSTGRES_DB = credentials('api_env') 
+    PORT = credentials('api_env') 
     POSTGRES_USER = credentials('api_env')     // username
     POSTGRES_PASSWORD = credentials('api_env') // password
     PGADMIN_DEFAULT_EMAIL = credentials('api_env')
