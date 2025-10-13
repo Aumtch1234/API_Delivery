@@ -1,57 +1,69 @@
-# Node modules
+# =========================
+# 🧩 Node.js Essentials
+# =========================
 node_modules/
-
-# Logs
-logs/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# dotenv environment files
+# =========================
+# ⚙️ Environment & Config
+# =========================
 .env
 .env.*.local
 
-# Build output
+# =========================
+# 🏗️ Build / Compiled Output
+# =========================
 dist/
 build/
 tmp/
 temp/
+out/
 
-# OS generated
+# =========================
+# 🧠 TypeScript / Lint Cache
+# =========================
+*.tsbuildinfo
+.eslintcache
+
+# =========================
+# 🧪 Tests & Coverage
+# =========================
+coverage/
+
+# =========================
+# 🐳 Docker & Database
+# =========================
+pg_data/
+pgdata/
+docker-data/
+*.sql
+*.dump
+
+# =========================
+# 📁 User Uploads
+# =========================
+uploads/
+
+# =========================
+# 🧰 IDE / OS Junk
+# =========================
 .DS_Store
 Thumbs.db
-
-# Editor folders
 .vscode/
 .idea/
 
-# Coverage directory used by testing tools
-coverage/
-
-# Optional npm cache directory
-.npm/
-
-# Optional eslint cache
-.eslintcache
-
-# TypeScript cache
-*.tsbuildinfo
-
-# 🐳 Docker & Database volumes
-pgdata/              # PostgreSQL data directory
-docker-data/         # (ถ้ามี mount volume ชื่ออื่น)
-
-# 📁 Uploads & user-generated files
-uploads/             # เก็บไฟล์อัปโหลด (เช่น รูป chat ฯลฯ)
-
-# 🔥 Build artifacts / runtime junk
+# =========================
+# 🔥 Misc / Backup Files
+# =========================
 *.swp
 *.swo
 *.bak
+
+# =========================
+# 🐋 Docker Config Files
+# =========================
+Dockerfile
+docker-compose.yml
