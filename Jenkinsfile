@@ -64,6 +64,12 @@ pipeline {
             echo "❌ .env file not found!"
             exit 1
           fi
+          
+          # Remove obsolete version attribute from docker-compose.yml
+          if grep -q "^version:" "$DOCKER_COMPOSE"; then
+            echo "🔧 Removing obsolete version attribute..."
+            sed -i '/^version:/d' "$DOCKER_COMPOSE"
+          fi
         '''
       }
     }
@@ -73,10 +79,21 @@ pipeline {
         echo '🧹 Cleaning old containers and volumes...'
         sh '''
           set +e
+          
+          # Stop and remove all containers from docker-compose
           docker-compose -f $DOCKER_COMPOSE down -v
+          
+          # Force remove specific containers if they still exist
+          docker rm -f postgres delivery-api pgadmin 2>/dev/null || true
+          
+          # Clean up unused resources
           docker image prune -f
           docker volume prune -f
+          docker network prune -f
+          
           set -e
+          
+          echo "✅ Cleanup completed"
         '''
       }
     }
