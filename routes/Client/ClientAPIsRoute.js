@@ -37,6 +37,8 @@ router.get('/address', authenticateJWT, profileController.getAddresses);
 router.get('/address/default', authenticateJWT, profileController.GetDefaultAddress);
 router.put('/update/address/:id', authenticateJWT, profileController.updateAddress);
 router.delete('/delete/address/:id', authenticateJWT, profileController.deleteAddress);
+router.get("/history", authenticateJWT, profileController.getOrderHistory);
+
 
 //refreshTokenAPI
 router.post('/refresh-token', authenticateJWT, refreshToken);

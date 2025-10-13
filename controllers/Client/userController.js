@@ -7,6 +7,64 @@ exports.getProfile = async (req, res) => {
   res.json(userResult.rows[0]);
 };
 
+exports.getOrderHistory = async (req, res) => {
+  try {
+    const user_id = req.user?.user_id;
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Unauthorized: user_id missing from token",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        o.order_id,
+        o.market_id,
+        m.shop_name,
+        SUM(oi.subtotal) AS subtotal,      -- ✅ รวมยอด subtotal ทั้งออเดอร์
+        o.delivery_fee,
+        o.status,
+        o.created_at,
+        o.updated_at,
+        json_agg(
+          json_build_object(
+            'food_name', oi.food_name,
+            'quantity', oi.quantity,
+            'sell_price', oi.sell_price,
+            'subtotal', oi.subtotal,
+            'selected_options', oi.selected_options
+          )
+        ) AS items                         -- ✅ รายการอาหารในออเดอร์ (array)
+      FROM orders o
+      JOIN markets m ON o.market_id = m.market_id
+      JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE o.user_id = $1
+      AND o.status IN ('completed', 'cancelled')
+      GROUP BY 
+        o.order_id, m.shop_name, o.delivery_fee, o.status, o.created_at, o.updated_at
+      ORDER BY o.updated_at DESC;
+      `,
+      [user_id]
+    );
+
+    res.status(200).json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching order history:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
 exports.updateProfile = async (req, res) => {
   try {
     // ตรวจสอบ token
