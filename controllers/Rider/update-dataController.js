@@ -261,3 +261,89 @@ exports.updateRiderPhoto = async (req, res) => {
         });
     }
 };
+
+// ✅ POST /rider/shop-closed
+exports.reportShopClosed = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // มาจาก token
+    const { market_id, order_id, reason, note } = req.body;
+
+    // หา rider_id จาก rider_profiles
+    const riderRes = await pool.query(
+      `SELECT rider_id FROM rider_profiles WHERE user_id = $1`,
+      [user_id]
+    );
+
+    if (riderRes.rows.length === 0) {
+      return res.status(404).json({ error: "ไม่พบข้อมูลไรเดอร์ในระบบ" });
+    }
+
+    const rider_id = riderRes.rows[0].rider_id;
+
+    // สร้าง URL สำหรับรูป
+    const imageUrls = (req.files || []).map(
+      file => `${req.protocol}://${req.get('host')}/uploads/shop_closed/${file.filename}`
+    );
+
+    // insert
+    const result = await pool.query(
+      `INSERT INTO shop_closed_reports 
+         (rider_id, market_id, order_id, reason, note, image_urls, status)
+       VALUES ($1,$2,$3,$4,$5,$6,'pending')
+       RETURNING *`,
+      [rider_id, market_id, order_id || null, reason, note || null, imageUrls]
+    );
+
+    res.status(201).json({
+      message: "แจ้งร้านปิดเรียบร้อยแล้ว ✅",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.error("❌ Error in reportShopClosed:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแจ้งร้านปิด" });
+  }
+};
+
+
+// ✅ GET /rider/shop-closed
+exports.getShopClosedReports = async (req, res) => {
+  try {
+    console.log("🔎 JWT payload:", req.user);
+    const user_id = req.user?.user_id;
+
+    if (!user_id) {
+      return res.status(400).json({ error: "ไม่พบ user_id ใน token" });
+    }
+
+    // ดึงข้อมูล rider_id จาก user_id ด้วย join
+    const result = await pool.query(
+      `
+      SELECT scr.*, 
+             u.display_name AS rider_name,
+             u.email AS rider_email,
+             u.photo_url AS rider_photo,
+             rp.rider_id
+      FROM shop_closed_reports scr
+      JOIN rider_profiles rp ON scr.rider_id = rp.rider_id
+      JOIN users u ON rp.user_id = u.user_id
+      WHERE u.user_id = $1
+      ORDER BY scr.created_at DESC
+      `,
+      [user_id]
+    );
+
+    console.log("📦 Found rows:", result.rows.length);
+
+    res.json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching shopClosed reports:", err);
+    res
+      .status(500)
+      .json({ error: "ไม่สามารถดึงข้อมูลรายงานร้านปิดได้" });
+  }
+};
+
