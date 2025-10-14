@@ -29,12 +29,6 @@ const { initSocket } = require('./SocketRoutes/Events/socketEvents');   // à¸Ÿà¸
 const FoodCategoryRoutes = require('./routes/Client/FoodCategoryRoutes');
 const clientRoutes = require("./routes/Client/ClientAPIsRoute");
 
-
-
-
-
-
-
 const app = express();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(cors());

@@ -1,204 +1,206 @@
+// routes/Rider/RiderAPIsRoute.js
 const express = require('express');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
 const router = express.Router();
 
-// Import controllers
-const { 
-    registerRider, 
-    submitIdentityVerification, 
-    checkApprovalStatus 
+/* =========================================================
+ *  Controllers
+ * =======================================================*/
+const {
+  registerRider,
+  submitIdentityVerification,
+  checkApprovalStatus,
 } = require('../../controllers/Rider/registerController');
 
 const {
-    loginRider,
-    loginRiderWithGoogle,
-    refreshToken,
-    getProfile
+  loginRider,
+  loginRiderWithGoogle,
+  refreshToken,
+  getProfile,
 } = require('../../controllers/Rider/authController');
 
 const {
-    updateRiderPhone,
-    updateRiderPromptPay,
-    updateRiderGender,
-    updateRiderBirthdate,
-    updateRiderPhoto
+  updateRiderPhone,
+  updateRiderPromptPay,
+  updateRiderGender,
+  updateRiderBirthdate,
+  updateRiderPhoto,
+  reportShopClosed,
+  getShopClosedReports,
 } = require('../../controllers/Rider/update-dataController');
 
 const {
-    getRiderGPBalance,
-    riderTopUp,
-    getRiderTopUpHistory,
-    getRiderTopUpStatus
+  getRiderGPBalance,
+  riderTopUp,
+  getRiderTopUpHistory,
+  getRiderTopUpStatus,
 } = require('../../controllers/Rider/rider-topup_Controller');
 
-const { 
-    getJobHistory,
-    // getTodayJobHistory,
-    // getThisMonthJobHistory,
-    // getThisYearJobHistory,
-    getJobHistoryByDate,
-    getJobHistoryByDateRange,
-    getJobHistoryByMonth,
-    getJobHistoryByYear
+const {
+  getJobHistory,
+  getJobHistoryByDate,
+  getJobHistoryByDateRange,
+  getJobHistoryByMonth,
+  getJobHistoryByYear,
 } = require('../../controllers/Rider/JobHistoryController');
 
-// Import middleware
+/* =========================================================
+ *  Middlewares
+ * =======================================================*/
 const {
-    verifyRiderToken,
-    verifyApprovedRider,
-    verifyOwnership,
-    checkNotSubmitted
+  verifyRiderToken,
+  verifyApprovedRider,
+  verifyOwnership,
+  checkNotSubmitted,
 } = require('../../middleware/Rider/auth');
 
-// กำหนดค่า multer สำหรับอัปโหลดไฟล์
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-        files: 6 // รูปโปรไฟล์ + เอกสาร 5 รูป
-    },
-    fileFilter: (req, file, cb) => {
-        // อนุญาตเฉพาะไฟล์รูปภาพ
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('กรุณาอัปโหลดเฉพาะไฟล์รูปภาพ'), false);
-        }
-    }
+/* =========================================================
+ *  Paths & Upload Dirs
+ *  (เดินขึ้น 2 ระดับจาก routes/Rider → Api_Delivery)
+ * =======================================================*/
+const ROOT_DIR = path.join(__dirname, '..', '..');                 // /Api_Delivery
+const UPLOADS_ROOT = path.join(ROOT_DIR, 'uploads');               // /Api_Delivery/uploads
+const SHOP_CLOSED_DIR = path.join(UPLOADS_ROOT, 'shop_closed');    // /Api_Delivery/uploads/shop_closed
+
+// สร้างโฟลเดอร์ถ้ายังไม่มี
+[UPLOADS_ROOT, SHOP_CLOSED_DIR].forEach((dir) => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-// กำหนดฟิลด์สำหรับอัปโหลดหลายรูป
-const uploadFields = upload.fields([
-    { name: 'profile_photo', maxCount: 1 },      // รูปโปรไฟล์
-    { name: 'id_card_selfie', maxCount: 1 },     // รูปถ่ายคู่บัตรประชาชน
-    { name: 'id_card_photo', maxCount: 1 },      // รูปถ่ายบัตรประชาชน
-    { name: 'driving_license_photo', maxCount: 1 }, // รูปใบขับขี่
-    { name: 'vehicle_photo', maxCount: 1 },      // รูปถ่ายรถ
-    { name: 'vehicle_registration_photo', maxCount: 1 } // รูปคู่มือทะเบียนรถ
+/* =========================================================
+ *  Multer Configs
+ * =======================================================*/
+// 1) สำหรับงานทั่วไป (เมมโมรี่) – ใช้กับ register/identity/topup
+const uploadMemory = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 6 }, // 10MB / รวม 6 ไฟล์
+  fileFilter: (req, file, cb) =>
+    file.mimetype.startsWith('image/')
+      ? cb(null, true)
+      : cb(new Error('กรุณาอัปโหลดเฉพาะไฟล์รูปภาพ'), false),
+});
+
+// ฟิลด์หลายรูปสำหรับ identity verification
+const uploadIdentityFields = uploadMemory.fields([
+  { name: 'profile_photo', maxCount: 1 },
+  { name: 'id_card_selfie', maxCount: 1 },
+  { name: 'id_card_photo', maxCount: 1 },
+  { name: 'driving_license_photo', maxCount: 1 },
+  { name: 'vehicle_photo', maxCount: 1 },
+  { name: 'vehicle_registration_photo', maxCount: 1 },
 ]);
 
-// Auth Routes (ไม่ต้องการ authentication)
-// POST /rider/login - เข้าสู่ระบบ
+// 2) สำหรับ “แจ้งร้านปิด” (ดิสก์) – เก็บไฟล์ลง host
+const storageShopClosed = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, SHOP_CLOSED_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = `shopclosed_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
+  },
+});
+const uploadShopClosed = multer({
+  storage: storageShopClosed,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB/ไฟล์
+  fileFilter: (req, file, cb) =>
+    file.mimetype.startsWith('image/')
+      ? cb(null, true)
+      : cb(new Error('กรุณาอัปโหลดเฉพาะไฟล์รูปภาพ')),
+});
+
+/* =========================================================
+ *  Auth (ไม่ต้องใช้ token)
+ * =======================================================*/
 router.post('/login', loginRider);
-
-// POST /rider/google-login - เข้าสู่ระบบด้วย Google
 router.post('/google-login', loginRiderWithGoogle);
-
-// POST /rider/refresh-token - รีเฟรช token
 router.post('/refresh-token', refreshToken);
 
-// Registration Routes (ไม่ต้องการ authentication)
-// POST /rider/register - สมัครสมาชิกไรเดอร์ (ขั้นตอนที่ 1)
-router.post('/register', upload.single('profile_photo'), registerRider);
+/* =========================================================
+ *  Registration (ไม่ต้องใช้ token)
+ * =======================================================*/
+router.post('/register', uploadMemory.single('profile_photo'), registerRider);
 
-// POST /rider/identity-verification - ยืนยันตัวตน (ขั้นตอนที่ 2)
-// ใช้ middleware เพื่อป้องกันการส่งซ้ำ
-router.post('/identity-verification', 
-    verifyRiderToken, 
-    checkNotSubmitted, 
-    uploadFields, 
-    submitIdentityVerification
+/* =========================================================
+ *  Identity Verification (ต้องใช้ token)
+ * =======================================================*/
+router.post(
+  '/identity-verification',
+  verifyRiderToken,
+  checkNotSubmitted,
+  uploadIdentityFields,
+  submitIdentityVerification
 );
 
-// Protected Routes (ต้องการ authentication)
-// GET /rider/profile - ดูข้อมูลโปรไฟล์ของตัวเอง
+/* =========================================================
+ *  Protected: Profile & Approval
+ * =======================================================*/
 router.get('/profile', verifyRiderToken, getProfile);
-
-// GET /rider/approval-status - ตรวจสอบสถานะการอนุมัติ
 router.get('/approval-status', verifyRiderToken, checkApprovalStatus);
 
-// Update Data Routes (ต้องการ authentication)
-// PUT /rider/update-phone - อัพเดตเบอร์โทรศัพท์
+/* =========================================================
+ *  Protected: Update Data
+ * =======================================================*/
 router.put('/update-phone', verifyRiderToken, updateRiderPhone);
-
-// PUT /rider/update-promptpay - อัพเดตหมายเลข PromptPay
 router.put('/update-promptpay', verifyRiderToken, updateRiderPromptPay);
-
-// PUT /rider/update-gender - อัพเดตเพศ
 router.put('/update-gender', verifyRiderToken, updateRiderGender);
-
-// PUT /rider/update-birthdate - อัพเดตวันเกิด
 router.put('/update-birthdate', verifyRiderToken, updateRiderBirthdate);
+router.put('/update-photo', verifyRiderToken, uploadMemory.single('photo'), updateRiderPhoto);
 
-// PUT /rider/update-photo - อัพเดตรูปโปรไฟล์
-router.put('/update-photo', verifyRiderToken, upload.single('photo'), updateRiderPhoto);
-
-
-// Top-up Routes (ต้องการ authentication)
-// GET /rider/gp-balance - ดูยอด GP คงเหลือ
+/* =========================================================
+ *  Protected: Top-up
+ * =======================================================*/
 router.get('/gp-balance', verifyRiderToken, getRiderGPBalance);
-
-// POST /rider/topup - เติมเงิน GP
-router.post('/topup', verifyRiderToken, upload.single('slip'), riderTopUp);
-
-// GET /rider/topup-history - ดูประวัติการเติมเงิน
+router.post('/topup', verifyRiderToken, uploadMemory.single('slip'), riderTopUp);
 router.get('/topup-history', verifyRiderToken, getRiderTopUpHistory);
-
-// GET /rider/topup/:topup_id/status - ดูสถานะการเติมเงินรายการเดียว
 router.get('/topup/:topup_id/status', verifyRiderToken, getRiderTopUpStatus);
 
-
-// Job History Routes (ต้องการ authentication)
-// GET /rider/job-history/all - ดูประวัติการทำงานของไรเดอร์ทั้งหมด
+/* =========================================================
+ *  Protected: Job History
+ * =======================================================*/
 router.get('/job-history/all', verifyRiderToken, getJobHistory);
-
-// GET /rider/job-history/today - ดูประวัติการทำงานของไรเดอร์วันนี้
-// router.get('/job-history/today', verifyRiderToken, getTodayJobHistory);
-// GET /rider/job-history/this-month - ดูประวัติการทำงานของไรเดอร์เดือนนี้
-// router.get('/job-history/this-month', verifyRiderToken, getThisMonthJobHistory);
-// GET /rider/job-history/this-year - ดูประวัติการทำงานของไรเดอร์ปีนี้
-// router.get('/job-history/this-year', verifyRiderToken, getThisYearJobHistory);
-
-// GET /rider/job-history/bydate?date=2025-10-02 - ดูประวัติการทำงานของไรเดอร์ในวันที่ระบุ (รูปแบบ YYYY-MM-DD)
 router.get('/job-history/bydate', verifyRiderToken, getJobHistoryByDate);
-
-// GET /rider/job-history/bydate-range - ดูประวัติการทำงานของไรเดอร์ในช่วงวันที่ระบุ
 router.get('/job-history/bydate-range', verifyRiderToken, getJobHistoryByDateRange);
-
-// GET /rider/job-history/by-month?month=10&year=2025 - ดูประวัติการทำงานของไรเดอร์ในเดือนที่เลือก
 router.get('/job-history/by-month', verifyRiderToken, getJobHistoryByMonth);
-
-// GET /rider/job-history/by-year?year=2025 - ดูประวัติการทำงานของไรเดอร์ในปีที่เลือก
 router.get('/job-history/by-year', verifyRiderToken, getJobHistoryByYear);
 
-// GET /rider/approved-only-test - ทดสอบ route ที่ต้องการ rider ที่อนุมัติแล้ว
-router.get('/approved-only-test', 
-    verifyRiderToken, 
-    verifyApprovedRider, 
-    (req, res) => {
-        res.json({
-            message: 'คุณเป็นไรเดอร์ที่ได้รับการอนุมัติแล้ว',
-            user: req.user
-        });
-    }
-);
+// ทดสอบเฉพาะไรเดอร์ที่อนุมัติแล้ว
+router.get('/approved-only-test', verifyRiderToken, verifyApprovedRider, (req, res) => {
+  res.json({ message: 'คุณเป็นไรเดอร์ที่ได้รับการอนุมัติแล้ว', user: req.user });
+});
 
-// Middleware สำหรับจัดการ error ของ multer
+/* =========================================================
+ *  Protected: Shop Closed (อัปโหลดลง host)
+ * =======================================================*/
+router.post(
+  '/shop-closed',
+  verifyRiderToken,
+  uploadShopClosed.array('images', 3), // ❗️ฟิลด์ชื่อ "images"
+  reportShopClosed
+);
+router.get('/shop-closed', verifyRiderToken, getShopClosedReports);
+
+/* =========================================================
+ *  Multer Error Handler (เฉพาะของไฟล์นี้)
+ * =======================================================*/
 router.use((error, req, res, next) => {
-    if (error instanceof multer.MulterError) {
-        if (error.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ 
-                error: 'ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB)' 
-            });
-        }
-        if (error.code === 'LIMIT_FILE_COUNT') {
-            return res.status(400).json({ 
-                error: 'จำนวนไฟล์เกินที่กำหนด' 
-            });
-        }
-        if (error.code === 'LIMIT_UNEXPECTED_FILE') {
-            return res.status(400).json({ 
-                error: 'ชื่อฟิลด์ไฟล์ไม่ถูกต้อง' 
-            });
-        }
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 10MB หรือ 5MB)' });
     }
-    
-    if (error.message === 'กรุณาอัปโหลดเฉพาะไฟล์รูปภาพ') {
-        return res.status(400).json({ error: error.message });
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ error: 'จำนวนไฟล์เกินที่กำหนด' });
     }
-    
-    next(error);
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ error: 'ชื่อฟิลด์ไฟล์ไม่ถูกต้อง' });
+    }
+  }
+  if (error?.message === 'กรุณาอัปโหลดเฉพาะไฟล์รูปภาพ') {
+    return res.status(400).json({ error: error.message });
+  }
+  next(error);
 });
 
 module.exports = router;
