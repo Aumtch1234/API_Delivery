@@ -283,7 +283,6 @@ exports.assignRider = async (req, res) => {
 };
 
 // API: อัพเดทสถานะออเดอร์
-// API: อัพเดทสถานะออเดอร์
 exports.updateOrderStatus = async (req, res) => {
     const { order_id, status, additional_data = {} } = req.body;
     const photoFile = req.file; // จาก multer middleware

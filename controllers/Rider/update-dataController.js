@@ -261,14 +261,13 @@ exports.updateRiderPhoto = async (req, res) => {
         });
     }
 };
-
 // ✅ POST /rider/shop-closed
 exports.reportShopClosed = async (req, res) => {
   try {
     const user_id = req.user.user_id; // มาจาก token
     const { market_id, order_id, reason, note } = req.body;
 
-    // หา rider_id จาก rider_profiles
+    // 🔹 หา rider_id จาก rider_profiles
     const riderRes = await pool.query(
       `SELECT rider_id FROM rider_profiles WHERE user_id = $1`,
       [user_id]
@@ -280,12 +279,13 @@ exports.reportShopClosed = async (req, res) => {
 
     const rider_id = riderRes.rows[0].rider_id;
 
-    // สร้าง URL สำหรับรูป
+    // 🔹 สร้าง URL สำหรับรูป
     const imageUrls = (req.files || []).map(
-      file => `${req.protocol}://${req.get('host')}/uploads/shop_closed/${file.filename}`
+      (file) =>
+        `${req.protocol}://${req.get("host")}/uploads/shop_closed/${file.filename}`
     );
 
-    // insert
+    // 🔹 บันทึกลง shop_closed_reports
     const result = await pool.query(
       `INSERT INTO shop_closed_reports 
          (rider_id, market_id, order_id, reason, note, image_urls, status)
@@ -294,15 +294,33 @@ exports.reportShopClosed = async (req, res) => {
       [rider_id, market_id, order_id || null, reason, note || null, imageUrls]
     );
 
+    // 🔹 อัปเดตคอลัมน์ note ของตาราง orders ด้วย reason
+    if (order_id) {
+      const combinedNote = note
+        ? `${reason} (${note})`
+        : reason;
+
+      await pool.query(
+        `UPDATE orders
+         SET note = $1
+         WHERE order_id = $2`,
+        [combinedNote, order_id]
+      );
+    }
+
     res.status(201).json({
+      success: true,
       message: "แจ้งร้านปิดเรียบร้อยแล้ว ✅",
       data: result.rows[0],
     });
   } catch (err) {
     console.error("❌ Error in reportShopClosed:", err);
-    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแจ้งร้านปิด" });
+    res
+      .status(500)
+      .json({ error: "เกิดข้อผิดพลาดในการแจ้งร้านปิด" });
   }
 };
+
 
 
 // ✅ GET /rider/shop-closed
