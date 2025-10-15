@@ -20,17 +20,22 @@ exports.upsertMarketReview = async (req, res) => {
   const { user_id } = req.user || {};
   const { order_id, rating, comment } = req.body || {};
 
-  if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
-  if (!order_id || !rating) return res.status(400).json({ error: 'order_id and rating are required' });
+  if (!user_id)
+    return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
+  if (!order_id || !rating)
+    return res
+      .status(400)
+      .json({ error: 'order_id and rating are required' });
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    // ทำ INSERT โดยดึง market_id จาก orders (จะพึ่ง trigger ตรวจสิทธิ์และสถานะ delivered)
+    // ✅ 1. Insert หรือ Update รีวิวร้าน
     const upsertSql = `
       INSERT INTO public.market_reviews (order_id, user_id, market_id, rating, comment)
-      SELECT $1, $2, o.market_id, $3, NULLIF($4, '') FROM public.orders o WHERE o.order_id = $1
+      SELECT $1, $2, o.market_id, $3, NULLIF($4, '') 
+      FROM public.orders o WHERE o.order_id = $1
       ON CONFLICT (order_id) DO UPDATE
       SET rating = EXCLUDED.rating,
           comment = EXCLUDED.comment,
@@ -39,8 +44,17 @@ exports.upsertMarketReview = async (req, res) => {
     `;
     const upsert = await client.query(upsertSql, [order_id, user_id, rating, comment ?? null]);
 
-    // ดึงสรุปใหม่ของ market (trigger ได้อัปเดตให้แล้ว)
     const marketId = upsert.rows[0].market_id;
+
+    // ✅ 2. อัปเดต orders ให้รู้ว่ารีวิวร้านแล้ว
+    await client.query(
+      `UPDATE public.orders 
+       SET is_market_reviewed = TRUE, updated_at = now()
+       WHERE order_id = $1`,
+      [order_id]
+    );
+
+    // ✅ 3. ดึง market summary ใหม่
     const agg = await client.query(
       `SELECT market_id, shop_name, rating AS rating_avg, reviews_count
        FROM public.markets WHERE market_id = $1`,
@@ -52,11 +66,14 @@ exports.upsertMarketReview = async (req, res) => {
       ok: true,
       review: upsert.rows[0],
       market_summary: agg.rows[0],
+      is_market_reviewed: true, // ✅ เพิ่มไว้ใน response ด้วย
     });
   } catch (err) {
     await client.query('ROLLBACK');
-    // ข้อความจาก trigger/constraint จะโยนออกมา เช่น ไม่ใช่เจ้าของออเดอร์/ยังไม่ delivered/dup etc.
-    return res.status(400).json({ error: 'Cannot upsert market review', detail: err.message });
+    return res.status(400).json({
+      error: 'Cannot upsert market review',
+      detail: err.message,
+    });
   } finally {
     client.release();
   }
@@ -66,17 +83,22 @@ exports.upsertMarketReview = async (req, res) => {
 exports.upsertRiderReview = async (req, res) => {
   const { user_id } = req.user || {};
   const { order_id, rating, comment } = req.body || {};
-  if (!user_id) return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
-  if (!order_id || !rating) return res.status(400).json({ error: 'order_id and rating are required' });
+  if (!user_id)
+    return res.status(401).json({ error: 'Invalid token payload (no user_id)' });
+  if (!order_id || !rating)
+    return res
+      .status(400)
+      .json({ error: 'order_id and rating are required' });
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
-    // ดึง rider_id จาก orders แล้ว upsert
+    // ✅ 1. Insert หรือ Update รีวิวไรเดอร์
     const upsertSql = `
       INSERT INTO public.rider_reviews (order_id, user_id, rider_id, rating, comment)
-      SELECT $1, $2, o.rider_id, $3, NULLIF($4, '') FROM public.orders o WHERE o.order_id = $1
+      SELECT $1, $2, o.rider_id, $3, NULLIF($4, '') 
+      FROM public.orders o WHERE o.order_id = $1
       ON CONFLICT (order_id) DO UPDATE
       SET rating = EXCLUDED.rating,
           comment = EXCLUDED.comment,
@@ -86,6 +108,16 @@ exports.upsertRiderReview = async (req, res) => {
     const upsert = await client.query(upsertSql, [order_id, user_id, rating, comment ?? null]);
 
     const riderId = upsert.rows[0].rider_id;
+
+    // ✅ 2. อัปเดต orders ให้รู้ว่ารีวิวไรเดอร์แล้ว
+    await client.query(
+      `UPDATE public.orders 
+       SET is_rider_reviewed = TRUE, updated_at = now()
+       WHERE order_id = $1`,
+      [order_id]
+    );
+
+    // ✅ 3. ดึงข้อมูลสรุปไรเดอร์ใหม่
     const agg = await client.query(
       `SELECT rp.rider_id, rp.rating AS rating_avg, rp.reviews_count, u.display_name AS rider_name
        FROM public.rider_profiles rp
@@ -99,14 +131,19 @@ exports.upsertRiderReview = async (req, res) => {
       ok: true,
       review: upsert.rows[0],
       rider_summary: agg.rows[0],
+      is_rider_reviewed: true, // ✅ เพิ่มไว้ใน response ด้วย
     });
   } catch (err) {
     await client.query('ROLLBACK');
-    return res.status(400).json({ error: 'Cannot upsert rider review', detail: err.message });
+    return res.status(400).json({
+      error: 'Cannot upsert rider review',
+      detail: err.message,
+    });
   } finally {
     client.release();
   }
 };
+
 
 // ================ List Reviews Market =================
 exports.listMarketReviews = async (req, res) => {

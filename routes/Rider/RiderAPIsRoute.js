@@ -11,6 +11,7 @@ const router = express.Router();
  * =======================================================*/
 const {
   registerRider,
+  DeleteRider,
   submitIdentityVerification,
   checkApprovalStatus,
 } = require('../../controllers/Rider/registerController');
@@ -122,6 +123,7 @@ router.post('/refresh-token', refreshToken);
  *  Registration (ไม่ต้องใช้ token)
  * =======================================================*/
 router.post('/register', uploadMemory.single('profile_photo'), registerRider);
+router.delete('/DeleteRider', verifyRiderToken, DeleteRider);
 
 /* =========================================================
  *  Identity Verification (ต้องใช้ token)

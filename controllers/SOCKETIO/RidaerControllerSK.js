@@ -559,74 +559,77 @@ exports.getOrdersWithItems = async (req, res) => {
         // Query หลัก
         let query = `
             SELECT
-                o.order_id,
-                o.user_id,
-                o.market_id,
-                m.shop_name,
-                m.owner_id as market_owner_id,
-                o.rider_id,
-                o.address,
-                o.address_id,  
-                o.delivery_type,
-                o.payment_method,
-                o.note,
-                o.distance_km,
-                o.delivery_fee,
-                o.bonus,
-                o.total_price,
-                o.original_total_price,
-                o.rider_required_gp,
-                o.status,
-                o.shop_status,
-                o.created_at,
-                o.updated_at,
-                
-                -- ข้อมูลตำแหน่งร้านค้า
-                jsonb_build_object(
-                    'market_id', m.market_id,
-                    'shop_name', m.shop_name,
-                    'latitude', m.latitude,
-                    'longitude', m.longitude,
-                    'address', m.address,
-                    'phone', m.phone
-                ) as market_location,
-                
-                -- ข้อมูลตำแหน่งลูกค้า (join ด้วย address_id)
-                jsonb_build_object(
-                    'address_id', ca.id,
-                    'name', ca.name,
-                    'phone', ca.phone,
-                    'address_name', ca.address,
-                    'district', ca.district,
-                    'city', ca.city,
-                    'postal_code', ca.postal_code,
-                    'notes', ca.notes,
-                    'latitude', ca.latitude,
-                    'longitude', ca.longitude,
-                    'location_text', ca.location_text
-                ) as customer_location,
-                
-                COALESCE(
-                    json_agg(
-                        DISTINCT jsonb_build_object(
-                            'item_id', oi.item_id,
-                            'food_id', oi.food_id,
-                            'food_name', oi.food_name,
-                            'quantity', oi.quantity,
-                            'base_price', f.price,
-                            'sell_price', oi.sell_price,
-                            'subtotal', oi.subtotal,
-                            'selected_options', oi.selected_options,
-                            'additional_notes', oi.additional_notes
-                        )
-                    ) FILTER (WHERE oi.item_id IS NOT NULL),
-                    '[]'
-                ) as items
-            FROM orders o
-            LEFT JOIN order_items oi ON o.order_id = oi.order_id
-            LEFT JOIN markets m ON o.market_id = m.market_id
-            LEFT JOIN foods f ON f.food_id = oi.food_id
-            LEFT JOIN client_addresses ca ON ca.id = o.address_id
+            o.order_id,
+            o.user_id,
+            o.market_id,
+            m.shop_name,
+            m.owner_id AS market_owner_id,
+            o.rider_id,
+            o.address,
+            o.address_id,
+            o.delivery_type,
+            o.payment_method,
+            o.note,
+            o.distance_km,
+            o.delivery_fee,
+            o.bonus,
+            o.total_price,
+            o.original_total_price,
+            o.rider_required_gp,
+            o.status,
+            o.shop_status,
+            o.created_at,
+            o.updated_at,
+
+            -- ข้อมูลตำแหน่งร้านค้า
+            jsonb_build_object(
+                'market_id', m.market_id,
+                'shop_name', m.shop_name,
+                'latitude', m.latitude,
+                'longitude', m.longitude,
+                'address', m.address,
+                'phone', m.phone
+            ) AS market_location,
+
+            -- ข้อมูลตำแหน่งลูกค้า
+            jsonb_build_object(
+                'photo_url', u.photo_url,
+                'address_id', ca.id,
+                'name', ca.name,
+                'phone', ca.phone,
+                'address_name', ca.address,
+                'district', ca.district,
+                'city', ca.city,
+                'postal_code', ca.postal_code,
+                'notes', ca.notes,
+                'latitude', ca.latitude,
+                'longitude', ca.longitude,
+                'location_text', ca.location_text
+            ) AS customer_location,
+
+            COALESCE(
+                json_agg(
+                    DISTINCT jsonb_build_object(
+                        'item_id', oi.item_id,
+                        'food_id', oi.food_id,
+                        'food_name', oi.food_name,
+                        'quantity', oi.quantity,
+                        'base_price', f.price,
+                        'sell_price', oi.sell_price,
+                        'subtotal', oi.subtotal,
+                        'selected_options', oi.selected_options,
+                        'additional_notes', oi.additional_notes
+                    )
+                ) FILTER (WHERE oi.item_id IS NOT NULL),
+                '[]'
+            ) AS items
+
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.user_id          -- ✅ เพิ่ม join นี้
+        LEFT JOIN order_items oi ON o.order_id = oi.order_id
+        LEFT JOIN markets m ON o.market_id = m.market_id
+        LEFT JOIN foods f ON f.food_id = oi.food_id
+        LEFT JOIN client_addresses ca ON ca.id = o.address_id
         `;
         // เพิ่ม join ตาราง foods ดึง price ในfoods
         const conditions = [];
@@ -661,6 +664,7 @@ exports.getOrdersWithItems = async (req, res) => {
 
         query += `
             GROUP BY o.order_id, o.address_id,
+                    u.photo_url,
                     m.market_id, m.shop_name, m.owner_id, m.latitude, m.longitude, m.address, m.phone,
                     ca.id, ca.name, ca.phone, ca.address, ca.district, ca.city, ca.postal_code, ca.notes, ca.latitude, ca.longitude, ca.location_text
             ORDER BY 

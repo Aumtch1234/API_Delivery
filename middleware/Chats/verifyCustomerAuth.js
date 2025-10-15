@@ -10,11 +10,6 @@ function authenticateCustomer(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
 
-    // ✅ อนุญาตทั้ง member และ seller ที่สั่งอาหาร
-    if (req.user.role !== 'member' && !req.user.is_seller) {
-      return res.status(403).json({ message: 'Only customers can access this endpoint' });
-    }
-
     next();
   } catch (err) {
     return res.status(403).json({ message: 'Invalid token' });

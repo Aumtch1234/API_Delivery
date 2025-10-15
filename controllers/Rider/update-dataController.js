@@ -262,31 +262,37 @@ exports.updateRiderPhoto = async (req, res) => {
     }
 };
 // ✅ POST /rider/shop-closed
+// ✅ POST /rider/shop-closed
 exports.reportShopClosed = async (req, res) => {
+  const client = await pool.connect();
   try {
-    const user_id = req.user.user_id; // มาจาก token
+    const user_id = req.user.user_id;
     const { market_id, order_id, reason, note } = req.body;
 
-    // 🔹 หา rider_id จาก rider_profiles
-    const riderRes = await pool.query(
-      `SELECT rider_id FROM rider_profiles WHERE user_id = $1`,
+    await client.query("BEGIN");
+
+    // 🔹 หา rider_id และ gp_balance
+    const riderRes = await client.query(
+      `SELECT rider_id, gp_balance FROM rider_profiles WHERE user_id = $1`,
       [user_id]
     );
 
     if (riderRes.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ error: "ไม่พบข้อมูลไรเดอร์ในระบบ" });
     }
 
     const rider_id = riderRes.rows[0].rider_id;
+    const currentGP = parseFloat(riderRes.rows[0].gp_balance) || 0;
 
-    // 🔹 สร้าง URL สำหรับรูป
+    // 🔹 สร้าง URL รูปภาพ
     const imageUrls = (req.files || []).map(
       (file) =>
         `${req.protocol}://${req.get("host")}/uploads/shop_closed/${file.filename}`
     );
 
     // 🔹 บันทึกลง shop_closed_reports
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO shop_closed_reports 
          (rider_id, market_id, order_id, reason, note, image_urls, status)
        VALUES ($1,$2,$3,$4,$5,$6,'pending')
@@ -294,33 +300,63 @@ exports.reportShopClosed = async (req, res) => {
       [rider_id, market_id, order_id || null, reason, note || null, imageUrls]
     );
 
-    // 🔹 อัปเดตคอลัมน์ note ของตาราง orders ด้วย reason
+    // 🔹 รวม reason + note เพื่ออัปเดต orders.note และสถานะ
     if (order_id) {
-      const combinedNote = note
-        ? `${reason} (${note})`
-        : reason;
-
-      await pool.query(
+      const combinedNote = note ? `${reason} (${note})` : reason;
+      await client.query(
         `UPDATE orders
-         SET note = $1
+         SET status = 'cancelled',
+             note = $1,
+             updated_at = NOW()
          WHERE order_id = $2`,
         [combinedNote, order_id]
       );
     }
 
+    // 🔹 ดึงค่า GP ที่ถูกหักจาก orders
+    let gpToRefund = 0;
+    if (order_id) {
+      const gpRes = await client.query(
+        `SELECT rider_required_gp FROM orders WHERE order_id = $1`,
+        [order_id]
+      );
+      if (gpRes.rows.length > 0) {
+        gpToRefund = parseFloat(gpRes.rows[0].rider_required_gp) || 0;
+      }
+    }
+
+    // 🔹 คืน GP
+    if (gpToRefund > 0) {
+      const newBalance = currentGP + gpToRefund;
+      await client.query(
+        `UPDATE rider_profiles
+         SET gp_balance = $1
+         WHERE rider_id = $2`,
+        [newBalance, rider_id]
+      );
+
+      console.log(
+        `💰 คืน GP ${gpToRefund} ให้ไรเดอร์ ${rider_id} (ยอดใหม่: ${newBalance})`
+      );
+    } else {
+      console.log(`⚠️ ไม่มี GP ที่ต้องคืนสำหรับออเดอร์ ${order_id}`);
+    }
+
+    await client.query("COMMIT");
+
     res.status(201).json({
       success: true,
-      message: "แจ้งร้านปิดเรียบร้อยแล้ว ✅",
+      message: "แจ้งร้านปิดเรียบร้อยแล้ว ✅ (คืน GP แล้ว)",
       data: result.rows[0],
     });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("❌ Error in reportShopClosed:", err);
-    res
-      .status(500)
-      .json({ error: "เกิดข้อผิดพลาดในการแจ้งร้านปิด" });
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแจ้งร้านปิด" });
+  } finally {
+    client.release();
   }
 };
-
 
 
 // ✅ GET /rider/shop-closed

@@ -4,14 +4,23 @@ const pool = require('../../config/db');
 exports.getAllCategories = async (req, res) => {
   try {
     // ✅ SELECT ให้ชัดเจนว่า column ไหนเป็น ID หลัก
-    const result = await pool.query(
-      `SELECT 
-        id,
-        name,
-        cate_image_url
-       FROM categorys 
-       ORDER BY id ASC`
-    );
+    const result = await pool.query(`
+    SELECT 
+      c.id,
+      c.name,
+      c.cate_image_url,
+
+      -- ✅ จำนวนเมนูอาหารในหมวดนั้น
+      COUNT(DISTINCT f.food_id) AS food_count
+
+    FROM categorys c
+    LEFT JOIN foods f ON f.category_id = c.id
+    LEFT JOIN food_reviews fr ON fr.food_id = f.food_id
+
+    GROUP BY c.id, c.name, c.cate_image_url
+    ORDER BY c.id ASC;
+  `);
+
     
     res.status(200).json({
       success: true,

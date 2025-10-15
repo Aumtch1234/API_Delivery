@@ -28,81 +28,86 @@ class CustomerChatController {
 
   // ✅ 1) รายการห้องแชทของลูกค้า
   static async getCustomerChatRooms(req, res) {
-    try {
-      const customerId = req.user?.user_id;
-      if (!customerId) return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
+  try {
+    const customerId = req.user?.user_id;
+    if (!customerId)
+      return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
 
-      const query = `
-        SELECT 
-          cr.room_id,
-          cr.order_id,
-          cr.customer_id,
-          cr.rider_id,
-          cr.status as room_status,
-          cr.created_at,
-          cr.updated_at,
+    const query = `
+      SELECT 
+        cr.room_id,
+        cr.order_id,
+        cr.customer_id,
+        cr.rider_id,
+        cr.status AS room_status,
+        cr.created_at,
+        cr.updated_at,
 
-          -- rider info (อาจยังไม่มี ให้ LEFT JOIN)
-          r.display_name as rider_name,
-          r.photo_url as rider_photo,
-          r.phone as rider_phone,
+        -- ✅ Rider info (JOIN ผ่าน rider_profiles → users)
+        u.display_name AS rider_name,
+        u.photo_url AS rider_photo,
+        u.phone AS rider_phone,
 
-          o.total_price,
-          o.status as order_status,
-          o.address,
-          ca.name as delivery_name,
-          ca.phone as delivery_phone,
-          ca.address as delivery_address,
+        -- ✅ Order info
+        o.total_price,
+        o.status AS order_status,
+        o.address,
+        ca.name AS delivery_name,
+        ca.phone AS delivery_phone,
+        ca.address AS delivery_address,
 
-          (
-            SELECT COUNT(*)
-            FROM chat_messages cm 
-            JOIN users mu ON mu.user_id = cm.sender_id
-            WHERE cm.room_id = cr.room_id 
-              AND mu.role != 'member' -- นับเฉพาะข้อความที่อีกฝั่งส่งมา
-              AND cm.is_read = false
-          ) as unread_count,
+        -- ✅ นับ unread เฉพาะข้อความจากอีกฝั่ง
+        (
+          SELECT COUNT(*)
+          FROM chat_messages cm
+          JOIN users mu ON mu.user_id = cm.sender_id
+          WHERE cm.room_id = cr.room_id
+            AND mu.role != 'member'
+            AND cm.is_read = false
+        ) AS unread_count,
 
-          (
-            SELECT cm.message_text
-            FROM chat_messages cm
-            WHERE cm.room_id = cr.room_id
-            ORDER BY cm.created_at DESC
-            LIMIT 1
-          ) as last_message,
+        -- ✅ ดึงข้อความล่าสุด
+        (
+          SELECT cm.message_text
+          FROM chat_messages cm
+          WHERE cm.room_id = cr.room_id
+          ORDER BY cm.created_at DESC
+          LIMIT 1
+        ) AS last_message,
 
-          (
-            SELECT cm.message_type
-            FROM chat_messages cm
-            WHERE cm.room_id = cr.room_id
-            ORDER BY cm.created_at DESC
-            LIMIT 1
-          ) as message_type,
+        (
+          SELECT cm.message_type
+          FROM chat_messages cm
+          WHERE cm.room_id = cr.room_id
+          ORDER BY cm.created_at DESC
+          LIMIT 1
+        ) AS message_type,
 
-          (
-            SELECT cm.created_at
-            FROM chat_messages cm
-            WHERE cm.room_id = cr.room_id
-            ORDER BY cm.created_at DESC
-            LIMIT 1
-          ) as last_message_time
+        (
+          SELECT cm.created_at
+          FROM chat_messages cm
+          WHERE cm.room_id = cr.room_id
+          ORDER BY cm.created_at DESC
+          LIMIT 1
+        ) AS last_message_time
 
-        FROM chat_rooms cr
-        LEFT JOIN users r ON r.user_id = cr.rider_id
-        LEFT JOIN orders o ON o.order_id = cr.order_id
-        LEFT JOIN client_addresses ca ON ca.id = o.address_id
-        WHERE cr.customer_id = $1 AND cr.status = 'active'
-        ORDER BY COALESCE(cr.updated_at, cr.created_at) DESC
-      `;
+      FROM chat_rooms cr
+      LEFT JOIN orders o ON o.order_id = cr.order_id
+      LEFT JOIN client_addresses ca ON ca.id = o.address_id
+      LEFT JOIN rider_profiles rp ON rp.rider_id = cr.rider_id
+      LEFT JOIN users u ON u.user_id = rp.user_id
+      WHERE cr.customer_id = $1 AND cr.status = 'active'
+      ORDER BY COALESCE(cr.updated_at, cr.created_at) DESC
+    `;
 
-      const result = await pool.query(query, [customerId]);
-      res.json({ success: true, data: result.rows });
-
-    } catch (error) {
-      console.error('❌ Error getCustomerChatRooms:', error);
-      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงรายการแชท' });
-    }
+    const result = await pool.query(query, [customerId]);
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('❌ Error getCustomerChatRooms:', error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงรายการแชท' });
   }
+}
+
 
   // ✅ 2) ข้อความในห้อง (รองรับ after + limit)
   static async getChatMessages(req, res) {

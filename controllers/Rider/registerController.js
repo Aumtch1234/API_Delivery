@@ -5,10 +5,10 @@ const { uploadToCloudinary } = require('../../utils/Rider/cloudinary');
 // สมัครสมาชิกไรเดอร์ (ขั้นตอนที่ 1)
 exports.registerRider = async (req, res) => {
     const client = await pool.connect();
-    
+
     try {
         await client.query('BEGIN');
-        
+
         const {
             display_name,
             email,
@@ -64,7 +64,7 @@ exports.registerRider = async (req, res) => {
 
         await client.query('COMMIT');
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: 'ลงทะเบียนสำเร็จ ขั้นตอนต่อไปกรุณายืนยันตัวตน',
             user_id: userId,
             next_step: 'identity_verification'
@@ -78,13 +78,73 @@ exports.registerRider = async (req, res) => {
     }
 };
 
+exports.DeleteRider = async (req, res) => {
+  const user_id = req.user?.user_id;
+
+  console.log('🧩 [DeleteRider] เริ่มทำงาน...');
+  console.log('🔑 Token user_id จาก req.user:', user_id);
+
+  if (!user_id) {
+    console.log('❌ ไม่พบ user_id ใน token');
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: ไม่พบ user_id ใน token',
+    });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // ✅ ตรวจสอบว่าผู้ใช้นี้มีอยู่จริงใน users หรือไม่
+    const check = await client.query(
+      'SELECT user_id FROM users WHERE user_id = $1',
+      [user_id]
+    );
+
+    if (check.rows.length === 0) {
+      await client.query('ROLLBACK');
+      console.log('⚠️ ไม่พบผู้ใช้ในตาราง users:', user_id);
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบผู้ใช้ในระบบ',
+      });
+    }
+
+    console.log('✅ พบผู้ใช้ใน users, กำลังลบ...');
+
+    // ✅ ลบผู้ใช้ — ถ้ามี FK จะ cascade ลบข้อมูลที่เกี่ยวข้องทั้งหมด
+    await client.query('DELETE FROM users WHERE user_id = $1', [user_id]);
+
+    await client.query('COMMIT');
+    console.log('✅ ลบผู้ใช้และข้อมูลที่เกี่ยวข้องเรียบร้อยแล้ว (user_id:', user_id, ')');
+
+    return res.status(200).json({
+      success: true,
+      message: `ลบบัญชีผู้ใช้ (ID: ${user_id}) สำเร็จ`,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('💥 เกิดข้อผิดพลาดในการลบบัญชี:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการลบข้อมูลผู้ใช้',
+      error: err.message,
+    });
+  } finally {
+    client.release();
+    console.log('🔚 [DeleteRider] จบการทำงาน\n');
+  }
+};
+
+
 // ยืนยันตัวตนไรเดอร์ (ขั้นตอนที่ 2)
 exports.submitIdentityVerification = async (req, res) => {
     const client = await pool.connect();
-    
+
     try {
         await client.query('BEGIN');
-        
+
         const {
             id_card_number,
             driving_license_number,
@@ -106,21 +166,21 @@ exports.submitIdentityVerification = async (req, res) => {
 
         let isResubmission = false;
         let existingRiderId = null;
-        
+
         if (existingProfile.rows.length > 0) {
             const currentStatus = existingProfile.rows[0].approval_status;
             existingRiderId = existingProfile.rows[0].rider_id;
-            
+
             if (currentStatus === 'rejected') {
                 // อนุญาตให้ส่งใหม่ - จะ UPDATE ข้อมูลเดิมแทนการลบและสร้างใหม่
                 isResubmission = true;
             } else if (currentStatus === 'pending') {
-                return res.status(400).json({ 
-                    error: 'คุณได้ส่งข้อมูลยืนยันตัวตนแล้ว กรุณารอการอนุมัติ' 
+                return res.status(400).json({
+                    error: 'คุณได้ส่งข้อมูลยืนยันตัวตนแล้ว กรุณารอการอนุมัติ'
                 });
             } else if (currentStatus === 'approved') {
-                return res.status(400).json({ 
-                    error: 'บัญชีของคุณได้รับการอนุมัติแล้ว' 
+                return res.status(400).json({
+                    error: 'บัญชีของคุณได้รับการอนุมัติแล้ว'
                 });
             }
         }
@@ -133,14 +193,14 @@ exports.submitIdentityVerification = async (req, res) => {
         // เช็คเลขบัตรประชาชนซ้ำ (ยกเว้นของตัวเองในกรณี resubmission)
         let duplicateIdCardQuery = 'SELECT * FROM rider_profiles WHERE id_card_number = $1';
         let duplicateIdCardParams = [id_card_number];
-        
+
         if (isResubmission) {
             duplicateIdCardQuery += ' AND user_id != $2';
             duplicateIdCardParams.push(user_id);
         }
-        
+
         const duplicateIdCard = await client.query(duplicateIdCardQuery, duplicateIdCardParams);
-        
+
         if (duplicateIdCard.rows.length > 0) {
             return res.status(400).json({ error: 'เลขบัตรประชาชนนี้ถูกใช้งานแล้ว' });
         }
@@ -148,14 +208,14 @@ exports.submitIdentityVerification = async (req, res) => {
         // เช็คเลขใบขับขี่ซ้ำ (ยกเว้นของตัวเองในกรณี resubmission)
         let duplicateLicenseQuery = 'SELECT * FROM rider_profiles WHERE driving_license_number = $1';
         let duplicateLicenseParams = [driving_license_number];
-        
+
         if (isResubmission) {
             duplicateLicenseQuery += ' AND user_id != $2';
             duplicateLicenseParams.push(user_id);
         }
-        
+
         const duplicateLicense = await client.query(duplicateLicenseQuery, duplicateLicenseParams);
-        
+
         if (duplicateLicense.rows.length > 0) {
             return res.status(400).json({ error: 'เลขใบขับขี่นี้ถูกใช้งานแล้ว' });
         }
@@ -163,14 +223,14 @@ exports.submitIdentityVerification = async (req, res) => {
         // เช็คทะเบียนรถซ้ำ (ยกเว้นของตัวเองในกรณี resubmission)
         let duplicateRegistrationQuery = 'SELECT * FROM rider_profiles WHERE vehicle_registration_number = $1 AND vehicle_registration_province = $2';
         let duplicateRegistrationParams = [vehicle_registration_number, vehicle_registration_province];
-        
+
         if (isResubmission) {
             duplicateRegistrationQuery += ' AND user_id != $3';
             duplicateRegistrationParams.push(user_id);
         }
-        
+
         const duplicateRegistration = await client.query(duplicateRegistrationQuery, duplicateRegistrationParams);
-        
+
         if (duplicateRegistration.rows.length > 0) {
             return res.status(400).json({ error: 'ทะเบียนรถนี้ถูกใช้งานแล้ว' });
         }
@@ -186,24 +246,24 @@ exports.submitIdentityVerification = async (req, res) => {
         ];
 
         const uploadedUrls = {};
-        
+
         for (const field of imageFields) {
             if (req.files && req.files[field] && req.files[field][0]) {
                 const uploadResult = await uploadToCloudinary(
-                    req.files[field][0].buffer, 
+                    req.files[field][0].buffer,
                     'rider-documents'
                 );
                 uploadedUrls[`${field}_url`] = uploadResult.secure_url;
             } else {
-                return res.status(400).json({ 
-                    error: `กรุณาอัปโหลด${field.replace('_', ' ')}` 
+                return res.status(400).json({
+                    error: `กรุณาอัปโหลด${field.replace('_', ' ')}`
                 });
             }
         }
 
         // บันทึกข้อมูลยืนยันตัวตน
         let resultRiderId;
-        
+
         if (isResubmission) {
             // UPDATE ข้อมูลเดิมเพื่อให้ rider_id คงเดิม
             await client.query(
@@ -276,11 +336,11 @@ exports.submitIdentityVerification = async (req, res) => {
 
         await client.query('COMMIT');
 
-        const responseMessage = isResubmission 
+        const responseMessage = isResubmission
             ? 'ส่งข้อมูลยืนยันตัวตนใหม่สำเร็จ รอการอนุมัติจากแอดมิน'
             : 'ส่งข้อมูลยืนยันตัวตนสำเร็จ รอการอนุมัติจากแอดมิน';
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: responseMessage,
             rider_id: resultRiderId,
             status: 'pending_approval',
@@ -316,7 +376,7 @@ exports.checkApprovalStatus = async (req, res) => {
         `, [user_id]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 error: 'ไม่พบข้อมูลการยืนยันตัวตน',
                 can_submit: true // สามารถส่งเอกสารได้
             });
@@ -324,7 +384,7 @@ exports.checkApprovalStatus = async (req, res) => {
 
         const profile = result.rows[0];
         const canResubmit = profile.approval_status === 'rejected';
-        
+
         res.json({
             status: profile.approval_status,
             submitted_at: profile.created_at,

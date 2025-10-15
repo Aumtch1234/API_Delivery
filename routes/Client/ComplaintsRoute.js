@@ -143,36 +143,90 @@ router.post("/", upload.single("evidence"), async (req, res) => {
   }
 });
 
-// === 🧾 GET: ดึงคำร้องเรียนทั้งหมด (สำหรับแอดมิน) ===
 router.get("/", async (req, res) => {
   try {
-    const query = `
+    // ดึงข้อมูลคำร้องเรียนปกติ
+    const complaintsQuery = `
       SELECT 
-        c.*,
+        c.complaint_id,
+        c.user_id,
+        c.market_id,
+        c.rider_id,
+        c.role,
+        c.subject,
+        c.message,
+        c.evidence_url,
+        NULL::text[] as image_urls,
+        NULL::integer as order_id,
+        c.status,
+        c.created_at,
+        NULL::timestamp without time zone as updated_at,
+        NULL::integer as reviewed_by,
+        NULL::timestamp without time zone as reviewed_at,
+        'complaint' as report_type,
         u.display_name AS user_name,
         u.email AS email,
-        u.role AS user_role,
         m.shop_name AS market_name,
-        owner.display_name AS owner_name,     -- ✅ เพิ่มชื่อเจ้าของร้าน
-        ur.display_name AS rider_name         -- ✅ ชื่อไรเดอร์จาก users
+        owner.display_name AS owner_name,
+        ur.display_name AS rider_name,
+        NULL::text as rider_email
       FROM public.complaints c
       LEFT JOIN public.users u ON c.user_id = u.user_id
       LEFT JOIN public.markets m ON c.market_id = m.market_id
-      LEFT JOIN public.users owner ON m.owner_id = owner.user_id  -- ✅ ดึงชื่อเจ้าของร้าน
+      LEFT JOIN public.users owner ON m.owner_id = owner.user_id
       LEFT JOIN public.rider_profiles r ON c.rider_id = r.rider_id
       LEFT JOIN public.users ur ON r.user_id = ur.user_id
-      ORDER BY c.created_at DESC;
     `;
 
-    const { rows } = await pool.query(query);
+    // ดึงข้อมูลรายงานร้านปิด
+    const shopClosedQuery = `
+      SELECT 
+        scr.report_id as complaint_id,
+        NULL::integer as user_id,
+        scr.market_id,
+        scr.rider_id,
+        'rider'::text as role,
+        scr.reason as subject,
+        scr.note as message,
+        NULL::text as evidence_url,
+        scr.image_urls,
+        scr.order_id,
+        scr.status,
+        scr.created_at,
+        scr.updated_at,
+        scr.reviewed_by,
+        scr.reviewed_at,
+        'shop_closed' as report_type,
+        ur.display_name AS user_name,
+        ur.email AS email,
+        m.shop_name AS market_name,
+        owner.display_name AS owner_name,
+        ur.display_name AS rider_name,
+        ur.email AS rider_email
+      FROM public.shop_closed_reports scr
+      LEFT JOIN public.markets m ON scr.market_id = m.market_id
+      LEFT JOIN public.users owner ON m.owner_id = owner.user_id
+      LEFT JOIN public.rider_profiles rp ON scr.rider_id = rp.rider_id
+      LEFT JOIN public.users ur ON rp.user_id = ur.user_id
+    `;
 
-    console.log(`📋 Complaints fetched: ${rows.length} rows`);
+    // รวมข้อมูลทั้งสองตาราง
+    const combinedQuery = `
+      ${complaintsQuery}
+      UNION ALL
+      ${shopClosedQuery}
+      ORDER BY created_at DESC
+    `;
+
+    const { rows } = await pool.query(combinedQuery);
+
+    console.log(`📋 Total reports fetched: ${rows.length} rows`);
     res.json(rows);
   } catch (err) {
-    console.error("❌ Error fetching all complaints:", err);
+    console.error("❌ Error fetching all reports:", err);
 
     if (err.code === "42P01") {
-      res.status(500).json({ error: "❌ ตาราง complaints ไม่พบในฐานข้อมูล" });
+      res.status(500).json({ error: "❌ ตารางไม่พบในฐานข้อมูล" });
     } else if (err.code === "42703") {
       res.status(500).json({
         error: `❌ คอลัมน์ที่ระบุไม่ถูกต้อง (${err.message})`,
@@ -182,6 +236,46 @@ router.get("/", async (req, res) => {
         .status(500)
         .json({ error: `❌ เกิดข้อผิดพลาดไม่ทราบสาเหตุ: ${err.message}` });
     }
+  }
+});
+
+// === 🔄 PATCH: อัปเดตสถานะคำร้องเรียน/รายงาน ===
+router.patch("/shop-closed/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, report_type } = req.body;
+
+    let query, values;
+
+    if (report_type === "shop_closed") {
+      query = `
+        UPDATE public.shop_closed_reports
+        SET status = $1, reviewed_at = NOW(), updated_at = NOW()
+        WHERE report_id = $2
+        RETURNING *
+      `;
+      values = [status, id];
+    } else {
+      query = `
+        UPDATE public.complaints
+        SET status = $1, updated_at = NOW()
+        WHERE complaint_id = $2
+        RETURNING *
+      `;
+      values = [status, id];
+    }
+
+    const { rows } = await pool.query(query, values);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "ไม่พบรายการที่ต้องการอัปเดต" });
+    }
+
+    console.log(`✅ Updated status for ${report_type || 'complaint'} #${id}`);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("❌ Error updating status:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 // === 🛠️ PATCH: อัปเดตสถานะการตรวจสอบคำร้อง ===

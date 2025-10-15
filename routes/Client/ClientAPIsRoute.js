@@ -14,7 +14,7 @@ const { getProfile, updateProfile } = require('../../controllers/Client/userCont
 const { marketsController, getMyMarket, addFood, getMyFoods, updateFood, updateMarketStatus, updateManualOverride, updateMarketController, deleteFood } = require('../../controllers/Client/marketController');
 const { refreshToken } = require('../../controllers/Client/refreshTokenController');
 const { sendOtp, verifyOtp } = require('../../controllers/Client/otpController');
-const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder } = require('../../controllers/Client/FoodsController');
+const { getAllFoods, getAllMarket, getAllFoodForMarketID, getFoodFromIDForOrder, getAllADMINMarket } = require('../../controllers/Client/FoodsController');
 const foodCategoryController = require('../../controllers/Client/FoodCategoryController');
 const cartsController = require('../../controllers/Client/cartsController');
 const profileController = require('../../controllers/Client/userController');
@@ -66,6 +66,7 @@ router.get('/getCategorys', foodCategoryController.getAllCategories);
 router.get('/foods', getAllFoods);
 router.get('/foods/:marketId', getAllFoodForMarketID);
 router.get('/markets', getAllMarket);
+router.get('/markets-admin', getAllADMINMarket);
 router.get('/foods/order/:foodId', getFoodFromIDForOrder);
 
 //carts
