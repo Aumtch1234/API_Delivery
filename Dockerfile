@@ -3,14 +3,17 @@
 # ------------------------------
 FROM node:18-alpine
 
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Bangkok /etc/localtime && \
+    echo "Asia/Bangkok" > /etc/timezone
+    
 # ------------------------------
 # 2️⃣ ตั้ง working directory
 # ------------------------------
 WORKDIR /
 
-RUN apt-get update && apt-get install -y tzdata && \
-    ln -snf /usr/share/zoneinfo/Asia/Bangkok /etc/localtime && \
-    echo "Asia/Bangkok" > /etc/timezone
+
+
 # ------------------------------
 # 3️⃣ คัดลอก package.json และ package-lock.json
 # ------------------------------
