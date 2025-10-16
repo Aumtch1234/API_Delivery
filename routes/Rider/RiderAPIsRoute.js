@@ -14,6 +14,7 @@ const {
   DeleteRider,
   submitIdentityVerification,
   checkApprovalStatus,
+  getRiderPromtPay,
 } = require('../../controllers/Rider/registerController');
 
 const {
@@ -141,6 +142,7 @@ router.post(
  * =======================================================*/
 router.get('/profile', verifyRiderToken, getProfile);
 router.get('/approval-status', verifyRiderToken, checkApprovalStatus);
+router.get('/promptpay', verifyRiderToken, getRiderPromtPay);
 
 /* =========================================================
  *  Protected: Update Data

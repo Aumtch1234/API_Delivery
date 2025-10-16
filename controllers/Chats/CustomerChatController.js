@@ -124,23 +124,41 @@ class CustomerChatController {
   static async getChatMessages(req, res) {
     try {
       const { roomId } = req.params;
-      const { after, limit = 200 } = req.query;
-      const customerId = req.user?.user_id;
+      const { after } = req.query;
 
-      if (!customerId) {
-        return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
+      const userId = req.user?.user_id;
+      const riderId = req.user?.rider_id;
+      const userRole = req.user?.role;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'ไม่พบข้อมูล user_id'
+        });
       }
 
-      // ตรวจสอบสิทธิ์
-      const roomCheck = await pool.query(
-        `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
-        [roomId, customerId]
-      );
+      // ตรวจสิทธิ์
+      let roomCheck;
+      if (userRole === 'rider' && riderId) {
+        roomCheck = await pool.query(
+          `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND rider_id = $2`,
+          [roomId, riderId]
+        );
+      } else {
+        roomCheck = await pool.query(
+          `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
+          [roomId, userId]
+        );
+      }
+
       if (roomCheck.rowCount === 0) {
-        return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงห้องนี้' });
+        return res.status(403).json({
+          success: false,
+          message: 'คุณไม่มีสิทธิ์เข้าถึงห้องแชทนี้'
+        });
       }
 
-      // ✅ ดึง messages + join users
+      // ดึงข้อความ
       const params = [roomId];
       let sql = `
       SELECT 
@@ -167,18 +185,29 @@ class CustomerChatController {
         sql += ` AND cm.created_at > $2`;
       }
 
-      sql += ` ORDER BY cm.created_at ASC LIMIT ${Math.min(parseInt(limit, 10) || 200, 500)}`;
+      sql += ` ORDER BY cm.created_at ASC LIMIT 200`;
 
       const result = await pool.query(sql, params);
 
-      console.log('📨 Query Messages:', result.rowCount);
-      console.log('🔍 Sample:', result.rows[0]);
+      // ✅ บังคับ timezone ไทยใน response
+      const messages = result.rows.map((m) => ({
+        ...m,
+        created_at: new Date(m.created_at).toLocaleString('sv-SE', {
+          timeZone: 'Asia/Bangkok',
+        }),
+      }));
 
-      res.json({ success: true, messages: result.rows });
+      res.json({
+        success: true,
+        messages,
+      });
 
-    } catch (e) {
-      console.error('❌ Error getChatMessages:', e);
-      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อความ' });
+    } catch (error) {
+      console.error('Error getting chat messages:', error);
+      res.status(500).json({
+        success: false,
+        message: 'เกิดข้อผิดพลาดในการดึงข้อความ',
+      });
     }
   }
 

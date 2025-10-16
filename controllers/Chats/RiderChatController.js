@@ -123,6 +123,7 @@ class RiderChatController {
   }
 
   // Get messages with pagination using 'after' parameter
+  // ✅ fixed version for timezone
   static async getChatMessages(req, res) {
     try {
       const { roomId } = req.params;
@@ -139,16 +140,14 @@ class RiderChatController {
         });
       }
 
-      // ตรวจสิทธิ์ - สำหรับ rider เท่านั้น
+      // ตรวจสิทธิ์
       let roomCheck;
-
       if (userRole === 'rider' && riderId) {
         roomCheck = await pool.query(
           `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND rider_id = $2`,
           [roomId, riderId]
         );
       } else {
-        // สำหรับ customer (จะทำในไฟล์อื่น)
         roomCheck = await pool.query(
           `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
           [roomId, userId]
@@ -162,27 +161,27 @@ class RiderChatController {
         });
       }
 
-      // Build query with 'after' pagination
+      // ดึงข้อความ
       const params = [roomId];
       let sql = `
-        SELECT 
-          cm.message_id,
-          cm.room_id,
-          cm.sender_id,
-          u.role as sender_type,
-          cm.message_text,
-          cm.message_type,
-          cm.image_url,
-          cm.latitude,
-          cm.longitude,
-          cm.is_read,
-          (cm.created_at AT TIME ZONE 'Asia/Bangkok') as created_at,
-          u.display_name as sender_name,
-          u.photo_url as sender_photo
-        FROM chat_messages cm
-        JOIN users u ON u.user_id = cm.sender_id
-        WHERE cm.room_id = $1
-      `;
+      SELECT 
+        cm.message_id,
+        cm.room_id,
+        cm.sender_id,
+        u.role as sender_type,
+        cm.message_text,
+        cm.message_type,
+        cm.image_url,
+        cm.latitude,
+        cm.longitude,
+        cm.is_read,
+        cm.created_at,
+        u.display_name as sender_name,
+        u.photo_url as sender_photo
+      FROM chat_messages cm
+      JOIN users u ON u.user_id = cm.sender_id
+      WHERE cm.room_id = $1
+    `;
 
       if (after) {
         params.push(after);
@@ -193,19 +192,29 @@ class RiderChatController {
 
       const result = await pool.query(sql, params);
 
+      // ✅ บังคับ timezone ไทยใน response
+      const messages = result.rows.map((m) => ({
+        ...m,
+        created_at: new Date(m.created_at).toLocaleString('sv-SE', {
+          timeZone: 'Asia/Bangkok',
+        }),
+      }));
+
       res.json({
         success: true,
-        messages: result.rows
+        messages,
       });
 
     } catch (error) {
       console.error('Error getting chat messages:', error);
       res.status(500).json({
         success: false,
-        message: 'เกิดข้อผิดพลาดในการดึงข้อความ'
+        message: 'เกิดข้อผิดพลาดในการดึงข้อความ',
       });
     }
   }
+  // time ได้
+
 
   // Create chat room using order_id
   static async createChatRoom(req, res) {

@@ -145,9 +145,6 @@ cron.schedule('* * * * *', async () => {
         }
       }
     }
-    console.log(
-      `🕐 Market ${market.market_id}: ${market.open_time}–${market.close_time}, Now ${now.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" })}, => ${shouldOpen ? "เปิด" : "ปิด"}`
-    );
 
     console.log(`[Cron 🇹🇭] ✅ อัปเดตร้านตามเวลาไทย: ${now.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
   } catch (error) {

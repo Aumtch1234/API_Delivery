@@ -356,6 +356,42 @@ exports.submitIdentityVerification = async (req, res) => {
     }
 };
 
+exports.getRiderPromtPay = async (req, res) => {
+    const user_id = req.user.user_id; // ดึง user_id จาก JWT token
+
+    try {
+        const result = await pool.query(
+            'SELECT rider_id, gp_balance, promptpay FROM rider_profiles WHERE user_id = $1',
+            [user_id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'ไม่พบข้อมูลผู้ใช้'
+            });
+        }
+
+        const { rider_id, gp_balance, promptpay } = result.rows[0];
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                user_id,
+                rider_id,
+                gp_balance,
+                promptpay
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching promptpay:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'เกิดข้อผิดพลาดในการดึงข้อมูล promptpay'
+        });
+    }
+};
+
 // ตรวจสอบสถานะการอนุมัติ
 exports.checkApprovalStatus = async (req, res) => {
     try {

@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict bBDk36gx0goYB8n22nsK36c1fJ5poMzRLaRuUdtldE0Uwz2jaBI9aWO0sFECqff
+\restrict lmfbcKj95RfcXQx2xAFDz8he8nMOkv0oeKaLy40achZKQbkMtnUtJwAd2ueYTZH
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
 
--- Started on 2025-10-16 07:57:39 +07
+-- Started on 2025-10-17 05:29:42 +07
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1185,7 +1185,7 @@ CREATE TABLE public.rider_topups (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     rider_id integer,
-    CONSTRAINT rider_topups_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])))
+    CONSTRAINT rider_topups_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'refunded'::text])))
 );
 
 
@@ -1521,10 +1521,9 @@ COPY public.admins (id, username, password, role) FROM stdin;
 
 COPY public.carts (cart_id, user_id, food_id, quantity, selected_options, note, total, created_at) FROM stdin;
 119	35	25	1	[{"label": "code", "extraPrice": 12}]		70	2025-09-26 15:59:03.801981
-292	31	28	1	[]		58	2025-10-13 21:58:17.41041
-293	31	28	1	[{"label": "เผ็ด", "extraPrice": 12}]		70	2025-10-13 21:58:21.923298
-294	31	21	1	[]		46	2025-10-13 21:59:19.747206
 304	34	40	1	[]		120	2025-10-15 01:56:24.054738
+315	36	40	1	[]		120	2025-10-16 15:46:20.925862
+319	31	37	1	[]		60	2025-10-17 03:44:17.877817
 \.
 
 
@@ -1550,6 +1549,20 @@ COPY public.categorys (id, name, cate_image_url) FROM stdin;
 COPY public.chat_messages (message_id, room_id, sender_id, sender_type, message_text, message_type, image_url, latitude, longitude, is_read, created_at) FROM stdin;
 111	28	45	rider	ดี	text	\N	\N	\N	t	2025-10-15 22:38:18.296232
 112	28	45	rider	\N	image	http://10.28.145.44:4000/uploads/chat-images/chat-1760542705073-6089596.jpg	\N	\N	t	2025-10-15 22:38:25.124305
+115	29	36	customer	hee	text	\N	\N	\N	t	2025-10-16 15:50:43.963741
+113	29	45	rider	gg	text	\N	\N	\N	t	2025-10-16 15:50:29.467445
+114	29	45	rider	fdhh	text	\N	\N	\N	t	2025-10-16 15:50:39.639635
+116	29	45	rider	g	text	\N	\N	\N	f	2025-10-16 21:25:49.480123
+117	29	45	rider	yyy	text	\N	\N	\N	f	2025-10-16 21:36:20.026984
+118	29	45	rider	ioi	text	\N	\N	\N	f	2025-10-16 21:36:55.968222
+119	31	31	customer	นน	text	\N	\N	\N	f	2025-10-17 03:44:59.534589
+120	31	31	customer	คน	text	\N	\N	\N	f	2025-10-17 03:46:15.354895
+121	31	31	customer	สาว	text	\N	\N	\N	f	2025-10-17 03:59:53.867681
+122	31	31	customer	สส	text	\N	\N	\N	f	2025-10-17 04:07:30.811293
+123	31	31	customer	ราสส	text	\N	\N	\N	f	2025-10-17 04:08:14.161141
+124	31	31	customer	คส	text	\N	\N	\N	f	2025-10-17 04:10:17.932752
+125	31	45	rider	จาก	text	\N	\N	\N	t	2025-10-17 04:15:02.144648
+126	33	31	customer	ดีๆ	text	\N	\N	\N	f	2025-10-17 05:27:18.948311
 \.
 
 
@@ -1560,9 +1573,14 @@ COPY public.chat_messages (message_id, room_id, sender_id, sender_type, message_
 --
 
 COPY public.chat_rooms (room_id, order_id, customer_id, rider_id, status, created_at, updated_at) FROM stdin;
-25	260	31	10	active	2025-10-15 16:13:46.884212	2025-10-15 16:13:46.884212
-26	261	31	10	active	2025-10-15 16:26:11.090146	2025-10-15 18:09:30.073529
-28	263	31	11	active	2025-10-15 20:59:39.150822	2025-10-15 23:33:49.609356
+31	270	31	11	unactive	2025-10-17 03:26:57.616405	2025-10-17 04:16:58.677695
+32	271	31	11	unactive	2025-10-17 04:18:38.796431	2025-10-17 05:27:08.821846
+33	272	31	11	active	2025-10-17 04:26:26.151961	2025-10-17 05:27:18.956892
+29	268	36	11	active	2025-10-16 15:50:09.613283	2025-10-16 21:36:55.97837
+25	260	31	10	unactive	2025-10-15 16:13:46.884212	2025-10-17 02:21:42.324098
+26	261	31	10	unactive	2025-10-15 16:26:11.090146	2025-10-17 02:21:42.324098
+28	263	31	11	unactive	2025-10-15 20:59:39.150822	2025-10-17 02:21:42.324098
+30	269	31	11	unactive	2025-10-17 02:20:16.896439	2025-10-17 02:21:42.324098
 \.
 
 
@@ -1581,8 +1599,8 @@ COPY public.client_addresses (id, user_id, name, phone, address, district, city,
 13	35	มาเล่น	0871676488	ถนนที่ไม่มีชื่อ ถนนที่ไม่มีชื่อ ตำบล ชีน้ำร้าย อำเภออินทร์บุรี สิงห์บุรี 16110 ประเทศไทย อ.อำเภออินทร์บุรี จ.สิงห์บุรี 16110	อำเภออินทร์บุรี	สิงห์บุรี	16110		15.072804051207106	100.35490293055773	ถนนที่ไม่มีชื่อ ถนนที่ไม่มีชื่อ ตำบล ชีน้ำร้าย อำเภออินทร์บุรี สิงห์บุรี 16110 ประเทศไทย อ.อำเภออินทร์บุรี จ.สิงห์บุรี 16110	2025-09-26 15:46:42.141682	t
 2	31	สุดหล่อจ่ะ	0989520103	74Q9+GCW อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.28956803546931	104.11867182701826	74Q9+GCW อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-13 16:30:15.754407	f
 3	31	เสก สุดจะหล่อ	0987654321	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.286741935703482	104.11390386521816	อ่างสกลนคร 74P7+M25 อ่างสกลนคร ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-13 18:03:41.179373	f
-8	31	เฟียส	0982147653	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000	หน้าร้าน ขายของชำ	17.271748923950433	104.12641134113073	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:17:19.27141	f
-7	31	สุดจัด	0849567312	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.26881945839936	104.13779195398092	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:13:49.04298	t
+7	31	สุดจัด	0849567312	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000		17.26881945839936	104.13779195398092	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:13:49.04298	f
+8	31	เฟียส	0982147653	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	อำเภอเมืองสกลนคร	สกลนคร	47000	หน้าร้าน ขายของชำ	17.271748923950433	104.12641134113073	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	2025-09-14 18:17:19.27141	t
 \.
 
 
@@ -1605,12 +1623,7 @@ COPY public.complaints (complaint_id, user_id, rider_id, market_id, role, subjec
 --
 
 COPY public.food_reviews (review_id, order_id, user_id, market_id, food_id, rating, comment, created_at, updated_at, order_item_id) FROM stdin;
-36	260	31	37	18	5	ดูดีอร่อยจริง	2025-10-15 16:17:02.693128	2025-10-15 16:17:02.693128	267
-37	261	31	37	18	2	ได้เยอะะ อร่อยน่ิย	2025-10-15 16:29:16.932538	2025-10-15 16:29:16.932538	268
-38	264	31	38	19	5	gg	2025-10-16 04:29:39.782773	2025-10-16 04:29:39.782773	271
-39	265	31	38	19	3	gag	2025-10-16 04:32:54.82035	2025-10-16 04:32:54.82035	272
-40	266	31	37	18	4	อ่อน	2025-10-16 04:40:36.144504	2025-10-16 04:40:36.144504	273
-41	267	31	37	42	4	\N	2025-10-16 04:41:51.879105	2025-10-16 04:41:51.879105	274
+42	269	31	38	19	2	อร่อยมาก	2025-10-17 02:26:37.734508	2025-10-17 02:26:37.734508	276
 \.
 
 
@@ -1621,27 +1634,27 @@ COPY public.food_reviews (review_id, order_id, user_id, market_id, food_id, rati
 --
 
 COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, options, rating, sell_price, sell_options, category_id, created_by_admin_id, is_visible) FROM stdin;
-20	37	ลข	31.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757654055/Market-LOGO/hwe1fcjovtxmkuyjh17n.jpg	2025-09-12 12:14:16.611986	[]	3.0	36.00	[]	1	\N	f
-22	40	วัว	98.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758282287/Market-LOGO/tnslbyic4c81moiot6ln.jpg	2025-09-19 18:44:49.217367	[{"label": "หนังเค็ม", "extraPrice": 20.0}]	\N	112.00	[]	1	\N	t
-23	40	แกงควาย	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758297822/Market-LOGO/czebok5syxrx3donwjph.png	2025-09-19 23:03:44.613978	[]	\N	67.00	[]	1	\N	t
-25	43	code	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758361159/Market-LOGO/jmrem0pdsqccb2fboheu.jpg	2025-09-20 16:39:21.203733	[{"label": "code", "extraPrice": 10}, {"label": "java", "extraPrice": 6}]	\N	58.00	[{"label": "code", "extraPrice": 12}, {"label": "java", "extraPrice": 7}]	1	\N	t
-26	39	กระเพรานะจ๊ะ	55.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758776507/Market-LOGO/ipfozd0icgjtzqfwxqpf.jpg	2025-09-25 12:01:47.742719	[{"label": "ไข่ดาว", "extraPrice": 6}, {"label": "ไข่เจียว", "extraPrice": 10}, {"label": "ผัก", "extraPrice": 7}]	\N	64.00	[{"label": "ไข่ดาว", "extraPrice": 7}, {"label": "ไข่เจียว", "extraPrice": 12}, {"label": "ผัก", "extraPrice": 9}]	1	\N	t
+18	37	ลาบ	45.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614820/Market-LOGO/uxxu9ksyzmbjvejbiba6.jpg	2025-09-12 01:20:20.96686	[{"label": "ไก่", "extraPrice": 10}, {"label": "หมู", "extraPrice": 15}, {"label": "เนื้อ", "extraPrice": 20}, {"label": "เป็ด", "extraPrice": 40}]	3.7	27.00	[{"label": "ไก่", "extraPrice": 12}, {"label": "หมู", "extraPrice": 18}, {"label": "เนื้อ", "extraPrice": 23}, {"label": "เป็ด", "extraPrice": 46}]	3	\N	f
+21	39	ข้าวผัด	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652162/images_eguoai.jpg	2025-09-19 18:31:46.878776	[{"label": "ปลา", "extraPrice": 20}, {"label": "หมู", "extraPrice": 10}, {"label": "กุนเชียง", "extraPrice": 15}, {"label": "แหนม", "extraPrice": 10}, {"label": "กุ้ง", "extraPrice": 25}]	\N	46.00	[]	1	\N	f
+34	44	Kao	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759608282/food-menu/jrc37qiwteqgqrtur6uu.jpg	2025-10-05 03:04:43.424067	[{"label": "k", "extraPrice": 10}, {"label": "e", "extraPrice": 20}]	\N	120.00	[{"label": "k", "extraPrice": 12}, {"label": "e", "extraPrice": 24}]	1	1	t
+22	40	ลาบเนื้อ	60.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652373/photo_li8xoa.jpg	2025-09-19 18:44:49.217367	[{"label": "เสื้อร้องไห้", "extraPrice": 20}]	\N	112.00	[]	1	\N	t
+35	44	หฟก	120.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759610312/food-menu/ucs9yjsd4lwn8hypduii.jpg	2025-10-05 03:38:32.884743	[{"label": "2", "extraPrice": 20}]	\N	144.00	[{"label": "2", "extraPrice": 24}]	1	1	t
+36	44	a	2.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759612682/food-menu/yxcof5fuchfdc5tos15x.jpg	2025-10-05 04:18:03.569573	[{"label": "2", "extraPrice": 2}]	\N	3.00	[{"label": "2", "extraPrice": 3}]	2	1	t
+40	45	ข้าวผัด	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760182451/food-menu/lx0mg4lnpssb7mdhdddl.jpg	2025-10-11 18:34:11.880525	[{"label": "๋KaiDown", "extraPrice": 10}]	\N	120.00	[{"label": "KaiDown", "extraPrice": 12}]	3	1	t
 27	39	พำ	51.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799559/Market-LOGO/wopxqzgco2jgldgbydyv.jpg	2025-09-25 18:25:59.813235	[{"label": "พพ", "extraPrice": 3}, {"label": "กอ", "extraPrice": 8}]	\N	59.00	[{"label": "พพ", "extraPrice": 4}, {"label": "กอ", "extraPrice": 10}]	1	\N	t
 28	39	ไก่น้อย	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799728/Market-LOGO/sfg9x7jpbo6ohat0czxf.jpg	2025-09-25 18:28:49.173621	[{"label": "เผ็ด", "extraPrice": 10}, {"label": "ผัก", "extraPrice": 5}]	\N	58.00	[{"label": "เผ็ด", "extraPrice": 12}, {"label": "ผัก", "extraPrice": 6}]	1	\N	t
 29	39	แกงไก่	23.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799857/Market-LOGO/ttgl5jlvunk7zj8wmcpi.jpg	2025-09-25 18:30:58.512084	[{"label": "น้ำ", "extraPrice": 3}]	\N	27.00	[{"label": "น้ำ", "extraPrice": 4}]	1	\N	t
-21	39	ข้าวสวย	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758281505/Market-LOGO/gaglreb9e95cl28nqt9q.jpg	2025-09-19 18:31:46.878776	[{"label": "แมว", "extraPrice": 7.0}]	\N	46.00	[]	1	\N	f
-18	37	ลาบ	23.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614820/Market-LOGO/uxxu9ksyzmbjvejbiba6.jpg	2025-09-12 01:20:20.96686	[{"label": "ไก่", "extraPrice": 10}, {"label": "หมู", "extraPrice": 15}, {"label": "เนื้อ", "extraPrice": 20}, {"label": "เป็ด", "extraPrice": 40}]	3.7	27.00	[{"label": "ไก่", "extraPrice": 12}, {"label": "หมู", "extraPrice": 18}, {"label": "เนื้อ", "extraPrice": 23}, {"label": "เป็ด", "extraPrice": 46}]	3	\N	f
+23	40	แกงพะแนงไก่	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652735/oaury0fcnnmn_dxlkqo.jpg	2025-09-19 23:03:44.613978	[]	\N	67.00	[]	1	\N	t
+25	43	ลาบเป็ด	70.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652887/ghsws2hlbvoi_vyu9jj.png	2025-09-20 16:39:21.203733	[]	\N	58.00	[{"label": "code", "extraPrice": 12}, {"label": "java", "extraPrice": 7}]	1	\N	t
 32	38	w	12.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759604597/food-menu/xuh67zkmaq87o05d8wg3.jpg	2025-10-05 02:03:18.277715	[{"label": "2", "extraPrice": 14}]	\N	15.00	[{"label": "2", "extraPrice": 17}]	2	\N	t
-40	45	ข้าวผัด	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760182451/food-menu/lx0mg4lnpssb7mdhdddl.jpg	2025-10-11 18:34:11.880525	[{"label": "๋KaiDown", "extraPrice": 10}]	\N	120.00	[{"label": "๋KaiDown", "extraPrice": 12}]	3	1	t
+26	39	กระเพราไก่นะจ๊ะ	51.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652992/ka_exlzdp.jpg	2025-09-25 12:01:47.742719	[{"label": "ไข่ดาว", "extraPrice": 6}, {"label": "ไข่เจียว", "extraPrice": 10}]	\N	64.00	[{"label": "ไข่ดาว", "extraPrice": 7}, {"label": "ไข่เจียว", "extraPrice": 12}, {"label": "ผัก", "extraPrice": 9}]	1	\N	t
 41	45	sd	12.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760182812/food-menu/ddjcz4ed4wclhswqj0ks.jpg	2025-10-11 18:40:13.734277	[{"label": "asd", "extraPrice": 10}]	\N	15.00	[{"label": "asd", "extraPrice": 12}]	2	1	f
-34	44	Kao	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759608282/food-menu/jrc37qiwteqgqrtur6uu.jpg	2025-10-05 03:04:43.424067	[{"label": "k", "extraPrice": 10}, {"label": "e", "extraPrice": 20}]	\N	120.00	[{"name": "k", "extraPrice": 12}, {"name": "e", "extraPrice": 24}]	1	1	t
-35	44	หฟก	120.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759610312/food-menu/ucs9yjsd4lwn8hypduii.jpg	2025-10-05 03:38:32.884743	[{"label": "2", "extraPrice": 20}]	\N	144.00	[{"name": "2", "extraPrice": 24}]	1	1	t
-36	44	a	2.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759612682/food-menu/yxcof5fuchfdc5tos15x.jpg	2025-10-05 04:18:03.569573	[{"label": "2", "extraPrice": 2}]	\N	3.00	[{"name": "2", "extraPrice": 3}]	2	1	t
-19	38	อ่อมหมู	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614871/Market-LOGO/ph5jwppwayvgmih9ohpc.jpg	2025-09-12 01:21:12.136991	[]	4.0	71.00	[]	1	\N	t
-37	44	ขี้คน	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759664329/food-menu/ttbzanfaa5klatuv679v.jpg	2025-10-05 18:38:50.129538	[{"label": "vanila", "extraPrice": 25}, {"label": "S", "extraPrice": 10}]	\N	60.00	[{"name": "vanila", "extraPrice": 30}, {"name": "S", "extraPrice": 12}]	2	15	t
-38	44	s	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759667836/food-menu/lqssppsxv47oc03xcld3.jpg	2025-10-05 19:37:16.840682	[{"label": "w", "extraPrice": 10}]	\N	24.00	[{"name": "w", "extraPrice": 12}]	1	15	t
-39	45	ฟห	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759684676/food-menu/owhwstijadrl7i7yspbk.jpg	2025-10-06 00:17:57.471406	[{"label": "d1", "extraPrice": 12}]	\N	12.00	[{"name": "d1", "extraPrice": 15}]	2	15	f
+19	38	อ่อมหมู	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614871/Market-LOGO/ph5jwppwayvgmih9ohpc.jpg	2025-09-12 01:21:12.136991	[]	2.0	71.00	[]	1	\N	t
+20	37	ลวกจิ้ม	31.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760651819/13-15_kf03eq.jpg	2025-09-12 12:14:16.611986	[{"label": "หมู", "extraPrice": 20}, {"label": "เนื้อ", "extraPrice": 25}, {"label": "ปลาหมึก", "extraPrice": 100}]	3.0	36.00	[]	1	\N	f
 42	37	กาว	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760188358/Market-LOGO/ve0ktipgnondbs0omgmn.jpg	2025-10-11 20:12:39.333346	[{"label": "เมา", "extraPrice": 500}, {"label": "ซอฟ", "extraPrice": 2000}]	4.0	23.00	[{"label": "เมา", "extraPrice": 575}, {"label": "ซอฟ", "extraPrice": 2300}]	2	\N	f
+37	44	ขี้เพลีย	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759664329/food-menu/ttbzanfaa5klatuv679v.jpg	2025-10-05 18:38:50.129538	[{"label": "vanila", "extraPrice": 25}, {"label": "S", "extraPrice": 10}]	\N	60.00	[{"label": "vanila", "extraPrice": 30}, {"label": "S", "extraPrice": 12}]	2	15	t
+38	44	s	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759667836/food-menu/lqssppsxv47oc03xcld3.jpg	2025-10-05 19:37:16.840682	[{"label": "w", "extraPrice": 10}]	\N	24.00	[{"label": "w", "extraPrice": 12}]	1	15	t
+39	45	ฟห	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759684676/food-menu/owhwstijadrl7i7yspbk.jpg	2025-10-06 00:17:57.471406	[{"label": "d1", "extraPrice": 12}]	\N	12.00	[{"label": "d1", "extraPrice": 15}]	2	15	f
 \.
 
 
@@ -1654,6 +1667,9 @@ COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, 
 COPY public.market_reviews (review_id, order_id, user_id, market_id, rating, comment, created_at, updated_at) FROM stdin;
 40	260	31	37	4	เเซบ	2025-10-15 16:16:24.713456	2025-10-15 16:16:24.713456
 41	261	31	37	4	เร็วดี	2025-10-15 16:29:43.539943	2025-10-15 16:29:43.539943
+42	269	31	38	2	อร่อยมาก	2025-10-17 02:21:54.35162	2025-10-17 02:21:54.35162
+43	271	31	38	3	o	2025-10-17 04:27:35.444956	2025-10-17 04:27:35.444956
+44	270	31	44	3	yy	2025-10-17 04:27:43.139971	2025-10-17 04:27:43.139971
 \.
 
 
@@ -1664,13 +1680,13 @@ COPY public.market_reviews (review_id, order_id, user_id, market_id, rating, com
 --
 
 COPY public.markets (market_id, owner_id, shop_name, shop_description, shop_logo_url, created_at, latitude, longitude, open_time, close_time, is_open, is_manual_override, override_until, rating, address, phone, approve, admin_id, is_admin, reviews_count) FROM stdin;
-44	\N	ซิมเบิ่งเด้อ	ขายอาการตามสั่ง เปิด 18:00 - 05:00 น. อร่อยพร้อมส่ง	https://res.cloudinary.com/djqdn2zru/image/upload/v1759586644/food-menu/ngr6oteprzvu64u9thov.jpg	2025-10-04 21:04:05.394236	17.272637211868073	104.13484127931125	18:00	05:00	f	f	\N	\N	123/9 บ้านเชียงเครือ เชียงเครือ เมือง สกลนคร 47000	0998234657	f	1	t	0
-37	31	เสกสายเบิร์น (ย่าง)	ขายไก่ย่าง เนื้อย่าง ปลาเผา ส่งฟรี ส่งไว หอมอร่อย. 🏎️💥	https://res.cloudinary.com/djqdn2zru/image/upload/v1757491128/Market-LOGO/zegkbequ9px72yz8mdkn.jpg	2025-09-10 14:58:49.472311	17.27025890434053	104.13420014083385	14:00	06:50	f	f	\N	4.0	42/6 เชียงเครือ หออะตอม 45801	0987654321	t	\N	f	2
-38	\N	ร้านแอดมิน	ร้านแอดมิน เด้อจ่ะ แพงขึ้น 20%	https://res.cloudinary.com/djqdn2zru/image/upload/v1757608039/food-menu/hserelfmmpvtup06j3lb.jpg	2025-09-11 23:27:20.249612	13.736717	100.523186	00:00	07:11	f	f	\N	\N	23/1 เชียงเครือ	-	f	1	t	0
+38	\N	ร้านแอดมิน	ร้านแอดมิน เด้อจ่ะ แพงขึ้น 20%	https://res.cloudinary.com/djqdn2zru/image/upload/v1757608039/food-menu/hserelfmmpvtup06j3lb.jpg	2025-09-11 23:27:20.249612	13.736717	100.523186	00:00	07:11	t	f	\N	2.5	23/1 เชียงเครือ	-	f	1	t	2
+37	31	เสกสายเบิร์น (ย่าง)	ขายไก่ย่าง เนื้อย่าง ปลาเผา ส่งฟรี ส่งไว หอมอร่อย. 🏎️💥	https://res.cloudinary.com/djqdn2zru/image/upload/v1757491128/Market-LOGO/zegkbequ9px72yz8mdkn.jpg	2025-09-10 14:58:49.472311	17.27025890434053	104.13420014083385	14:00	06:50	t	f	\N	4.0	42/6 เชียงเครือ หออะตอม 45801	0987654321	t	\N	f	2
+44	\N	ซิมเบิ่งเด้อ	ขายอาการตามสั่ง เปิด 18:00 - 05:00 น. อร่อยพร้อมส่ง	https://res.cloudinary.com/djqdn2zru/image/upload/v1759586644/food-menu/ngr6oteprzvu64u9thov.jpg	2025-10-04 21:04:05.394236	17.272637211868073	104.13484127931125	10:00	02:00	f	f	\N	3.0	123/9 บ้านเชียงเครือ เชียงเครือ เมือง สกลนคร 47000	0998234657	f	1	t	1
+40	34	สมรักษ์ไง	สวัสดีครับ	https://res.cloudinary.com/djqdn2zru/image/upload/v1758282179/Market-LOGO/x379jxfcblswkbgrcv2y.jpg	2025-09-19 18:43:00.668904	51.93657927318116	-100.27912449091673	04:42	23:59	t	f	\N	\N	ศรีเกต	0984857628	t	1	f	0
+45	\N	หกหก	หก	https://res.cloudinary.com/djqdn2zru/image/upload/v1759682440/food-menu/qe8fm7rg2y1z6bv30yrp.jpg	2025-10-05 23:40:41.440782	17.28934765314215	104.11304434246144	19:09	11:41	t	f	\N	\N	s	0912013123	f	15	t	0
 39	36	ร้ายแรงมาก a	ไฟฟ้า a	https://res.cloudinary.com/djqdn2zru/image/upload/v1759827313/Market-LOGO/gdjy3svitexlgayxkgql.png	2025-09-19 18:29:17.243767	17.27891775402024	104.11517959088087	15:54	19:54	f	f	\N	\N	42/6 เชียงเครือ หออะตอม 45801a	0716876464	t	1	f	2
 43	35	122	122	https://res.cloudinary.com/djqdn2zru/image/upload/v1758360443/Market-LOGO/s8yir43xu0t8tbzptnj1.jpg	2025-09-20 16:27:25.266129	38.28260714608228	-93.04697670042515	16:26	23:26	f	f	\N	\N	122	122	t	1	f	0
-45	\N	หกหก	หก	https://res.cloudinary.com/djqdn2zru/image/upload/v1759682440/food-menu/qe8fm7rg2y1z6bv30yrp.jpg	2025-10-05 23:40:41.440782	17.28934765314215	104.11304434246144	19:09	11:41	t	f	\N	\N	s	0912013123	f	15	t	0
-40	34	สมรักษ์ไง	สวัสดีครับ	https://res.cloudinary.com/djqdn2zru/image/upload/v1758282179/Market-LOGO/x379jxfcblswkbgrcv2y.jpg	2025-09-19 18:43:00.668904	51.93657927318116	-100.27912449091673	04:42	23:59	t	f	\N	\N	ศรีเกต	0984857628	t	1	f	0
 \.
 
 
@@ -1688,6 +1704,11 @@ COPY public.order_items (item_id, order_id, food_id, food_name, quantity, sell_p
 272	265	19	อ่อมหมู	1	71.00	71.00	[]	59.00	59.00	[]		t
 273	266	18	ลาบ	1	27.00	27.00	[]	23.00	23.00	[]		t
 274	267	42	กาว	1	23.00	598.00	[{"label": "เมา", "extraPrice": 575}]	20.00	520.00	[{"label": "เมา", "extraPrice": 500}]		t
+275	268	37	ขี้คน	1	60.00	60.00	[]	50.00	50.00	[]		f
+276	269	19	อ่อมหมู	1	71.00	71.00	[]	59.00	59.00	[]		t
+277	270	37	ขี้คน	1	60.00	90.00	[{"label": "", "extraPrice": 30}]	50.00	50.00	[]		f
+278	271	19	อ่อมหมู	3	71.00	213.00	[]	59.00	177.00	[]		f
+279	272	40	ข้าวผัด	1	120.00	120.00	[]	100.00	100.00	[]		f
 \.
 
 
@@ -1698,13 +1719,18 @@ COPY public.order_items (item_id, order_id, food_id, food_name, quantity, sell_p
 --
 
 COPY public.orders (order_id, user_id, market_id, rider_id, address, delivery_type, payment_method, note, distance_km, delivery_fee, total_price, status, created_at, updated_at, address_id, rider_required_gp, bonus, original_total_price, shop_status, delivery_photo, is_market_reviewed, is_rider_reviewed) FROM stdin;
+272	31	45	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.98	15.00	135.00	rider_assigned	2025-10-17 04:25:58.893725	2025-10-17 04:26:26.109002	8	20.00	0.00	100.00	\N	\N	f	f
+271	31	38	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		660.74	3275.00	3488.00	completed	2025-10-17 04:18:18.167716	2025-10-17 04:27:35.444956	8	26.00	10.00	177.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760649925075_j5evaf.jpg	t	t
+270	31	44	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.76	15.00	105.00	completed	2025-10-17 03:23:07.075643	2025-10-17 04:27:43.139971	8	40.00	0.00	50.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760649354991_lbks1o.jpg	t	f
 260	31	37	10	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	60.00	completed	2025-10-15 16:13:09.796264	2025-10-15 16:16:41.398618	7	7.00	0.00	38.00	ready_for_pickup	http://10.28.145.44:4000/uploads/delivery_photos/delivery_1760519709037_nemsnv.jpg	t	t
 261	31	37	10	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	54.00	completed	2025-10-15 16:25:49.033576	2025-10-15 16:29:56.763913	7	6.00	0.00	33.00	ready_for_pickup	http://10.28.145.44:4000/uploads/delivery_photos/delivery_1760520465934_gt5fgr.jpg	t	t
-263	31	44	11	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		3.82	15.00	105.00	rider_assigned	2025-10-15 20:59:22.677191	2025-10-15 23:05:59.380038	7	40.00	0.00	50.00	\N	\N	f	f
 264	31	38	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-16 04:29:01.979237	2025-10-16 04:29:01.979237	7	12.00	0.00	59.00	\N	\N	f	f
 265	31	38	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-16 04:32:16.663082	2025-10-16 04:32:16.663082	7	12.00	0.00	59.00	\N	\N	f	f
 266	31	37	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	42.00	completed	2025-10-16 04:39:52.051967	2025-10-16 04:39:52.051967	7	4.00	0.00	23.00	\N	\N	f	f
 267	31	37	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	613.00	completed	2025-10-16 04:41:30.562277	2025-10-16 04:41:30.562277	7	63.00	15.00	520.00	\N	\N	f	f
+268	36	44	11	Bokpyin ต.Bokpyin อ.Kawthoung จ.Tanintharyi Region	แบบ/วางไว้จุดที่ระบุ	เงินสด		14.06	45.00	105.00	completed	2025-10-16 15:49:03.421567	2025-10-17 02:12:15.618985	10	10.00	0.00	50.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760641935460_ogk46q.jpg	f	f
+263	31	44	11	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		3.82	15.00	105.00	completed	2025-10-15 20:59:22.677191	2025-10-17 02:17:35.224027	7	40.00	0.00	50.00	\N	http://10.164.109.44:4000/uploads/delivery_photos/delivery_1760604591873_vsp9.jpg	f	t
+269	31	38	11	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-17 02:19:15.102766	2025-10-17 02:21:54.35162	7	12.00	0.00	59.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760642494793_p44ixt.jpg	t	f
 \.
 
 
@@ -1728,7 +1754,7 @@ COPY public.rider_addresses (address_id, user_id, house_number, street, subdistr
 
 COPY public.rider_profiles (rider_id, user_id, id_card_number, id_card_photo_url, id_card_selfie_url, driving_license_number, driving_license_photo_url, vehicle_type, vehicle_brand_model, vehicle_color, vehicle_photo_url, vehicle_registration_photo_url, approval_status, approved_by, approved_at, rejection_reason, created_at, updated_at, vehicle_registration_number, vehicle_registration_province, promptpay, gp_balance, rating, reviews_count) FROM stdin;
 10	35	9901700123459	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260702/rider-documents/ppufc7us313g6qem5zkp.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260701/rider-documents/hphwpjueczxwksykhlmr.png	DL1234568	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260703/rider-documents/n6ycoqgi3oz0wy3db1cj.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260704/rider-documents/qslldgochuknpxqns2hn.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260705/rider-documents/itjr5smgaraqqtadtlzb.png	approved	1	\N	\N	2025-09-19 12:44:59.694794	2025-10-15 16:29:56.763913	ฟก-123	สกลนคร	1234556789012	5875.00	4.5	2
-11	45	1560528864554	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530956/rider-documents/i7fitnarwwldd3zxv7zn.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530955/rider-documents/qmebayouuhdu7gfuvnjt.jpg	12356788	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530957/rider-documents/ajjpa2tveycyxnvmky9k.jpg	motorcycle	hcjcfu	red	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530959/rider-documents/ikedac3ptle9rzap78cp.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530960/rider-documents/cuuzoncicyrqixvdnglu.jpg	approved	1	2025-10-15 19:42:04.201079	\N	2025-10-15 19:22:33.223371	2025-10-15 23:05:59.380038	yyy	ggg	0989520103	128.00	\N	0
+11	45	1560528864554	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530956/rider-documents/i7fitnarwwldd3zxv7zn.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530955/rider-documents/qmebayouuhdu7gfuvnjt.jpg	12356788	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530957/rider-documents/ajjpa2tveycyxnvmky9k.jpg	motorcycle	hcjcfu	red	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530959/rider-documents/ikedac3ptle9rzap78cp.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530960/rider-documents/cuuzoncicyrqixvdnglu.jpg	approved	1	2025-10-15 19:42:04.201079	\N	2025-10-15 19:22:33.223371	2025-10-17 04:27:27.512626	yyy	ggg	0989520103	138.00	4.5	2
 \.
 
 
@@ -1741,6 +1767,8 @@ COPY public.rider_profiles (rider_id, user_id, id_card_number, id_card_photo_url
 COPY public.rider_reviews (review_id, order_id, user_id, rider_id, rating, comment, created_at, updated_at) FROM stdin;
 23	260	31	10	5	เร็วไปเเรงจริง	2025-10-15 16:16:41.398618	2025-10-15 16:16:41.398618
 24	261	31	10	4	ค้อน	2025-10-15 16:29:56.763913	2025-10-15 16:29:56.763913
+25	263	31	11	4	ขี้กาก	2025-10-17 02:17:35.224027	2025-10-17 02:17:35.224027
+26	271	31	11	5	\N	2025-10-17 04:27:27.512626	2025-10-17 04:27:27.512626
 \.
 
 
@@ -1758,6 +1786,7 @@ COPY public.rider_topups (topup_id, user_id, amount, slip_url, status, rejection
 10	45	200.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760534106/rider-topup-slips/vzmomb2tiur7wcp3uysd.jpg	approved	\N	1	2025-10-15 20:15:12.637909	2025-10-15 20:15:07.818018	2025-10-15 20:15:12.637909	11
 11	45	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760534153/rider-topup-slips/tkrggfnuwmvs2mq39xqp.jpg	rejected	ขี้ตั๋ว	1	\N	2025-10-15 20:15:54.09448	2025-10-15 20:16:11.27741	11
 12	45	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760534263/rider-topup-slips/v9y0in4pdic2szdjfhly.png	rejected	มั่ว	1	\N	2025-10-15 20:17:44.424799	2025-10-15 20:17:59.598133	11
+13	45	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760650523/rider-topup-slips/hf7mgmjyk21gfotwxywi.jpg	pending	\N	\N	\N	2025-10-17 04:35:23.949304	2025-10-17 04:35:23.949304	11
 \.
 
 
@@ -1809,7 +1838,7 @@ SELECT pg_catalog.setval('public.admins_id_seq', 15, true);
 -- Name: carts_cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.carts_cart_id_seq', 314, true);
+SELECT pg_catalog.setval('public.carts_cart_id_seq', 321, true);
 
 
 --
@@ -1827,7 +1856,7 @@ SELECT pg_catalog.setval('public.categorys_id_seq', 3, true);
 -- Name: chat_messages_message_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.chat_messages_message_id_seq', 112, true);
+SELECT pg_catalog.setval('public.chat_messages_message_id_seq', 126, true);
 
 
 --
@@ -1836,7 +1865,7 @@ SELECT pg_catalog.setval('public.chat_messages_message_id_seq', 112, true);
 -- Name: chat_rooms_room_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.chat_rooms_room_id_seq', 28, true);
+SELECT pg_catalog.setval('public.chat_rooms_room_id_seq', 33, true);
 
 
 --
@@ -1863,7 +1892,7 @@ SELECT pg_catalog.setval('public.complaints_complaint_id_seq', 3, true);
 -- Name: food_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.food_reviews_review_id_seq', 41, true);
+SELECT pg_catalog.setval('public.food_reviews_review_id_seq', 42, true);
 
 
 --
@@ -1881,7 +1910,7 @@ SELECT pg_catalog.setval('public.foods_food_id_seq', 42, true);
 -- Name: market_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.market_reviews_review_id_seq', 41, true);
+SELECT pg_catalog.setval('public.market_reviews_review_id_seq', 44, true);
 
 
 --
@@ -1899,7 +1928,7 @@ SELECT pg_catalog.setval('public.markets_market_id_seq', 45, true);
 -- Name: order_items_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.order_items_item_id_seq', 274, true);
+SELECT pg_catalog.setval('public.order_items_item_id_seq', 279, true);
 
 
 --
@@ -1908,7 +1937,7 @@ SELECT pg_catalog.setval('public.order_items_item_id_seq', 274, true);
 -- Name: orders_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.orders_order_id_seq', 267, true);
+SELECT pg_catalog.setval('public.orders_order_id_seq', 272, true);
 
 
 --
@@ -1935,7 +1964,7 @@ SELECT pg_catalog.setval('public.rider_profiles_rider_id_seq', 11, true);
 -- Name: rider_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.rider_reviews_review_id_seq', 24, true);
+SELECT pg_catalog.setval('public.rider_reviews_review_id_seq', 26, true);
 
 
 --
@@ -1944,7 +1973,7 @@ SELECT pg_catalog.setval('public.rider_reviews_review_id_seq', 24, true);
 -- Name: rider_topups_topup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.rider_topups_topup_id_seq', 12, true);
+SELECT pg_catalog.setval('public.rider_topups_topup_id_seq', 13, true);
 
 
 --
@@ -2849,11 +2878,11 @@ ALTER TABLE ONLY public.shop_closed_reports
     ADD CONSTRAINT shop_closed_reports_rider_id_fkey FOREIGN KEY (rider_id) REFERENCES public.rider_profiles(rider_id) ON DELETE SET NULL;
 
 
--- Completed on 2025-10-16 07:57:39 +07
+-- Completed on 2025-10-17 05:29:43 +07
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bBDk36gx0goYB8n22nsK36c1fJ5poMzRLaRuUdtldE0Uwz2jaBI9aWO0sFECqff
+\unrestrict lmfbcKj95RfcXQx2xAFDz8he8nMOkv0oeKaLy40achZKQbkMtnUtJwAd2ueYTZH
 
