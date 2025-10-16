@@ -59,7 +59,7 @@ const server = http.createServer(app);  // ⬅️ ใช้ server แทน app
 const { Server } = require("socket.io");
 const attachChatHandlers = require('./SocketRoutes/Events/ChatEvents');
 const io = new Server(server, {
-  cors: { origin: ["http://localhost:4000", "http://20.189.96.19", "http://20.189.96.19:4000", "*"], methods: ['GET', 'POST', 'PUT', 'DELETE'] }
+  cors: { origin: "*", methods: ['GET', 'POST', 'PUT', 'DELETE'] }
 });
 
 // ให้ io เข้าถึงใน controller เผื่อ controller ฝั่ง HTTP ต้องการ emit ผ่าน req.app.get('io'
