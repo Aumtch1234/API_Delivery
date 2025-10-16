@@ -2,7 +2,6 @@ const pool = require('../../config/db');
 const { getIO } = require("../../SocketRoutes/Events/socketEvents"); // ✅ import ฟังก์ชันดึง io instance
 
 // ✅ ตรวจสอบสถานะร้านค้าก่อนสั่งซื้อ - เวอร์ชันสมบูรณ์
-// ✅ ตรวจสอบสถานะร้านค้าก่อนสั่งซื้อ - ตรงตามโครงสร้างตาราง markets
 exports.checkStoresStatus = async (req, res) => {
   try {
     const user_id = req.user.user_id;
@@ -98,41 +97,48 @@ exports.checkStoresStatus = async (req, res) => {
         continue;
       }
 
-      // ✅ ตรวจสอบเวลาทำการ (open_time และ close_time เป็น TEXT)
+      // ✅ ตรวจสอบเวลาทำการ (รองรับข้ามวัน)
       if (store.open_time && store.close_time) {
-        const openTime = store.open_time;
-        const closeTime = store.close_time;
+        const now = new Date(
+          new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+        );
 
-        let isOutsideHours = false;
+        const [openHour, openMinute] = store.open_time.split(':').map(Number);
+        const [closeHour, closeMinute] = store.close_time.split(':').map(Number);
 
-        // กรณีร้านเปิดข้ามวัน (เช่น 22:00 - 02:00)
-        if (openTime > closeTime) {
-          // ถ้าเวลาปัจจุบันอยู่ระหว่าง closeTime ถึง openTime = นอกเวลาทำการ
-          if (currentTimeString > closeTime && currentTimeString < openTime) {
-            isOutsideHours = true;
-          }
+        const openDate = new Date(now);
+        openDate.setHours(openHour, openMinute, 0, 0);
+
+        const closeDate = new Date(now);
+        closeDate.setHours(closeHour, closeMinute, 0, 0);
+
+        let isOpenByTime = false;
+
+        if (closeDate <= openDate) {
+          // ✅ ร้านเปิดข้ามวัน เช่น 18:00 → 05:00
+          closeDate.setDate(closeDate.getDate() + 1);
+          const adjustedNow = new Date(now);
+          if (adjustedNow < openDate) adjustedNow.setDate(adjustedNow.getDate() + 1);
+
+          isOpenByTime = adjustedNow >= openDate && adjustedNow <= closeDate;
         } else {
-          // กรณีปกติ (เช่น 08:00 - 20:00)
-          if (currentTimeString < openTime || currentTimeString > closeTime) {
-            isOutsideHours = true;
-          }
+          isOpenByTime = now >= openDate && now <= closeDate;
         }
 
-        if (isOutsideHours) {
+        if (!isOpenByTime) {
           closedStores.push({
             market_id: store.market_id,
             market_name: store.shop_name || 'ไม่ระบุชื่อร้าน',
             reason: 'นอกเวลาทำการ',
-            opening_time: openTime,
-            closing_time: closeTime
+            opening_time: store.open_time,
+            closing_time: store.close_time
           });
-          console.log(`⏰ Store ${store.shop_name} outside hours (${openTime} - ${closeTime})`);
+          console.log(`⏰ Store ${store.shop_name} outside hours (${store.open_time} - ${store.close_time})`);
         } else {
-          console.log(`✅ Store ${store.shop_name} is open (${openTime} - ${closeTime})`);
+          console.log(`✅ Store ${store.shop_name} is open (${store.open_time} - ${store.close_time})`);
         }
-      } else {
-        console.log(`✅ Store ${store.shop_name} is open (no time restrictions)`);
       }
+
     }
 
     // ส่ง response
@@ -229,9 +235,9 @@ exports.PostOrders = async (req, res) => {
 
     // loop ต่อร้าน
     for (const [marketId, items] of Object.entries(basketsByMarket)) {
-      const distance    = toNum(distances[marketId], 0);
+      const distance = toNum(distances[marketId], 0);
       const deliveryFee = money(deliveryFees[marketId]);
-      const totalPrice  = money(totalPrices[marketId]);
+      const totalPrice = money(totalPrices[marketId]);
 
       // 1) สร้าง order (ตั้ง original_total_price = 0 ก่อน เดี๋ยวค่อยอัปเดต)
       const orderInsert = await client.query(
@@ -269,7 +275,7 @@ exports.PostOrders = async (req, res) => {
       `;
 
       let calculatedOriginalTotal = 0; //รวมต้นทุนของออเดอร์นี้
-      let calculatedSellTotal     = 0; // ✅ รวมยอดขาย(รวม option) ทั้งออเดอร์
+      let calculatedSellTotal = 0; // ✅ รวมยอดขาย(รวม option) ทั้งออเดอร์
 
       // 3) loop สินค้าแต่ละชิ้น
       for (const item of items) {
@@ -337,7 +343,7 @@ exports.PostOrders = async (req, res) => {
         const originalSubtotal = money(unitOriginalCost * qty);
 
         // รวมต้นทุนของออเดอร์
-        calculatedSellTotal     += sellSubtotal;      // ✅ สะสมยอดขาย
+        calculatedSellTotal += sellSubtotal;      // ✅ สะสมยอดขาย
         calculatedOriginalTotal += originalSubtotal;  // (เดิมมีอยู่แล้ว)
 
         // INSERT รายการ
@@ -357,7 +363,7 @@ exports.PostOrders = async (req, res) => {
       }
 
       // 4) คำนวณ GP และ BONUS ตามต้นทุนรวม
-      const baseCostOriginalTotal  = money(calculatedOriginalTotal);           // ต้นทุนรวมทั้งออเดอร์
+      const baseCostOriginalTotal = money(calculatedOriginalTotal);           // ต้นทุนรวมทั้งออเดอร์
       const grossSell = money(calculatedSellTotal);              // Σ(subtotal) = ยอดขายรวมทั้งออเดอร์ (รวม option แล้ว)
       const riderGP = Math.max(0, money(calculatedSellTotal - calculatedOriginalTotal)); // ✅ GP ที่ยังไม่หักโบัส ต่อออเดอร์ = ยอดราคาขาย - ต้นทุน และต้องไม่ติดลบ
 
@@ -380,7 +386,7 @@ exports.PostOrders = async (req, res) => {
             bonus                = $3,
             updated_at           = NOW()
           WHERE order_id = $4`,
-        [ baseCostOriginalTotal, GPAfterBonus, money(bonusAmount), order.order_id ]
+        [baseCostOriginalTotal, GPAfterBonus, money(bonusAmount), order.order_id]
       );
 
       // 6) ลบตะกร้า
@@ -553,7 +559,7 @@ exports.getOrdersByCustomer = async (req, res) => {
 // 🔥 API ใหม่: ดึงข้อมูลร้านค้าเพื่อเช็คว่าร้านไหนเป็นร้านแอดมิน (owner_id = null = 20% GP)
 exports.getMarketsInfo = async (req, res) => {
   const { market_ids } = req.body;
-  
+
   console.log(`🔍 Getting markets info for: ${market_ids?.join(', ')}`);
 
   if (!market_ids || !Array.isArray(market_ids) || market_ids.length === 0) {
@@ -566,7 +572,7 @@ exports.getMarketsInfo = async (req, res) => {
   try {
     // สร้าง placeholder สำหรับ IN clause
     const placeholders = market_ids.map((_, index) => `$${index + 1}`).join(', ');
-    
+
     const result = await pool.query(
       `SELECT 
         market_id,
@@ -579,7 +585,7 @@ exports.getMarketsInfo = async (req, res) => {
     );
 
     console.log(`✅ Found ${result.rows.length} markets`);
-    
+
     // Log ข้อมูลร้านแต่ละร้าน
     result.rows.forEach(market => {
       const isAdmin = market.owner_id === null;
