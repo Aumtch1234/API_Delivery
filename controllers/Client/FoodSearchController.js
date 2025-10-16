@@ -8,39 +8,41 @@ const searchFoodsAndCategories = async (req, res) => {
     }
 
     const query = `
-      SELECT 
-        f.food_id,
-        f.food_name,
-        f.price,
-        f.sell_price,
-        COALESCE(AVG(fr.rating), 0)::numeric(3,2) AS rating_avg,  -- ✅ ค่าเฉลี่ยจาก food_reviews
-        f.image_url,
-        m.shop_name,
-        m.owner_id,
-        m.is_admin,
-        m.approve,
-        c.name AS category_name
-      FROM foods f
-      JOIN markets m ON f.market_id = m.market_id
-      JOIN categorys c ON f.category_id = c.id
-      LEFT JOIN food_reviews fr ON f.food_id = fr.food_id   -- ✅ join รีวิวอาหาร
+    SELECT 
+      f.food_id,
+      f.food_name,
+      f.price,
+      f.sell_price,
+      COALESCE(AVG(fr.rating), 0)::numeric(3,2) AS rating_avg,  -- ✅ ค่าเฉลี่ยจาก food_reviews
+      f.image_url,
+      m.shop_name,
+      m.owner_id,
+      m.is_admin,
+      m.approve,
+      c.name AS category_name
+    FROM foods f
+    JOIN markets m ON f.market_id = m.market_id
+    JOIN categorys c ON f.category_id = c.id
+    LEFT JOIN food_reviews fr ON f.food_id = fr.food_id   -- ✅ join รีวิวอาหาร
 
-      WHERE 
-        f.food_name ILIKE $1 
-        OR c.name ILIKE $1 
-        OR m.shop_name ILIKE $1
+    WHERE 
+      (f.food_name ILIKE $1 
+      OR c.name ILIKE $1 
+      OR m.shop_name ILIKE $1)
+      AND f.is_visible = TRUE     -- ✅ แสดงเฉพาะเมนูที่เปิดให้เห็น
 
-      GROUP BY 
-        f.food_id, f.food_name, f.price, f.sell_price, f.image_url,
-        m.shop_name, m.owner_id, m.is_admin, m.approve, c.name
+    GROUP BY 
+      f.food_id, f.food_name, f.price, f.sell_price, f.image_url,
+      m.shop_name, m.owner_id, m.is_admin, m.approve, c.name
 
-      ORDER BY 
-        CASE 
-          WHEN m.owner_id IS NOT NULL THEN 1  -- ✅ ร้านสมาชิกมาก่อน
-          ELSE 2                              -- ✅ ร้าน admin ทีหลัง
-        END,
-        rating_avg DESC;  -- ✅ เรียงตามค่าเฉลี่ยเรตติ้ง
-    `;
+    ORDER BY 
+      CASE 
+        WHEN m.owner_id IS NOT NULL THEN 1  -- ✅ ร้านสมาชิกมาก่อน
+        ELSE 2                              -- ✅ ร้าน admin ทีหลัง
+      END,
+      rating_avg DESC;  -- ✅ เรียงตามค่าเฉลี่ยเรตติ้ง
+  `;
+
 
     const result = await pool.query(query, [`%${q}%`]);
 

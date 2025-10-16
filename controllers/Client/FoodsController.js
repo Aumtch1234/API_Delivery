@@ -3,23 +3,25 @@ const pool = require('../../config/db');
 exports.getAllFoods = async (req, res) => {
   try {
     const query = `
-      SELECT
-        f.food_id,
-        f.food_name,
-        f.price,
-        f.sell_price,
-        f.image_url,
-        f.rating, -- optional, ถ้ามีคอลัมน์ rating ใน foods อยู่แล้ว
-        m.owner_id,
-        m.shop_name,
-        COALESCE(AVG(r.rating), 0)::numeric(3,2) AS rating_avg,
-        COUNT(r.review_id) AS review_count
-      FROM foods f
-      JOIN markets m ON f.market_id = m.market_id
-      LEFT JOIN food_reviews r ON f.food_id = r.food_id
-      GROUP BY f.food_id, m.owner_id, m.shop_name
-      ORDER BY f.food_id;
-    `;
+    SELECT
+      f.food_id,
+      f.food_name,
+      f.price,
+      f.sell_price,
+      f.image_url,
+      f.rating, -- ถ้ามีคอลัมน์ rating ใน foods อยู่แล้ว
+      m.owner_id,
+      m.shop_name,
+      COALESCE(AVG(r.rating), 0)::numeric(3,2) AS rating_avg,
+      COUNT(r.review_id) AS review_count
+    FROM foods f
+    JOIN markets m ON f.market_id = m.market_id
+    LEFT JOIN food_reviews r ON f.food_id = r.food_id
+    WHERE f.is_visible = TRUE     -- ✅ แสดงเฉพาะเมนูที่เปิดให้เห็น
+    GROUP BY f.food_id, m.owner_id, m.shop_name
+    ORDER BY f.food_id;
+  `;
+
 
     const result = await pool.query(query);
 
@@ -74,6 +76,7 @@ exports.getAllFoodForMarketID = async (req, res) => {
       LEFT JOIN market_reviews mr ON m.market_id = mr.market_id
 
       WHERE f.market_id = $1
+      AND f.is_visible = TRUE
 
       GROUP BY 
         f.food_id,

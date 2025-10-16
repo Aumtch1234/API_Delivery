@@ -353,7 +353,8 @@ exports.getAllMarketReviews = async (req, res) => {
     console.error('❌ getAllMarketReviews error:', err);
     return res.status(400).json({ error: 'Cannot fetch reviews', detail: err.message });
   }
-};// ================ Food Reviews =================
+};
+// ================ Food Reviews =================
 exports.upsertFoodReviews = async (req, res) => {
   const { user_id } = req.user || {};
   const { order_id, reviews } = req.body;
@@ -431,6 +432,23 @@ exports.upsertFoodReviews = async (req, res) => {
         WHERE item_id = $1;
         `,
         [order_item_id]
+      );
+
+
+      // ✅ อัปเดตค่าเฉลี่ย rating ของเมนูนี้ในตาราง foods
+      await client.query(
+        `
+        UPDATE public.foods
+        SET rating = sub.avg_rating
+        FROM (
+          SELECT food_id, ROUND(AVG(rating)::numeric, 2) AS avg_rating
+          FROM public.food_reviews
+          WHERE food_id = $1
+          GROUP BY food_id
+        ) AS sub
+        WHERE foods.food_id = sub.food_id;
+        `,
+        [food_id]
       );
     }
 

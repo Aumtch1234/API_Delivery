@@ -29,21 +29,26 @@ router.patch('/admins/verify/:id', verifyToken, verifyAdmin);
 router.get('/admins/pending', verifyToken, getPendingAdmins);
 router.get('/admins/all', verifyToken, getAllAdmins);
 
-// Food Menu
+// Food Menu ADMIN
 router.post('/addmarket', upload.single('shop_logo_url'), verifyToken, marketFoodController.createMarket);
 router.patch('/market/:id', verifyToken, upload.single('shop_logo_url'), marketFoodController.updateMarket);
 router.post('/addcategory', verifyToken, upload.single('image'), marketFoodController.createCategory);
 router.get('/getcategories', verifyToken, marketFoodController.getCategories);
-router.get('/foods/market/:id', verifyToken, marketFoodController.getFoodsByMarketId);
+router.get('/foods/market/:id',  marketFoodController.getFoodsByMarketId);
 router.post('/addfood', verifyToken, upload.single('image'), postFood);
 router.get('/admin/markets', marketFoodController.getMarkets);
 router.delete('/food/:id', verifyToken, deleteFood);
 router.patch('/food/:id', verifyToken, upload.single('image'), updateFood);
 
+router.put('/foods/:food_id/visibility', verifyToken, marketFoodController.toggleFoodVisibility);
+router.put('/markets/:id/toggle-status', verifyToken, marketFoodController.ToggleStoreStatus);
+router.put('/markets/:id/manual-override', verifyToken, marketFoodController.IsManualMarket);
+
+
 //Users Menu
 router.get('/users', verifyToken, getUsersGroupedByProvider); // Uncomment if you have a getUsers function
 
-//Markets
+//Markets Customer
 router.patch('/market/verify/:id', verifyToken, marketController.verifyMarket);
 router.get('/markets/all', verifyToken, marketController.getAllMarkets);
 

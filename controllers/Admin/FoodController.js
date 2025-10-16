@@ -93,7 +93,215 @@ exports.postFood = async (req, res) => {
   }
 };
 
+exports.IsManualMarket = async (req, res) => {
+  // ✅ แก้ไข: ใช้ req.params.id แทน req.params.marketId เพราะ route ใช้ :id
+  const { id: marketId } = req.params;
+  const { is_manual_override } = req.body;
 
+  try {
+    // ตรวจสอบว่ามี marketId
+    if (!marketId) {
+      return res.status(400).json({
+        success: false,
+        message: "ไม่พบ Market ID"
+      });
+    }
+
+    // ตรวจสอบว่ามีค่า is_manual_override
+    if (typeof is_manual_override !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: "กรุณาระบุ is_manual_override เป็น boolean"
+      });
+    }
+
+    // ตรวจสอบว่าร้านค้ามีอยู่จริง
+    const checkMarket = await pool.query(
+      'SELECT market_id, shop_name, is_manual_override FROM markets WHERE market_id = $1',
+      [marketId]
+    );
+
+    if (checkMarket.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "ไม่พบร้านค้านี้"
+      });
+    }
+
+    // อัปเดตโหมด manual override
+    const updateQuery = `
+      UPDATE markets 
+      SET is_manual_override = $1,
+          override_until = CASE 
+            WHEN $1 = true THEN NULL 
+            ELSE override_until 
+          END
+      WHERE market_id = $2
+      RETURNING market_id, shop_name, is_open, is_manual_override, override_until
+    `;
+
+    const result = await pool.query(updateQuery, [is_manual_override, marketId]);
+
+    // ถ้าเปลี่ยนเป็นโหมดอัตโนมัติ ให้คำนวณสถานะเปิด-ปิดตามเวลา
+    if (!is_manual_override) {
+      const market = result.rows[0];
+      const marketDetails = await pool.query(
+        'SELECT open_time, close_time FROM markets WHERE market_id = $1',
+        [marketId]
+      );
+
+      if (marketDetails.rows.length > 0) {
+        const { open_time, close_time } = marketDetails.rows[0];
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+
+        let shouldBeOpen;
+
+        // จัดการกรณีร้านเปิดข้ามวัน (เช่น 18:00 - 05:00)
+        if (open_time > close_time) {
+          shouldBeOpen = currentTime >= open_time || currentTime < close_time;
+        } else {
+          shouldBeOpen = currentTime >= open_time && currentTime < close_time;
+        }
+
+        // อัปเดตสถานะเปิด-ปิดตามเวลาจริง
+        await pool.query(
+          'UPDATE markets SET is_open = $1 WHERE market_id = $2',
+          [shouldBeOpen, marketId]
+        );
+
+        result.rows[0].is_open = shouldBeOpen;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: is_manual_override
+        ? "เปลี่ยนเป็นโหมดปรับเองสำเร็จ"
+        : "เปลี่ยนเป็นโหมดอัตโนมัติสำเร็จ",
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Error toggling manual override:", error);
+    return res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนโหมด",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Toggle การแสดงเมนู
+exports.toggleFoodVisibility = async (req, res) => {
+  const { food_id } = req.params;
+  const { is_visible } = req.body;
+
+  try {
+    // ตรวจสอบ input
+    if (typeof is_visible !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "กรุณาระบุค่า is_visible เป็น true หรือ false"
+      });
+    }
+
+    // ตรวจสอบว่าเมนูมีอยู่จริงไหม
+    const check = await pool.query("SELECT food_name FROM foods WHERE food_id = $1", [food_id]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "ไม่พบเมนูอาหารนี้" });
+    }
+
+    // อัปเดตสถานะ
+    const result = await pool.query(
+      `UPDATE foods 
+       SET is_visible = $1
+       WHERE food_id = $2 
+       RETURNING food_id, food_name, is_visible`,
+      [is_visible, food_id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: is_visible ? "✅ แสดงเมนูในระบบแล้ว" : "🚫 ซ่อนเมนูเรียบร้อย",
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error("❌ toggleFoodVisibility error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดในการเปลี่ยนสถานะเมนู",
+      error: error.message
+    });
+  }
+};
+
+
+// ฟังก์ชันเสริม: อัปเดตสถานะเปิด-ปิดร้านเมื่ออยู่ในโหมด Manual
+exports.ToggleStoreStatus = async (req, res) => {
+  const { id: marketId } = req.params;
+
+  const { is_open } = req.body;
+
+  try {
+    if (!marketId) {
+      return res.status(400).json({
+        success: false,
+        message: "ไม่พบ Market ID"
+      });
+    }
+
+    if (typeof is_open !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: "กรุณาระบุ is_open เป็น boolean"
+      });
+    }
+
+    // ตรวจสอบว่าร้านอยู่ในโหมด Manual หรือไม่
+    const checkMarket = await pool.query(
+      'SELECT is_manual_override FROM markets WHERE market_id = $1',
+      [marketId]
+    );
+
+    if (checkMarket.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "ไม่พบร้านค้านี้"
+      });
+    }
+
+    if (!checkMarket.rows[0].is_manual_override) {
+      return res.status(403).json({
+        success: false,
+        message: "ไม่สามารถเปิด/ปิดร้านได้ เนื่องจากอยู่ในโหมดอัตโนมัติ กรุณาเปลี่ยนเป็นโหมดปรับเองก่อน"
+      });
+    }
+
+    // อัปเดตสถานะเปิด-ปิด
+    const result = await pool.query(
+      `UPDATE markets 
+       SET is_open = $1
+       WHERE market_id = $2
+       RETURNING market_id, shop_name, is_open, is_manual_override`,
+      [is_open, marketId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: is_open ? "เปิดร้านสำเร็จ" : "ปิดร้านสำเร็จ",
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Error toggling store status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดในการเปิด/ปิดร้าน",
+      error: error.message
+    });
+  }
+};
 
 exports.getMarkets = async (req, res) => {
   try {
@@ -129,18 +337,44 @@ exports.getFoodsByMarketId = async (req, res) => {
   try {
     const query = `
      SELECT
-      m.market_id, m.shop_name, m.shop_description AS description,
-      m.shop_logo_url, m.address, m.phone, m.open_time, m.close_time,
-      m.latitude, m.longitude,
-      f.food_id, f.food_name, f.price, f.sell_price, f.image_url, f.rating,
-      f.options, f.sell_options, f.category_id,
+      m.market_id, 
+      m.shop_name, 
+      m.shop_description AS description,
+      m.shop_logo_url, 
+      m.address, 
+      m.phone, 
+      m.open_time, 
+      m.close_time,
+      m.latitude, 
+      m.longitude,
+      m.is_open, 
+      m.is_manual_override, 
+      m.override_until,
+      f.food_id, 
+      f.food_name, 
+      f.price, 
+      f.sell_price, 
+      f.image_url,
+      COALESCE(AVG(r.rating), 0) AS rating,  -- ✅ ใช้ค่าเฉลี่ยแทน f.rating
+      f.options, 
+      f.sell_options, 
+      f.category_id,
+      f.is_visible,
       c.name AS category_name,
       c.cate_image_url AS category_image_url
     FROM markets m
     LEFT JOIN foods f ON f.market_id = m.market_id
-    LEFT JOIN categorys c ON c.id = f.category_id   -- <- join หมวดหมู่
+    LEFT JOIN categorys c ON c.id = f.category_id
+    LEFT JOIN food_reviews r ON r.food_id = f.food_id  -- ✅ join รีวิว
     WHERE m.market_id = $1
+    GROUP BY 
+      m.market_id, m.shop_name, m.shop_description, m.shop_logo_url, m.address,
+      m.phone, m.open_time, m.close_time, m.latitude, m.longitude,
+      m.is_open, m.is_manual_override, m.override_until,
+      f.food_id, f.food_name, f.price, f.sell_price, f.image_url,
+      f.options, f.sell_options, f.category_id, c.name, c.cate_image_url
     ORDER BY f.food_id DESC;
+
     `;
     const result = await pool.query(query, [marketId]);
 

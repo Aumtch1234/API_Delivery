@@ -194,6 +194,7 @@ exports.getMyFoods = async (req, res) => {
   const userId = req.user?.user_id;
 
   try {
+    // ✅ ดึง market_id ของเจ้าของร้าน
     const marketResult = await pool.query(
       'SELECT market_id FROM markets WHERE owner_id = $1',
       [userId]
@@ -205,9 +206,10 @@ exports.getMyFoods = async (req, res) => {
 
     const marketId = marketResult.rows[0].market_id;
 
-    // ✅ JOIN กับ categorys table เพื่อดึง category_name
+    // ✅ JOIN กับ categorys + LEFT JOIN กับ food_reviews เพื่อคำนวณค่าเฉลี่ย
     const foodsResult = await pool.query(
-      `SELECT 
+      `
+      SELECT 
         f.food_id,
         f.market_id,
         f.food_name,
@@ -216,29 +218,35 @@ exports.getMyFoods = async (req, res) => {
         f.image_url,
         f.options,
         f.sell_options,
-        f.rating,
+        COALESCE(AVG(fr.rating), 0)::numeric(3,2) AS rating_avg,  -- ✅ ค่าเฉลี่ยจาก food_reviews
+        COUNT(fr.review_id) AS review_count,                       -- ✅ จำนวนรีวิว (ถ้าอยากใช้)
         f.created_at,
         f.created_by_admin_id,
         f.category_id,
-        c.name as category_name,
+        f.is_visible,
+        c.name AS category_name,
         c.cate_image_url
-       FROM foods f
-       LEFT JOIN categorys c ON f.category_id = c.id
-       WHERE f.market_id = $1
-       ORDER BY f.created_at DESC`,
+      FROM foods f
+      LEFT JOIN categorys c ON f.category_id = c.id
+      LEFT JOIN food_reviews fr ON f.food_id = fr.food_id          -- ✅ join รีวิวอาหาร
+      WHERE f.market_id = $1
+      GROUP BY 
+        f.food_id, f.market_id, f.food_name, f.price, f.sell_price,
+        f.image_url, f.options, f.sell_options, f.created_at, 
+        f.created_by_admin_id, f.category_id, c.name, c.cate_image_url
+      ORDER BY f.created_at DESC
+      `,
       [marketId]
     );
 
     // ✅ ตรวจสอบ options ถ้าเป็น null ให้ใส่เป็น '[]'
-    const foods = foodsResult.rows.map((food) => {
-      return {
-        ...food,
-        options: food.options ? JSON.stringify(food.options) : '[]',
-        sell_options: food.sell_options ? food.sell_options : [],
-      };
-    });
+    const foods = foodsResult.rows.map((food) => ({
+      ...food,
+      options: food.options ? JSON.stringify(food.options) : '[]',
+      sell_options: food.sell_options || [],
+    }));
 
-    console.log('📦 เมนูที่โหลดมา (with category):', JSON.stringify(foods, null, 2));
+    console.log('📦 เมนูที่โหลดมา (with category & rating):', JSON.stringify(foods, null, 2));
 
     res.status(200).json({ foods });
   } catch (err) {
@@ -246,6 +254,7 @@ exports.getMyFoods = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงเมนู' });
   }
 };
+
 
 exports.addFood = async (req, res) => {
   const userId = req.user?.user_id;
@@ -312,14 +321,14 @@ exports.addFood = async (req, res) => {
 exports.updateFood = async (req, res) => {
   const userId = req.user?.user_id;
   const foodId = req.params.id;
-  let { food_name, price, options, category_id } = req.body; // ✅ เพิ่ม category_id
+  let { food_name, price, options, category_id, is_visible } = req.body; // ✅ เพิ่ม is_visible
   const image = req.file?.path;
 
   console.log('🟢 updateFood called');
   console.log('User ID:', userId);
   console.log('Food ID:', foodId);
   console.log('Request body:', req.body);
-  console.log('Category ID:', category_id); // ✅ เพิ่ม log
+  console.log('Category ID:', category_id);
   console.log('Image path:', image);
 
   try {
@@ -368,7 +377,7 @@ exports.updateFood = async (req, res) => {
       } else if (Array.isArray(options)) {
         parsedOptions = options;
       }
-      // คำนวณ sell_options ใหม่
+
       sellOptions = parsedOptions.map(option => {
         const optPriceNum = Number(option.extraPrice || option.price) || 0;
         const optionPrice = market.owner_id
@@ -377,28 +386,35 @@ exports.updateFood = async (req, res) => {
         return { ...option, extraPrice: optionPrice };
       });
     }
+
     console.log('Parsed options:', parsedOptions);
     console.log('Calculated sell_options:', sellOptions);
 
     // ✅ สร้าง query dynamic
-    let updateQuery = 'UPDATE foods SET food_name = $1, price = $2, sell_price = $3';
+    let updateQuery = `
+      UPDATE foods 
+      SET food_name = $1, 
+          price = $2, 
+          sell_price = $3
+    `;
     const params = [food_name, price, sellPrice];
     let paramIndex = 4;
 
-    // ✅ เพิ่ม category_id ถ้ามีการส่งมา
+    // ✅ category_id
     if (category_id !== undefined && category_id !== null) {
       updateQuery += `, category_id = $${paramIndex}`;
       params.push(category_id);
       paramIndex++;
     }
 
+    // ✅ image
     if (image) {
       updateQuery += `, image_url = $${paramIndex}`;
       params.push(image);
       paramIndex++;
     }
 
-    // เพิ่ม options และ sell_options ถ้ามี
+    // ✅ options
     if (options) {
       updateQuery += `, options = $${paramIndex}`;
       params.push(JSON.stringify(parsedOptions));
@@ -406,6 +422,15 @@ exports.updateFood = async (req, res) => {
 
       updateQuery += `, sell_options = $${paramIndex}`;
       params.push(JSON.stringify(sellOptions));
+      paramIndex++;
+    }
+
+    // ✅ is_visible (ใหม่)
+    if (is_visible !== undefined) {
+      const isVisibleBool =
+        is_visible === true || is_visible === 'true' ? true : false;
+      updateQuery += `, is_visible = $${paramIndex}`;
+      params.push(isVisibleBool);
       paramIndex++;
     }
 
@@ -424,6 +449,7 @@ exports.updateFood = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตเมนู' });
   }
 };
+
 
 exports.updateManualOverride = async (req, res) => {
   const userId = req.user?.user_id; // ต้องมี middleware authenticateJWT กำหนด req.user

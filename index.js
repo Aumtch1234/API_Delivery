@@ -72,6 +72,7 @@ attachChatHandlers(io);
 // Cron job ทุก 1 วิ
 cron.schedule('* * * * *', async () => {
   try {
+    // ✅ ตั้งเวลาไทย (UTC+7)
     const now = new Date();
 
     const result = await pool.query(
@@ -79,29 +80,24 @@ cron.schedule('* * * * *', async () => {
     );
 
     for (const market of result.rows) {
-      if (!market.open_time || !market.close_time) {
-        // console.log(`[Cron] ร้าน ${market.market_id} ไม่มีเวลาเปิด/ปิด`);
-        continue;
-      }
+      if (!market.open_time || !market.close_time) continue;
 
       let skipUpdate = false;
 
-      // ตรวจสอบ override manual
+      // ✅ ตรวจสอบ override manual
       if (market.is_manual_override) {
         if (market.override_until && now > new Date(market.override_until)) {
           await pool.query(
             'UPDATE markets SET is_manual_override = false, override_until = NULL WHERE market_id = $1',
             [market.market_id]
           );
-          // console.log(`[Cron] ยกเลิก override ร้าน ${market.market_id} (หมดเวลา)`);
         } else {
           skipUpdate = true;
-          // console.log(`[Cron] ร้าน ${market.market_id} override อยู่ ข้าม`);
         }
       }
 
       if (!skipUpdate) {
-        // แปลงเวลาเปิด/ปิดจาก string "HH:mm" เป็น Date
+        // ✅ แปลงเวลาเปิด-ปิดจาก string "HH:mm" เป็น Date (เวลาไทย)
         const [openHour, openMinute] = market.open_time.split(':').map(Number);
         const [closeHour, closeMinute] = market.close_time.split(':').map(Number);
 
@@ -113,30 +109,25 @@ cron.schedule('* * * * *', async () => {
 
         let shouldOpen = false;
 
+        // ✅ รองรับร้านที่เปิดข้ามวัน เช่น 18:00 → 05:00
         if (closeDate <= openDate) {
-          // ข้ามคืน
-          if (now >= openDate || now <= closeDate) {
-            shouldOpen = true;
-          }
+          shouldOpen = now >= openDate || now <= closeDate;
         } else {
-          if (now >= openDate && now <= closeDate) {
-            shouldOpen = true;
-          }
+          shouldOpen = now >= openDate && now <= closeDate;
         }
 
         if (market.is_open !== shouldOpen) {
-          await pool.query('UPDATE markets SET is_open = $1 WHERE market_id = $2', [
-            shouldOpen,
-            market.market_id,
-          ]);
-          // console.log(`[Cron] ร้าน ${market.market_id} อัปเดต is_open เป็น ${shouldOpen}`);
+          await pool.query(
+            'UPDATE markets SET is_open = $1 WHERE market_id = $2',
+            [shouldOpen, market.market_id]
+          );
         }
       }
     }
 
-    // console.log(`[Cron] ✅ จบรอบเวลา: ${now.toISOString()}\n`);
+    console.log(`[Cron 🇹🇭] ✅ อัปเดตร้านตามเวลาไทย: ${now.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
   } catch (error) {
-    console.error(`[Cron] ❌ เกิดข้อผิดพลาด:`, error);
+    console.error(`[Cron 🇹🇭] ❌ เกิดข้อผิดพลาด:`, error);
   }
 });
 

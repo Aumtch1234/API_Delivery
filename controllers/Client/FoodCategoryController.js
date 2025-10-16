@@ -5,33 +5,36 @@ exports.getAllCategories = async (req, res) => {
   try {
     // ✅ SELECT ให้ชัดเจนว่า column ไหนเป็น ID หลัก
     const result = await pool.query(`
-    SELECT 
-      c.id,
-      c.name,
-      c.cate_image_url,
+  SELECT 
+    c.id,
+    c.name,
+    c.cate_image_url,
 
-      -- ✅ จำนวนเมนูอาหารในหมวดนั้น
-      COUNT(DISTINCT f.food_id) AS food_count
+    -- ✅ จำนวนเมนูอาหารในหมวดนั้น (เฉพาะเมนูที่เปิดให้เห็น)
+    COUNT(DISTINCT f.food_id) AS food_count
 
-    FROM categorys c
-    LEFT JOIN foods f ON f.category_id = c.id
-    LEFT JOIN food_reviews fr ON fr.food_id = f.food_id
+  FROM categorys c
+  LEFT JOIN foods f 
+    ON f.category_id = c.id 
+    AND f.is_visible = TRUE    -- ✅ นับเฉพาะเมนูที่เปิดให้เห็น
+  LEFT JOIN food_reviews fr ON fr.food_id = f.food_id
 
-    GROUP BY c.id, c.name, c.cate_image_url
-    ORDER BY c.id ASC;
-  `);
+  GROUP BY c.id, c.name, c.cate_image_url
+  ORDER BY c.id ASC;
+`);
 
-    
+
+
     res.status(200).json({
       success: true,
       data: result.rows
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Server error',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -42,33 +45,35 @@ exports.getFoodsByCategory = async (req, res) => {
 
   try {
     const query = `
-  SELECT 
-    f.food_id,
-    f.food_name,
-    f.price,
-    f.sell_price,
-    f.rating,
-    f.image_url,
-    f.market_id,
-    m.shop_name,        -- ✅ เพิ่มชื่อร้าน
-    c.name AS category_name
-  FROM 
-    public.foods f
-  JOIN 
-    public.categorys c ON f.category_id = c.id
-  JOIN 
-    public.markets m ON f.market_id = m.market_id   -- ✅ join เพื่อดึงชื่อร้าน
-  WHERE 
-    f.category_id = $1
-  ORDER BY 
-    f.food_id ASC;
-`;
+      SELECT 
+        f.food_id,
+        f.food_name,
+        f.price,
+        f.sell_price,
+        f.rating,
+        f.image_url,
+        f.market_id,
+        m.shop_name,
+        c.name AS category_name
+      FROM 
+        public.foods f
+      JOIN 
+        public.categorys c ON f.category_id = c.id
+      JOIN 
+        public.markets m ON f.market_id = m.market_id
+      WHERE 
+        f.category_id = $1
+        AND f.is_visible = TRUE     -- ✅ แสดงเฉพาะที่เปิดให้เห็น
+      ORDER BY 
+        f.food_id ASC;
+    `;
+
     const result = await pool.query(query, [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'ไม่พบเมนูอาหารในหมวดหมู่นี้',
+        message: 'ไม่พบเมนูอาหารในหมวดหมู่นี้ หรือทั้งหมดถูกซ่อนอยู่',
         data: [],
       });
     }
@@ -87,3 +92,4 @@ exports.getFoodsByCategory = async (req, res) => {
     });
   }
 };
+
