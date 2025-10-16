@@ -58,9 +58,20 @@ const server = http.createServer(app);  // ⬅️ ใช้ server แทน app
 // สร้าง Socket.IO แค่ครั้งเดียว แล้วแชร์ให้ทุกโมดูล
 const { Server } = require("socket.io");
 const attachChatHandlers = require('./SocketRoutes/Events/ChatEvents');
+
 const io = new Server(server, {
-  cors: { origin: "*", methods: ['GET', 'POST', 'PUT', 'DELETE'] }
+  cors: {
+    origin: [
+      "http://localhost:5173",          // dev frontend
+      "http://20.189.96.19",            // production domain/IP
+      "http://20.189.96.19:4000",       // API direct access
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true, // ✅ ต้องอยู่ในนี้เท่านั้น
+  },
+  transports: ["websocket", "polling"], // ✅ เพิ่มบังคับ websocket
 });
+
 
 // ให้ io เข้าถึงใน controller เผื่อ controller ฝั่ง HTTP ต้องการ emit ผ่าน req.app.get('io'
 app.set('io', io);
