@@ -84,7 +84,9 @@ attachChatHandlers(io);
 cron.schedule('* * * * *', async () => {
   try {
     // ✅ ตั้งเวลาไทย (UTC+7)
-    const now = new Date();
+    const now = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+    );
 
     const result = await pool.query(
       'SELECT market_id, open_time, close_time, is_open, is_manual_override, override_until FROM markets'
@@ -122,10 +124,18 @@ cron.schedule('* * * * *', async () => {
 
         // ✅ รองรับร้านที่เปิดข้ามวัน เช่น 18:00 → 05:00
         if (closeDate <= openDate) {
-          shouldOpen = now >= openDate || now <= closeDate;
+          // ถ้าเวลาปิดน้อยกว่าเวลาเปิด แสดงว่าปิดวันถัดไป → บวก 1 วันให้ closeDate
+          closeDate.setDate(closeDate.getDate() + 1);
+
+          // ถ้าเวลาปัจจุบัน < openDate แปลว่าเรายังอยู่หลังเที่ยงคืน → บวกวันให้ now ด้วย
+          const adjustedNow = new Date(now);
+          if (adjustedNow < openDate) adjustedNow.setDate(adjustedNow.getDate() + 1);
+
+          shouldOpen = adjustedNow >= openDate && adjustedNow <= closeDate;
         } else {
           shouldOpen = now >= openDate && now <= closeDate;
         }
+
 
         if (market.is_open !== shouldOpen) {
           await pool.query(
@@ -135,6 +145,9 @@ cron.schedule('* * * * *', async () => {
         }
       }
     }
+    console.log(
+      `🕐 Market ${market.market_id}: ${market.open_time}–${market.close_time}, Now ${now.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok" })}, => ${shouldOpen ? "เปิด" : "ปิด"}`
+    );
 
     console.log(`[Cron 🇹🇭] ✅ อัปเดตร้านตามเวลาไทย: ${now.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}`);
   } catch (error) {
