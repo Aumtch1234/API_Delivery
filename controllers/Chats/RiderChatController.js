@@ -176,7 +176,7 @@ class RiderChatController {
           cm.latitude,
           cm.longitude,
           cm.is_read,
-          cm.created_at,
+          (cm.created_at AT TIME ZONE 'Asia/Bangkok') as created_at,
           u.display_name as sender_name,
           u.photo_url as sender_photo
         FROM chat_messages cm
