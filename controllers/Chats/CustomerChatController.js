@@ -28,12 +28,23 @@ class CustomerChatController {
 
   // ✅ 1) รายการห้องแชทของลูกค้า
   static async getCustomerChatRooms(req, res) {
-  try {
-    const customerId = req.user?.user_id;
-    if (!customerId)
-      return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
+    try {
+      const customerId = req.user?.user_id;
+      if (!customerId)
+        return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
 
-    const query = `
+      // ✅ อัพเดทสถานะห้องแชทเป็น unactive ถ้า order เป็น completed
+      await pool.query(`
+      UPDATE chat_rooms cr
+      SET status = 'unactive', updated_at = NOW()
+      FROM orders o
+      WHERE cr.order_id = o.order_id
+        AND cr.customer_id = $1
+        AND o.status = 'completed'
+        AND cr.status = 'active'
+    `, [customerId]);
+
+      const query = `
       SELECT 
         cr.room_id,
         cr.order_id,
@@ -100,38 +111,38 @@ class CustomerChatController {
       ORDER BY COALESCE(cr.updated_at, cr.created_at) DESC
     `;
 
-    const result = await pool.query(query, [customerId]);
-    res.json({ success: true, data: result.rows });
-  } catch (error) {
-    console.error('❌ Error getCustomerChatRooms:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงรายการแชท' });
+      const result = await pool.query(query, [customerId]);
+      res.json({ success: true, data: result.rows });
+    } catch (error) {
+      console.error('❌ Error getCustomerChatRooms:', error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงรายการแชท' });
+    }
   }
-}
 
 
   // ✅ 2) ข้อความในห้อง (รองรับ after + limit)
   static async getChatMessages(req, res) {
-  try {
-    const { roomId } = req.params;
-    const { after, limit = 200 } = req.query;
-    const customerId = req.user?.user_id;
+    try {
+      const { roomId } = req.params;
+      const { after, limit = 200 } = req.query;
+      const customerId = req.user?.user_id;
 
-    if (!customerId) {
-      return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
-    }
+      if (!customerId) {
+        return res.status(401).json({ success: false, message: 'ไม่พบ user_id' });
+      }
 
-    // ตรวจสอบสิทธิ์
-    const roomCheck = await pool.query(
-      `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
-      [roomId, customerId]
-    );
-    if (roomCheck.rowCount === 0) {
-      return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงห้องนี้' });
-    }
+      // ตรวจสอบสิทธิ์
+      const roomCheck = await pool.query(
+        `SELECT 1 FROM chat_rooms WHERE room_id = $1 AND customer_id = $2`,
+        [roomId, customerId]
+      );
+      if (roomCheck.rowCount === 0) {
+        return res.status(403).json({ success: false, message: 'ไม่มีสิทธิ์เข้าถึงห้องนี้' });
+      }
 
-    // ✅ ดึง messages + join users
-    const params = [roomId];
-    let sql = `
+      // ✅ ดึง messages + join users
+      const params = [roomId];
+      let sql = `
       SELECT 
         cm.message_id,
         cm.room_id,
@@ -151,25 +162,25 @@ class CustomerChatController {
       WHERE cm.room_id = $1
     `;
 
-    if (after) {
-      params.push(after);
-      sql += ` AND cm.created_at > $2`;
+      if (after) {
+        params.push(after);
+        sql += ` AND cm.created_at > $2`;
+      }
+
+      sql += ` ORDER BY cm.created_at ASC LIMIT ${Math.min(parseInt(limit, 10) || 200, 500)}`;
+
+      const result = await pool.query(sql, params);
+
+      console.log('📨 Query Messages:', result.rowCount);
+      console.log('🔍 Sample:', result.rows[0]);
+
+      res.json({ success: true, messages: result.rows });
+
+    } catch (e) {
+      console.error('❌ Error getChatMessages:', e);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อความ' });
     }
-
-    sql += ` ORDER BY cm.created_at ASC LIMIT ${Math.min(parseInt(limit, 10) || 200, 500)}`;
-
-    const result = await pool.query(sql, params);
-
-    console.log('📨 Query Messages:', result.rowCount);
-    console.log('🔍 Sample:', result.rows[0]);
-
-    res.json({ success: true, messages: result.rows });
-
-  } catch (e) {
-    console.error('❌ Error getChatMessages:', e);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อความ' });
   }
-}
 
 
   // ✅ 3) เข้าร่วมห้อง
@@ -265,13 +276,13 @@ class CustomerChatController {
            AND created_at > NOW() - INTERVAL '10 seconds'`,
           [roomId, customerId, messageText]
         );
-        
+
         if (existingMessage.rowCount > 0) {
           console.log('🔄 Duplicate message detected, returning existing message');
-          return res.json({ 
-            success: true, 
+          return res.json({
+            success: true,
             data: { message_id: existingMessage.rows[0].message_id },
-            message: 'ข้อความถูกส่งแล้ว' 
+            message: 'ข้อความถูกส่งแล้ว'
           });
         }
       }
