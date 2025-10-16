@@ -2,17 +2,25 @@
 const pool = require('../../config/db');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs'); // 
 
 // Configure multer for image uploads
+const uploadDir = path.join(__dirname, '../../uploads/chat-images');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/chat-images/');
+    // ตรวจอีกชั้นหนึ่ง (กันไว้ในกรณี container เคลียร์ไฟล์)
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+      console.log(`📁 (runtime) สร้างโฟลเดอร์อัตโนมัติ: ${uploadDir}`);
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, 'chat-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
+
 
 const upload = multer({
   storage: storage,
