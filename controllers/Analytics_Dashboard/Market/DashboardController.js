@@ -76,14 +76,14 @@ exports.getDailySummary = async (req, res) => {
     // 4) วิธีชำระเงิน
     const pmSql = `
       WITH filtered_orders AS (
-        SELECT payment_method, total_price
+        SELECT payment_method, original_total_price
         FROM orders o
         WHERE DATE(o.created_at AT TIME ZONE 'Asia/Bangkok') = $1
           AND ($2::int IS NULL OR o.market_id = $2)
           AND (array_length($3::text[],1) IS NULL OR o.status = ANY($3::text[]))
       )
       SELECT COALESCE(payment_method, 'unknown') AS method,
-             COALESCE(SUM(total_price),0)::numeric(12,2) AS amount
+             COALESCE(SUM(original_total_price),0)::numeric(12,2) AS amount
       FROM filtered_orders
       GROUP BY COALESCE(payment_method, 'unknown')
       ORDER BY amount DESC;
