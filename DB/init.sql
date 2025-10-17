@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict lmfbcKj95RfcXQx2xAFDz8he8nMOkv0oeKaLy40achZKQbkMtnUtJwAd2ueYTZH
+\restrict 7i9jmpqvS2vDqfZaw67yXpkpuAqdxcdL7URBq4RsvmYoB1yCHVq9LQH5E8YLN85
 
--- Dumped from database version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
--- Dumped by pg_dump version 16.10 (Ubuntu 16.10-0ubuntu0.24.04.1)
+-- Dumped from database version 16.10 (Debian 16.10-1.pgdg13+1)
+-- Dumped by pg_dump version 16.10
 
--- Started on 2025-10-17 05:29:42 +07
+-- Started on 2025-10-17 09:47:47 +07
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,7 +21,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 253 (class 1255 OID 25356)
+-- TOC entry 253 (class 1255 OID 16385)
 -- Name: _after_market_review_change(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -38,7 +38,7 @@ $$;
 ALTER FUNCTION public._after_market_review_change() OWNER TO postgres;
 
 --
--- TOC entry 254 (class 1255 OID 25357)
+-- TOC entry 254 (class 1255 OID 16386)
 -- Name: _after_rider_review_change(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -55,7 +55,7 @@ $$;
 ALTER FUNCTION public._after_rider_review_change() OWNER TO postgres;
 
 --
--- TOC entry 255 (class 1255 OID 25358)
+-- TOC entry 255 (class 1255 OID 16387)
 -- Name: notify_order_update(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -86,7 +86,7 @@ $$;
 ALTER FUNCTION public.notify_order_update() OWNER TO postgres;
 
 --
--- TOC entry 256 (class 1255 OID 25359)
+-- TOC entry 256 (class 1255 OID 16388)
 -- Name: recompute_market_rating(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -106,7 +106,7 @@ $$;
 ALTER FUNCTION public.recompute_market_rating(p_market_id integer) OWNER TO postgres;
 
 --
--- TOC entry 257 (class 1255 OID 25360)
+-- TOC entry 257 (class 1255 OID 16389)
 -- Name: recompute_rider_rating(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -126,7 +126,7 @@ $$;
 ALTER FUNCTION public.recompute_rider_rating(p_rider_id integer) OWNER TO postgres;
 
 --
--- TOC entry 258 (class 1255 OID 25361)
+-- TOC entry 258 (class 1255 OID 16390)
 -- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -143,7 +143,7 @@ $$;
 ALTER FUNCTION public.update_updated_at_column() OWNER TO postgres;
 
 --
--- TOC entry 259 (class 1255 OID 25362)
+-- TOC entry 259 (class 1255 OID 16391)
 -- Name: validate_market_review(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -183,7 +183,7 @@ $$;
 ALTER FUNCTION public.validate_market_review() OWNER TO postgres;
 
 --
--- TOC entry 260 (class 1255 OID 25363)
+-- TOC entry 260 (class 1255 OID 16392)
 -- Name: validate_rider_review(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -227,7 +227,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 215 (class 1259 OID 25364)
+-- TOC entry 215 (class 1259 OID 16393)
 -- Name: admins; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -242,7 +242,7 @@ CREATE TABLE public.admins (
 ALTER TABLE public.admins OWNER TO postgres;
 
 --
--- TOC entry 216 (class 1259 OID 25370)
+-- TOC entry 216 (class 1259 OID 16399)
 -- Name: admins_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -258,7 +258,7 @@ CREATE SEQUENCE public.admins_id_seq
 ALTER SEQUENCE public.admins_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3756 (class 0 OID 0)
+-- TOC entry 3774 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: admins_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -267,7 +267,7 @@ ALTER SEQUENCE public.admins_id_seq OWNED BY public.admins.id;
 
 
 --
--- TOC entry 217 (class 1259 OID 25371)
+-- TOC entry 217 (class 1259 OID 16400)
 -- Name: carts; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -286,7 +286,7 @@ CREATE TABLE public.carts (
 ALTER TABLE public.carts OWNER TO postgres;
 
 --
--- TOC entry 218 (class 1259 OID 25378)
+-- TOC entry 218 (class 1259 OID 16407)
 -- Name: carts_cart_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -302,7 +302,7 @@ CREATE SEQUENCE public.carts_cart_id_seq
 ALTER SEQUENCE public.carts_cart_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3757 (class 0 OID 0)
+-- TOC entry 3775 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: carts_cart_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -311,7 +311,7 @@ ALTER SEQUENCE public.carts_cart_id_seq OWNED BY public.carts.cart_id;
 
 
 --
--- TOC entry 219 (class 1259 OID 25379)
+-- TOC entry 219 (class 1259 OID 16408)
 -- Name: categorys; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -325,7 +325,7 @@ CREATE TABLE public.categorys (
 ALTER TABLE public.categorys OWNER TO postgres;
 
 --
--- TOC entry 220 (class 1259 OID 25384)
+-- TOC entry 220 (class 1259 OID 16413)
 -- Name: categorys_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -341,7 +341,7 @@ CREATE SEQUENCE public.categorys_id_seq
 ALTER SEQUENCE public.categorys_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3758 (class 0 OID 0)
+-- TOC entry 3776 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: categorys_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -350,7 +350,7 @@ ALTER SEQUENCE public.categorys_id_seq OWNED BY public.categorys.id;
 
 
 --
--- TOC entry 221 (class 1259 OID 25385)
+-- TOC entry 221 (class 1259 OID 16414)
 -- Name: chat_messages; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -373,7 +373,7 @@ CREATE TABLE public.chat_messages (
 ALTER TABLE public.chat_messages OWNER TO postgres;
 
 --
--- TOC entry 222 (class 1259 OID 25394)
+-- TOC entry 222 (class 1259 OID 16423)
 -- Name: chat_messages_message_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -389,7 +389,7 @@ CREATE SEQUENCE public.chat_messages_message_id_seq
 ALTER SEQUENCE public.chat_messages_message_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3759 (class 0 OID 0)
+-- TOC entry 3777 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: chat_messages_message_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -398,7 +398,7 @@ ALTER SEQUENCE public.chat_messages_message_id_seq OWNED BY public.chat_messages
 
 
 --
--- TOC entry 223 (class 1259 OID 25395)
+-- TOC entry 223 (class 1259 OID 16424)
 -- Name: chat_rooms; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -416,7 +416,7 @@ CREATE TABLE public.chat_rooms (
 ALTER TABLE public.chat_rooms OWNER TO postgres;
 
 --
--- TOC entry 224 (class 1259 OID 25401)
+-- TOC entry 224 (class 1259 OID 16430)
 -- Name: chat_rooms_room_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -432,7 +432,7 @@ CREATE SEQUENCE public.chat_rooms_room_id_seq
 ALTER SEQUENCE public.chat_rooms_room_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3760 (class 0 OID 0)
+-- TOC entry 3778 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: chat_rooms_room_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -441,7 +441,7 @@ ALTER SEQUENCE public.chat_rooms_room_id_seq OWNED BY public.chat_rooms.room_id;
 
 
 --
--- TOC entry 225 (class 1259 OID 25402)
+-- TOC entry 225 (class 1259 OID 16431)
 -- Name: client_addresses; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -466,7 +466,7 @@ CREATE TABLE public.client_addresses (
 ALTER TABLE public.client_addresses OWNER TO postgres;
 
 --
--- TOC entry 226 (class 1259 OID 25408)
+-- TOC entry 226 (class 1259 OID 16437)
 -- Name: client_addresses_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -482,7 +482,7 @@ CREATE SEQUENCE public.client_addresses_id_seq
 ALTER SEQUENCE public.client_addresses_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3761 (class 0 OID 0)
+-- TOC entry 3779 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: client_addresses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -491,7 +491,7 @@ ALTER SEQUENCE public.client_addresses_id_seq OWNED BY public.client_addresses.i
 
 
 --
--- TOC entry 250 (class 1259 OID 25793)
+-- TOC entry 227 (class 1259 OID 16438)
 -- Name: complaints; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -514,7 +514,7 @@ CREATE TABLE public.complaints (
 ALTER TABLE public.complaints OWNER TO postgres;
 
 --
--- TOC entry 249 (class 1259 OID 25792)
+-- TOC entry 228 (class 1259 OID 16446)
 -- Name: complaints_complaint_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -530,8 +530,8 @@ CREATE SEQUENCE public.complaints_complaint_id_seq
 ALTER SEQUENCE public.complaints_complaint_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3762 (class 0 OID 0)
--- Dependencies: 249
+-- TOC entry 3780 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: complaints_complaint_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -539,7 +539,7 @@ ALTER SEQUENCE public.complaints_complaint_id_seq OWNED BY public.complaints.com
 
 
 --
--- TOC entry 248 (class 1259 OID 25754)
+-- TOC entry 229 (class 1259 OID 16447)
 -- Name: food_reviews; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -561,7 +561,7 @@ CREATE TABLE public.food_reviews (
 ALTER TABLE public.food_reviews OWNER TO postgres;
 
 --
--- TOC entry 247 (class 1259 OID 25753)
+-- TOC entry 230 (class 1259 OID 16455)
 -- Name: food_reviews_review_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -577,8 +577,8 @@ CREATE SEQUENCE public.food_reviews_review_id_seq
 ALTER SEQUENCE public.food_reviews_review_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3763 (class 0 OID 0)
--- Dependencies: 247
+-- TOC entry 3781 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: food_reviews_review_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -586,7 +586,7 @@ ALTER SEQUENCE public.food_reviews_review_id_seq OWNED BY public.food_reviews.re
 
 
 --
--- TOC entry 227 (class 1259 OID 25409)
+-- TOC entry 231 (class 1259 OID 16456)
 -- Name: foods; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -610,7 +610,7 @@ CREATE TABLE public.foods (
 ALTER TABLE public.foods OWNER TO postgres;
 
 --
--- TOC entry 228 (class 1259 OID 25417)
+-- TOC entry 232 (class 1259 OID 16465)
 -- Name: foods_food_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -626,8 +626,8 @@ CREATE SEQUENCE public.foods_food_id_seq
 ALTER SEQUENCE public.foods_food_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3764 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 3782 (class 0 OID 0)
+-- Dependencies: 232
 -- Name: foods_food_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -635,7 +635,7 @@ ALTER SEQUENCE public.foods_food_id_seq OWNED BY public.foods.food_id;
 
 
 --
--- TOC entry 229 (class 1259 OID 25418)
+-- TOC entry 233 (class 1259 OID 16466)
 -- Name: market_reviews; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -655,7 +655,7 @@ CREATE TABLE public.market_reviews (
 ALTER TABLE public.market_reviews OWNER TO postgres;
 
 --
--- TOC entry 230 (class 1259 OID 25426)
+-- TOC entry 234 (class 1259 OID 16474)
 -- Name: market_reviews_review_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -671,8 +671,8 @@ CREATE SEQUENCE public.market_reviews_review_id_seq
 ALTER SEQUENCE public.market_reviews_review_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3765 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 3783 (class 0 OID 0)
+-- Dependencies: 234
 -- Name: market_reviews_review_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -680,7 +680,7 @@ ALTER SEQUENCE public.market_reviews_review_id_seq OWNED BY public.market_review
 
 
 --
--- TOC entry 231 (class 1259 OID 25427)
+-- TOC entry 235 (class 1259 OID 16475)
 -- Name: markets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -711,7 +711,7 @@ CREATE TABLE public.markets (
 ALTER TABLE public.markets OWNER TO postgres;
 
 --
--- TOC entry 232 (class 1259 OID 25438)
+-- TOC entry 236 (class 1259 OID 16486)
 -- Name: markets_market_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -727,8 +727,8 @@ CREATE SEQUENCE public.markets_market_id_seq
 ALTER SEQUENCE public.markets_market_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3766 (class 0 OID 0)
--- Dependencies: 232
+-- TOC entry 3784 (class 0 OID 0)
+-- Dependencies: 236
 -- Name: markets_market_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -736,7 +736,7 @@ ALTER SEQUENCE public.markets_market_id_seq OWNED BY public.markets.market_id;
 
 
 --
--- TOC entry 233 (class 1259 OID 25439)
+-- TOC entry 237 (class 1259 OID 16487)
 -- Name: order_items; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -760,8 +760,8 @@ CREATE TABLE public.order_items (
 ALTER TABLE public.order_items OWNER TO postgres;
 
 --
--- TOC entry 3767 (class 0 OID 0)
--- Dependencies: 233
+-- TOC entry 3785 (class 0 OID 0)
+-- Dependencies: 237
 -- Name: COLUMN order_items.original_price; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -769,8 +769,8 @@ COMMENT ON COLUMN public.order_items.original_price IS 'ราคาต้นท
 
 
 --
--- TOC entry 3768 (class 0 OID 0)
--- Dependencies: 233
+-- TOC entry 3786 (class 0 OID 0)
+-- Dependencies: 237
 -- Name: COLUMN order_items.original_subtotal; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -778,8 +778,8 @@ COMMENT ON COLUMN public.order_items.original_subtotal IS 'ราคารวม
 
 
 --
--- TOC entry 3769 (class 0 OID 0)
--- Dependencies: 233
+-- TOC entry 3787 (class 0 OID 0)
+-- Dependencies: 237
 -- Name: COLUMN order_items.original_options; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -787,8 +787,8 @@ COMMENT ON COLUMN public.order_items.original_options IS 'ตัวเลือ�
 
 
 --
--- TOC entry 3770 (class 0 OID 0)
--- Dependencies: 233
+-- TOC entry 3788 (class 0 OID 0)
+-- Dependencies: 237
 -- Name: COLUMN order_items.additional_notes; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -796,7 +796,7 @@ COMMENT ON COLUMN public.order_items.additional_notes IS 'รายละเอ�
 
 
 --
--- TOC entry 234 (class 1259 OID 25448)
+-- TOC entry 238 (class 1259 OID 16498)
 -- Name: order_items_item_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -812,8 +812,8 @@ CREATE SEQUENCE public.order_items_item_id_seq
 ALTER SEQUENCE public.order_items_item_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3771 (class 0 OID 0)
--- Dependencies: 234
+-- TOC entry 3789 (class 0 OID 0)
+-- Dependencies: 238
 -- Name: order_items_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -821,7 +821,7 @@ ALTER SEQUENCE public.order_items_item_id_seq OWNED BY public.order_items.item_i
 
 
 --
--- TOC entry 235 (class 1259 OID 25449)
+-- TOC entry 239 (class 1259 OID 16499)
 -- Name: orders; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -855,8 +855,8 @@ CREATE TABLE public.orders (
 ALTER TABLE public.orders OWNER TO postgres;
 
 --
--- TOC entry 3772 (class 0 OID 0)
--- Dependencies: 235
+-- TOC entry 3790 (class 0 OID 0)
+-- Dependencies: 239
 -- Name: COLUMN orders.original_total_price; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -864,7 +864,7 @@ COMMENT ON COLUMN public.orders.original_total_price IS 'ราคารวม�
 
 
 --
--- TOC entry 236 (class 1259 OID 25461)
+-- TOC entry 240 (class 1259 OID 16513)
 -- Name: orders_order_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -880,8 +880,8 @@ CREATE SEQUENCE public.orders_order_id_seq
 ALTER SEQUENCE public.orders_order_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3773 (class 0 OID 0)
--- Dependencies: 236
+-- TOC entry 3791 (class 0 OID 0)
+-- Dependencies: 240
 -- Name: orders_order_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -889,7 +889,7 @@ ALTER SEQUENCE public.orders_order_id_seq OWNED BY public.orders.order_id;
 
 
 --
--- TOC entry 237 (class 1259 OID 25462)
+-- TOC entry 241 (class 1259 OID 16514)
 -- Name: rider_addresses; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -911,8 +911,8 @@ CREATE TABLE public.rider_addresses (
 ALTER TABLE public.rider_addresses OWNER TO postgres;
 
 --
--- TOC entry 3774 (class 0 OID 0)
--- Dependencies: 237
+-- TOC entry 3792 (class 0 OID 0)
+-- Dependencies: 241
 -- Name: TABLE rider_addresses; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -920,8 +920,8 @@ COMMENT ON TABLE public.rider_addresses IS 'ตารางเก็บที่
 
 
 --
--- TOC entry 3775 (class 0 OID 0)
--- Dependencies: 237
+-- TOC entry 3793 (class 0 OID 0)
+-- Dependencies: 241
 -- Name: COLUMN rider_addresses.subdistrict; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -929,8 +929,8 @@ COMMENT ON COLUMN public.rider_addresses.subdistrict IS 'ตำบล';
 
 
 --
--- TOC entry 3776 (class 0 OID 0)
--- Dependencies: 237
+-- TOC entry 3794 (class 0 OID 0)
+-- Dependencies: 241
 -- Name: COLUMN rider_addresses.district; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -938,8 +938,8 @@ COMMENT ON COLUMN public.rider_addresses.district IS 'อำเภอ';
 
 
 --
--- TOC entry 3777 (class 0 OID 0)
--- Dependencies: 237
+-- TOC entry 3795 (class 0 OID 0)
+-- Dependencies: 241
 -- Name: COLUMN rider_addresses.province; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -947,7 +947,7 @@ COMMENT ON COLUMN public.rider_addresses.province IS 'จังหวัด';
 
 
 --
--- TOC entry 238 (class 1259 OID 25470)
+-- TOC entry 242 (class 1259 OID 16522)
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -963,8 +963,8 @@ CREATE SEQUENCE public.rider_addresses_address_id_seq
 ALTER SEQUENCE public.rider_addresses_address_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3778 (class 0 OID 0)
--- Dependencies: 238
+-- TOC entry 3796 (class 0 OID 0)
+-- Dependencies: 242
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -972,7 +972,7 @@ ALTER SEQUENCE public.rider_addresses_address_id_seq OWNED BY public.rider_addre
 
 
 --
--- TOC entry 239 (class 1259 OID 25471)
+-- TOC entry 243 (class 1259 OID 16523)
 -- Name: rider_profiles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1009,8 +1009,8 @@ CREATE TABLE public.rider_profiles (
 ALTER TABLE public.rider_profiles OWNER TO postgres;
 
 --
--- TOC entry 3779 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3797 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: TABLE rider_profiles; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1018,8 +1018,8 @@ COMMENT ON TABLE public.rider_profiles IS 'ตารางเก็บข้อ�
 
 
 --
--- TOC entry 3780 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3798 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.id_card_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1027,8 +1027,8 @@ COMMENT ON COLUMN public.rider_profiles.id_card_photo_url IS 'รูปถ่า
 
 
 --
--- TOC entry 3781 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3799 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.id_card_selfie_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1036,8 +1036,8 @@ COMMENT ON COLUMN public.rider_profiles.id_card_selfie_url IS 'รูปถ่�
 
 
 --
--- TOC entry 3782 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3800 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.driving_license_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1045,8 +1045,8 @@ COMMENT ON COLUMN public.rider_profiles.driving_license_photo_url IS 'รูป�
 
 
 --
--- TOC entry 3783 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3801 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.vehicle_type; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1054,8 +1054,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_type IS 'ประเภทร�
 
 
 --
--- TOC entry 3784 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3802 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.vehicle_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1063,8 +1063,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_photo_url IS 'รูปถ่า
 
 
 --
--- TOC entry 3785 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3803 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.vehicle_registration_photo_url; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1072,8 +1072,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_photo_url IS 'ร�
 
 
 --
--- TOC entry 3786 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3804 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.vehicle_registration_number; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1081,8 +1081,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_number IS 'หม�
 
 
 --
--- TOC entry 3787 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3805 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.vehicle_registration_province; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1090,8 +1090,8 @@ COMMENT ON COLUMN public.rider_profiles.vehicle_registration_province IS 'จั
 
 
 --
--- TOC entry 3788 (class 0 OID 0)
--- Dependencies: 239
+-- TOC entry 3806 (class 0 OID 0)
+-- Dependencies: 243
 -- Name: COLUMN rider_profiles.promptpay; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1099,7 +1099,7 @@ COMMENT ON COLUMN public.rider_profiles.promptpay IS 'หมายเลข Prom
 
 
 --
--- TOC entry 240 (class 1259 OID 25486)
+-- TOC entry 244 (class 1259 OID 16538)
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1115,8 +1115,8 @@ CREATE SEQUENCE public.rider_profiles_rider_id_seq
 ALTER SEQUENCE public.rider_profiles_rider_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3789 (class 0 OID 0)
--- Dependencies: 240
+-- TOC entry 3807 (class 0 OID 0)
+-- Dependencies: 244
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1124,7 +1124,7 @@ ALTER SEQUENCE public.rider_profiles_rider_id_seq OWNED BY public.rider_profiles
 
 
 --
--- TOC entry 241 (class 1259 OID 25487)
+-- TOC entry 245 (class 1259 OID 16539)
 -- Name: rider_reviews; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1144,7 +1144,7 @@ CREATE TABLE public.rider_reviews (
 ALTER TABLE public.rider_reviews OWNER TO postgres;
 
 --
--- TOC entry 242 (class 1259 OID 25495)
+-- TOC entry 246 (class 1259 OID 16547)
 -- Name: rider_reviews_review_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1160,8 +1160,8 @@ CREATE SEQUENCE public.rider_reviews_review_id_seq
 ALTER SEQUENCE public.rider_reviews_review_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3790 (class 0 OID 0)
--- Dependencies: 242
+-- TOC entry 3808 (class 0 OID 0)
+-- Dependencies: 246
 -- Name: rider_reviews_review_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1169,7 +1169,7 @@ ALTER SEQUENCE public.rider_reviews_review_id_seq OWNED BY public.rider_reviews.
 
 
 --
--- TOC entry 243 (class 1259 OID 25496)
+-- TOC entry 247 (class 1259 OID 16548)
 -- Name: rider_topups; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1192,8 +1192,8 @@ CREATE TABLE public.rider_topups (
 ALTER TABLE public.rider_topups OWNER TO postgres;
 
 --
--- TOC entry 3791 (class 0 OID 0)
--- Dependencies: 243
+-- TOC entry 3809 (class 0 OID 0)
+-- Dependencies: 247
 -- Name: TABLE rider_topups; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1201,8 +1201,8 @@ COMMENT ON TABLE public.rider_topups IS 'ตารางเก็บข้อม
 
 
 --
--- TOC entry 3792 (class 0 OID 0)
--- Dependencies: 243
+-- TOC entry 3810 (class 0 OID 0)
+-- Dependencies: 247
 -- Name: COLUMN rider_topups.user_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1210,8 +1210,8 @@ COMMENT ON COLUMN public.rider_topups.user_id IS 'รหัสผู้ใช้
 
 
 --
--- TOC entry 3793 (class 0 OID 0)
--- Dependencies: 243
+-- TOC entry 3811 (class 0 OID 0)
+-- Dependencies: 247
 -- Name: COLUMN rider_topups.rider_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
@@ -1219,7 +1219,7 @@ COMMENT ON COLUMN public.rider_topups.rider_id IS 'รหัสไรเดอ�
 
 
 --
--- TOC entry 244 (class 1259 OID 25505)
+-- TOC entry 248 (class 1259 OID 16557)
 -- Name: rider_topups_topup_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1235,8 +1235,8 @@ CREATE SEQUENCE public.rider_topups_topup_id_seq
 ALTER SEQUENCE public.rider_topups_topup_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3794 (class 0 OID 0)
--- Dependencies: 244
+-- TOC entry 3812 (class 0 OID 0)
+-- Dependencies: 248
 -- Name: rider_topups_topup_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1244,7 +1244,7 @@ ALTER SEQUENCE public.rider_topups_topup_id_seq OWNED BY public.rider_topups.top
 
 
 --
--- TOC entry 252 (class 1259 OID 26080)
+-- TOC entry 249 (class 1259 OID 16558)
 -- Name: shop_closed_reports; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1261,14 +1261,14 @@ CREATE TABLE public.shop_closed_reports (
     reviewed_at timestamp without time zone,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT shop_closed_reports_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'checked'::character varying])::text[])))
+    CONSTRAINT shop_closed_reports_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('checked'::character varying)::text])))
 );
 
 
 ALTER TABLE public.shop_closed_reports OWNER TO postgres;
 
 --
--- TOC entry 251 (class 1259 OID 26079)
+-- TOC entry 250 (class 1259 OID 16567)
 -- Name: shop_closed_reports_report_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1284,8 +1284,8 @@ CREATE SEQUENCE public.shop_closed_reports_report_id_seq
 ALTER SEQUENCE public.shop_closed_reports_report_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3795 (class 0 OID 0)
--- Dependencies: 251
+-- TOC entry 3813 (class 0 OID 0)
+-- Dependencies: 250
 -- Name: shop_closed_reports_report_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1293,7 +1293,7 @@ ALTER SEQUENCE public.shop_closed_reports_report_id_seq OWNED BY public.shop_clo
 
 
 --
--- TOC entry 245 (class 1259 OID 25506)
+-- TOC entry 251 (class 1259 OID 16568)
 -- Name: users; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1319,7 +1319,7 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- TOC entry 246 (class 1259 OID 25515)
+-- TOC entry 252 (class 1259 OID 16577)
 -- Name: users_user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1335,8 +1335,8 @@ CREATE SEQUENCE public.users_user_id_seq
 ALTER SEQUENCE public.users_user_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3796 (class 0 OID 0)
--- Dependencies: 246
+-- TOC entry 3814 (class 0 OID 0)
+-- Dependencies: 252
 -- Name: users_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1344,7 +1344,7 @@ ALTER SEQUENCE public.users_user_id_seq OWNED BY public.users.user_id;
 
 
 --
--- TOC entry 3347 (class 2604 OID 25516)
+-- TOC entry 3365 (class 2604 OID 16578)
 -- Name: admins id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1352,7 +1352,7 @@ ALTER TABLE ONLY public.admins ALTER COLUMN id SET DEFAULT nextval('public.admin
 
 
 --
--- TOC entry 3349 (class 2604 OID 25517)
+-- TOC entry 3367 (class 2604 OID 16579)
 -- Name: carts cart_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1360,7 +1360,7 @@ ALTER TABLE ONLY public.carts ALTER COLUMN cart_id SET DEFAULT nextval('public.c
 
 
 --
--- TOC entry 3352 (class 2604 OID 25518)
+-- TOC entry 3370 (class 2604 OID 16580)
 -- Name: categorys id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1368,7 +1368,7 @@ ALTER TABLE ONLY public.categorys ALTER COLUMN id SET DEFAULT nextval('public.ca
 
 
 --
--- TOC entry 3353 (class 2604 OID 25519)
+-- TOC entry 3371 (class 2604 OID 16581)
 -- Name: chat_messages message_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1376,7 +1376,7 @@ ALTER TABLE ONLY public.chat_messages ALTER COLUMN message_id SET DEFAULT nextva
 
 
 --
--- TOC entry 3357 (class 2604 OID 25520)
+-- TOC entry 3375 (class 2604 OID 16582)
 -- Name: chat_rooms room_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1384,7 +1384,7 @@ ALTER TABLE ONLY public.chat_rooms ALTER COLUMN room_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 3361 (class 2604 OID 25521)
+-- TOC entry 3379 (class 2604 OID 16583)
 -- Name: client_addresses id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1392,7 +1392,7 @@ ALTER TABLE ONLY public.client_addresses ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 3422 (class 2604 OID 25796)
+-- TOC entry 3381 (class 2604 OID 16584)
 -- Name: complaints complaint_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1400,7 +1400,7 @@ ALTER TABLE ONLY public.complaints ALTER COLUMN complaint_id SET DEFAULT nextval
 
 
 --
--- TOC entry 3419 (class 2604 OID 25757)
+-- TOC entry 3384 (class 2604 OID 16585)
 -- Name: food_reviews review_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1408,7 +1408,7 @@ ALTER TABLE ONLY public.food_reviews ALTER COLUMN review_id SET DEFAULT nextval(
 
 
 --
--- TOC entry 3363 (class 2604 OID 25522)
+-- TOC entry 3387 (class 2604 OID 16586)
 -- Name: foods food_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1416,7 +1416,7 @@ ALTER TABLE ONLY public.foods ALTER COLUMN food_id SET DEFAULT nextval('public.f
 
 
 --
--- TOC entry 3368 (class 2604 OID 25523)
+-- TOC entry 3392 (class 2604 OID 16587)
 -- Name: market_reviews review_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1424,7 +1424,7 @@ ALTER TABLE ONLY public.market_reviews ALTER COLUMN review_id SET DEFAULT nextva
 
 
 --
--- TOC entry 3371 (class 2604 OID 25524)
+-- TOC entry 3395 (class 2604 OID 16588)
 -- Name: markets market_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1432,7 +1432,7 @@ ALTER TABLE ONLY public.markets ALTER COLUMN market_id SET DEFAULT nextval('publ
 
 
 --
--- TOC entry 3378 (class 2604 OID 25525)
+-- TOC entry 3402 (class 2604 OID 16589)
 -- Name: order_items item_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1440,7 +1440,7 @@ ALTER TABLE ONLY public.order_items ALTER COLUMN item_id SET DEFAULT nextval('pu
 
 
 --
--- TOC entry 3385 (class 2604 OID 25526)
+-- TOC entry 3409 (class 2604 OID 16590)
 -- Name: orders order_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1448,7 +1448,7 @@ ALTER TABLE ONLY public.orders ALTER COLUMN order_id SET DEFAULT nextval('public
 
 
 --
--- TOC entry 3394 (class 2604 OID 25527)
+-- TOC entry 3418 (class 2604 OID 16591)
 -- Name: rider_addresses address_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1456,7 +1456,7 @@ ALTER TABLE ONLY public.rider_addresses ALTER COLUMN address_id SET DEFAULT next
 
 
 --
--- TOC entry 3398 (class 2604 OID 25528)
+-- TOC entry 3422 (class 2604 OID 16592)
 -- Name: rider_profiles rider_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1464,7 +1464,7 @@ ALTER TABLE ONLY public.rider_profiles ALTER COLUMN rider_id SET DEFAULT nextval
 
 
 --
--- TOC entry 3407 (class 2604 OID 25529)
+-- TOC entry 3431 (class 2604 OID 16593)
 -- Name: rider_reviews review_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1472,7 +1472,7 @@ ALTER TABLE ONLY public.rider_reviews ALTER COLUMN review_id SET DEFAULT nextval
 
 
 --
--- TOC entry 3410 (class 2604 OID 25530)
+-- TOC entry 3434 (class 2604 OID 16594)
 -- Name: rider_topups topup_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1480,7 +1480,7 @@ ALTER TABLE ONLY public.rider_topups ALTER COLUMN topup_id SET DEFAULT nextval('
 
 
 --
--- TOC entry 3425 (class 2604 OID 26083)
+-- TOC entry 3438 (class 2604 OID 16595)
 -- Name: shop_closed_reports report_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1488,7 +1488,7 @@ ALTER TABLE ONLY public.shop_closed_reports ALTER COLUMN report_id SET DEFAULT n
 
 
 --
--- TOC entry 3414 (class 2604 OID 25531)
+-- TOC entry 3442 (class 2604 OID 16596)
 -- Name: users user_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1496,7 +1496,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN user_id SET DEFAULT nextval('public.u
 
 
 --
--- TOC entry 3713 (class 0 OID 25364)
+-- TOC entry 3731 (class 0 OID 16393)
 -- Dependencies: 215
 -- Data for Name: admins; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1514,78 +1514,54 @@ COPY public.admins (id, username, password, role) FROM stdin;
 
 
 --
--- TOC entry 3715 (class 0 OID 25371)
+-- TOC entry 3733 (class 0 OID 16400)
 -- Dependencies: 217
 -- Data for Name: carts; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.carts (cart_id, user_id, food_id, quantity, selected_options, note, total, created_at) FROM stdin;
-119	35	25	1	[{"label": "code", "extraPrice": 12}]		70	2025-09-26 15:59:03.801981
-304	34	40	1	[]		120	2025-10-15 01:56:24.054738
-315	36	40	1	[]		120	2025-10-16 15:46:20.925862
-319	31	37	1	[]		60	2025-10-17 03:44:17.877817
 \.
 
 
 --
--- TOC entry 3717 (class 0 OID 25379)
+-- TOC entry 3735 (class 0 OID 16408)
 -- Dependencies: 219
 -- Data for Name: categorys; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.categorys (id, name, cate_image_url) FROM stdin;
-1	ข้าว	https://res.cloudinary.com/djqdn2zru/image/upload/v1759581770/food-menu/i0qoaoo5jqxi4jmxhps7.jpg
-2	เครื่องดื่ม	https://res.cloudinary.com/djqdn2zru/image/upload/v1759604045/food-menu/io2q0jl1kuttafsbwmxg.jpg
-3	น้ำอัดลม	https://res.cloudinary.com/djqdn2zru/image/upload/v1760184282/food-menu/oamqbmhlqoddqp2rikon.png
+9	อาหารตามสั่ง	https://res.cloudinary.com/djqdn2zru/image/upload/v1760656908/food-menu/qzrkwzo0j7qabmkbsfoa.jpg
+10	เครื่องดื่ม	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657148/food-menu/vjoujp3jsig2ehovzopr.png
+11	ก๋วยเตี๋ยว	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657192/food-menu/ujlxcipln4v2rboivcsw.jpg
+12	อาหารอีสาน	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657253/food-menu/apyj0wm1orw3vuopuogg.jpg
+13	ของกินเล่น	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657359/food-menu/d5sawluudaefj8hfwv9q.jpg
+14	ผลไม้	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657406/food-menu/v2drv7mz4whgxs7cciuf.jpg
+15	ของหวาน	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657475/food-menu/bcki0nauphebmv9mdqnd.jpg
 \.
 
 
 --
--- TOC entry 3719 (class 0 OID 25385)
+-- TOC entry 3737 (class 0 OID 16414)
 -- Dependencies: 221
 -- Data for Name: chat_messages; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.chat_messages (message_id, room_id, sender_id, sender_type, message_text, message_type, image_url, latitude, longitude, is_read, created_at) FROM stdin;
-111	28	45	rider	ดี	text	\N	\N	\N	t	2025-10-15 22:38:18.296232
-112	28	45	rider	\N	image	http://10.28.145.44:4000/uploads/chat-images/chat-1760542705073-6089596.jpg	\N	\N	t	2025-10-15 22:38:25.124305
-115	29	36	customer	hee	text	\N	\N	\N	t	2025-10-16 15:50:43.963741
-113	29	45	rider	gg	text	\N	\N	\N	t	2025-10-16 15:50:29.467445
-114	29	45	rider	fdhh	text	\N	\N	\N	t	2025-10-16 15:50:39.639635
-116	29	45	rider	g	text	\N	\N	\N	f	2025-10-16 21:25:49.480123
-117	29	45	rider	yyy	text	\N	\N	\N	f	2025-10-16 21:36:20.026984
-118	29	45	rider	ioi	text	\N	\N	\N	f	2025-10-16 21:36:55.968222
-119	31	31	customer	นน	text	\N	\N	\N	f	2025-10-17 03:44:59.534589
-120	31	31	customer	คน	text	\N	\N	\N	f	2025-10-17 03:46:15.354895
-121	31	31	customer	สาว	text	\N	\N	\N	f	2025-10-17 03:59:53.867681
-122	31	31	customer	สส	text	\N	\N	\N	f	2025-10-17 04:07:30.811293
-123	31	31	customer	ราสส	text	\N	\N	\N	f	2025-10-17 04:08:14.161141
-124	31	31	customer	คส	text	\N	\N	\N	f	2025-10-17 04:10:17.932752
-125	31	45	rider	จาก	text	\N	\N	\N	t	2025-10-17 04:15:02.144648
-126	33	31	customer	ดีๆ	text	\N	\N	\N	f	2025-10-17 05:27:18.948311
 \.
 
 
 --
--- TOC entry 3721 (class 0 OID 25395)
+-- TOC entry 3739 (class 0 OID 16424)
 -- Dependencies: 223
 -- Data for Name: chat_rooms; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.chat_rooms (room_id, order_id, customer_id, rider_id, status, created_at, updated_at) FROM stdin;
-31	270	31	11	unactive	2025-10-17 03:26:57.616405	2025-10-17 04:16:58.677695
-32	271	31	11	unactive	2025-10-17 04:18:38.796431	2025-10-17 05:27:08.821846
-33	272	31	11	active	2025-10-17 04:26:26.151961	2025-10-17 05:27:18.956892
-29	268	36	11	active	2025-10-16 15:50:09.613283	2025-10-16 21:36:55.97837
-25	260	31	10	unactive	2025-10-15 16:13:46.884212	2025-10-17 02:21:42.324098
-26	261	31	10	unactive	2025-10-15 16:26:11.090146	2025-10-17 02:21:42.324098
-28	263	31	11	unactive	2025-10-15 20:59:39.150822	2025-10-17 02:21:42.324098
-30	269	31	11	unactive	2025-10-17 02:20:16.896439	2025-10-17 02:21:42.324098
 \.
 
 
 --
--- TOC entry 3723 (class 0 OID 25402)
+-- TOC entry 3741 (class 0 OID 16431)
 -- Dependencies: 225
 -- Data for Name: client_addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -1605,138 +1581,110 @@ COPY public.client_addresses (id, user_id, name, phone, address, district, city,
 
 
 --
--- TOC entry 3748 (class 0 OID 25793)
--- Dependencies: 250
+-- TOC entry 3743 (class 0 OID 16438)
+-- Dependencies: 227
 -- Data for Name: complaints; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.complaints (complaint_id, user_id, rider_id, market_id, role, subject, message, evidence_url, created_at, status, updated_at) FROM stdin;
-3	35	10	37	rider	asd	abc	/uploads/complaints/complaint-1760345872853-292.jpeg	2025-10-13 15:57:52.878412	checked	2025-10-14 21:52:27.172953
-2	35	10	37	rider	asd	abc	\N	2025-10-13 15:52:07.321064	checked	2025-10-14 21:55:57.549323
+3	35	10	\N	rider	asd	abc	/uploads/complaints/complaint-1760345872853-292.jpeg	2025-10-13 15:57:52.878412	checked	2025-10-14 21:52:27.172953
+2	35	10	\N	rider	asd	abc	\N	2025-10-13 15:52:07.321064	checked	2025-10-14 21:55:57.549323
 \.
 
 
 --
--- TOC entry 3746 (class 0 OID 25754)
--- Dependencies: 248
+-- TOC entry 3745 (class 0 OID 16447)
+-- Dependencies: 229
 -- Data for Name: food_reviews; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.food_reviews (review_id, order_id, user_id, market_id, food_id, rating, comment, created_at, updated_at, order_item_id) FROM stdin;
-42	269	31	38	19	2	อร่อยมาก	2025-10-17 02:26:37.734508	2025-10-17 02:26:37.734508	276
 \.
 
 
 --
--- TOC entry 3725 (class 0 OID 25409)
--- Dependencies: 227
+-- TOC entry 3747 (class 0 OID 16456)
+-- Dependencies: 231
 -- Data for Name: foods; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.foods (food_id, market_id, food_name, price, image_url, created_at, options, rating, sell_price, sell_options, category_id, created_by_admin_id, is_visible) FROM stdin;
-18	37	ลาบ	45.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614820/Market-LOGO/uxxu9ksyzmbjvejbiba6.jpg	2025-09-12 01:20:20.96686	[{"label": "ไก่", "extraPrice": 10}, {"label": "หมู", "extraPrice": 15}, {"label": "เนื้อ", "extraPrice": 20}, {"label": "เป็ด", "extraPrice": 40}]	3.7	27.00	[{"label": "ไก่", "extraPrice": 12}, {"label": "หมู", "extraPrice": 18}, {"label": "เนื้อ", "extraPrice": 23}, {"label": "เป็ด", "extraPrice": 46}]	3	\N	f
-21	39	ข้าวผัด	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652162/images_eguoai.jpg	2025-09-19 18:31:46.878776	[{"label": "ปลา", "extraPrice": 20}, {"label": "หมู", "extraPrice": 10}, {"label": "กุนเชียง", "extraPrice": 15}, {"label": "แหนม", "extraPrice": 10}, {"label": "กุ้ง", "extraPrice": 25}]	\N	46.00	[]	1	\N	f
-34	44	Kao	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759608282/food-menu/jrc37qiwteqgqrtur6uu.jpg	2025-10-05 03:04:43.424067	[{"label": "k", "extraPrice": 10}, {"label": "e", "extraPrice": 20}]	\N	120.00	[{"label": "k", "extraPrice": 12}, {"label": "e", "extraPrice": 24}]	1	1	t
-22	40	ลาบเนื้อ	60.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652373/photo_li8xoa.jpg	2025-09-19 18:44:49.217367	[{"label": "เสื้อร้องไห้", "extraPrice": 20}]	\N	112.00	[]	1	\N	t
-35	44	หฟก	120.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759610312/food-menu/ucs9yjsd4lwn8hypduii.jpg	2025-10-05 03:38:32.884743	[{"label": "2", "extraPrice": 20}]	\N	144.00	[{"label": "2", "extraPrice": 24}]	1	1	t
-36	44	a	2.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759612682/food-menu/yxcof5fuchfdc5tos15x.jpg	2025-10-05 04:18:03.569573	[{"label": "2", "extraPrice": 2}]	\N	3.00	[{"label": "2", "extraPrice": 3}]	2	1	t
-40	45	ข้าวผัด	100.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760182451/food-menu/lx0mg4lnpssb7mdhdddl.jpg	2025-10-11 18:34:11.880525	[{"label": "๋KaiDown", "extraPrice": 10}]	\N	120.00	[{"label": "KaiDown", "extraPrice": 12}]	3	1	t
-27	39	พำ	51.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799559/Market-LOGO/wopxqzgco2jgldgbydyv.jpg	2025-09-25 18:25:59.813235	[{"label": "พพ", "extraPrice": 3}, {"label": "กอ", "extraPrice": 8}]	\N	59.00	[{"label": "พพ", "extraPrice": 4}, {"label": "กอ", "extraPrice": 10}]	1	\N	t
-28	39	ไก่น้อย	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799728/Market-LOGO/sfg9x7jpbo6ohat0czxf.jpg	2025-09-25 18:28:49.173621	[{"label": "เผ็ด", "extraPrice": 10}, {"label": "ผัก", "extraPrice": 5}]	\N	58.00	[{"label": "เผ็ด", "extraPrice": 12}, {"label": "ผัก", "extraPrice": 6}]	1	\N	t
-29	39	แกงไก่	23.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1758799857/Market-LOGO/ttgl5jlvunk7zj8wmcpi.jpg	2025-09-25 18:30:58.512084	[{"label": "น้ำ", "extraPrice": 3}]	\N	27.00	[{"label": "น้ำ", "extraPrice": 4}]	1	\N	t
-23	40	แกงพะแนงไก่	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652735/oaury0fcnnmn_dxlkqo.jpg	2025-09-19 23:03:44.613978	[]	\N	67.00	[]	1	\N	t
-25	43	ลาบเป็ด	70.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652887/ghsws2hlbvoi_vyu9jj.png	2025-09-20 16:39:21.203733	[]	\N	58.00	[{"label": "code", "extraPrice": 12}, {"label": "java", "extraPrice": 7}]	1	\N	t
-32	38	w	12.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759604597/food-menu/xuh67zkmaq87o05d8wg3.jpg	2025-10-05 02:03:18.277715	[{"label": "2", "extraPrice": 14}]	\N	15.00	[{"label": "2", "extraPrice": 17}]	2	\N	t
-26	39	กระเพราไก่นะจ๊ะ	51.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760652992/ka_exlzdp.jpg	2025-09-25 12:01:47.742719	[{"label": "ไข่ดาว", "extraPrice": 6}, {"label": "ไข่เจียว", "extraPrice": 10}]	\N	64.00	[{"label": "ไข่ดาว", "extraPrice": 7}, {"label": "ไข่เจียว", "extraPrice": 12}, {"label": "ผัก", "extraPrice": 9}]	1	\N	t
-41	45	sd	12.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760182812/food-menu/ddjcz4ed4wclhswqj0ks.jpg	2025-10-11 18:40:13.734277	[{"label": "asd", "extraPrice": 10}]	\N	15.00	[{"label": "asd", "extraPrice": 12}]	2	1	f
-19	38	อ่อมหมู	59.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1757614871/Market-LOGO/ph5jwppwayvgmih9ohpc.jpg	2025-09-12 01:21:12.136991	[]	2.0	71.00	[]	1	\N	t
-20	37	ลวกจิ้ม	31.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760651819/13-15_kf03eq.jpg	2025-09-12 12:14:16.611986	[{"label": "หมู", "extraPrice": 20}, {"label": "เนื้อ", "extraPrice": 25}, {"label": "ปลาหมึก", "extraPrice": 100}]	3.0	36.00	[]	1	\N	f
-42	37	กาว	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760188358/Market-LOGO/ve0ktipgnondbs0omgmn.jpg	2025-10-11 20:12:39.333346	[{"label": "เมา", "extraPrice": 500}, {"label": "ซอฟ", "extraPrice": 2000}]	4.0	23.00	[{"label": "เมา", "extraPrice": 575}, {"label": "ซอฟ", "extraPrice": 2300}]	2	\N	f
-37	44	ขี้เพลีย	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759664329/food-menu/ttbzanfaa5klatuv679v.jpg	2025-10-05 18:38:50.129538	[{"label": "vanila", "extraPrice": 25}, {"label": "S", "extraPrice": 10}]	\N	60.00	[{"label": "vanila", "extraPrice": 30}, {"label": "S", "extraPrice": 12}]	2	15	t
-38	44	s	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759667836/food-menu/lqssppsxv47oc03xcld3.jpg	2025-10-05 19:37:16.840682	[{"label": "w", "extraPrice": 10}]	\N	24.00	[{"label": "w", "extraPrice": 12}]	1	15	t
-39	45	ฟห	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1759684676/food-menu/owhwstijadrl7i7yspbk.jpg	2025-10-06 00:17:57.471406	[{"label": "d1", "extraPrice": 12}]	\N	12.00	[{"label": "d1", "extraPrice": 15}]	2	15	f
+43	44	กระเพรา	39.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658114/food-menu/mthwxryeawow3jgrfwpw.jpg	2025-10-17 06:41:54.890425	[{"label": "หมูชิ้น", "extraPrice": 0}, {"label": "หมูสับ", "extraPrice": 0}, {"label": "หมูสามชั้น", "extraPrice": 0}, {"label": "เนื้อไก่", "extraPrice": 0}]	\N	47.00	[{"label": "หมูชิ้น", "extraPrice": 0}, {"label": "หมูสับ", "extraPrice": 0}, {"label": "หมูสามชั้น", "extraPrice": 0}, {"label": "เนื้อไก่", "extraPrice": 0}]	9	1	t
+44	44	ไข่เจียว	29.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658273/food-menu/nw0ysgze7zk6hsnfz5se.jpg	2025-10-17 06:44:33.840186	[{"label": "ปูอัด", "extraPrice": 6}, {"label": "หมูสับ", "extraPrice": 6}, {"label": "ไส้กรอก", "extraPrice": 6}, {"label": "แหนม", "extraPrice": 11}, {"label": "ไก่ยอ", "extraPrice": 6}, {"label": "กุนเชียง", "extraPrice": 6}]	\N	35.00	[{"label": "ปูอัด", "extraPrice": 8}, {"label": "หมูสับ", "extraPrice": 8}, {"label": "ไส้กรอก", "extraPrice": 8}, {"label": "แหนม", "extraPrice": 14}, {"label": "ไก่ยอ", "extraPrice": 8}, {"label": "กุนเชียง", "extraPrice": 8}]	9	1	t
+45	44	ไข่ดาว	29.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658328/food-menu/ve7gbwfpvxgqvec0wr4n.jpg	2025-10-17 06:45:28.740974	[]	\N	35.00	[]	9	1	t
+46	45	หมูปิ้ง	5.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658744/food-menu/jhbskv8fxy69chbinbn5.jpg	2025-10-17 06:52:24.856902	[]	\N	6.00	[]	13	1	t
+47	45	ข้าวเหนียว	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658773/food-menu/sdji9xij2zk0ats3lyi2.jpg	2025-10-17 06:52:53.708214	[]	\N	12.00	[]	12	1	t
+48	38	ข้าวผัด	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760659051/food-menu/sk94ws4hejqvro1fp8ot.jpg	2025-10-17 06:57:32.393593	[]	\N	48.00	[]	9	1	t
+49	39	กล้วยบวชชี	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760659812/Market-LOGO/i4tsqltffnbomjvuj3xr.png	2025-10-17 07:08:58.438784	[]	\N	23.00	[]	15	\N	t
+50	39	บัวลอยไข่หวาน	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760659893/Market-LOGO/x0dcrizhm0panqy2vjbn.png	2025-10-17 07:11:33.753911	[]	\N	23.00	[]	15	\N	t
+51	39	ทับทิมกรอบน้ำกะทิ	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760660022/Market-LOGO/ggdg8rfdpwl2qday2wcz.png	2025-10-17 07:13:43.228665	[]	\N	23.00	[]	15	\N	t
+52	46	คอหมูย่าง	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661350/Market-LOGO/zulwrf1id7na4t7hyugr.jpg	2025-10-17 07:35:51.036099	[]	\N	58.00	[]	12	\N	t
+53	46	ไก่ย่างสูตรพี่เสก	60.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661435/Market-LOGO/aadltq2j4flxidqob31v.jpg	2025-10-17 07:37:17.042001	[]	\N	69.00	[]	12	\N	t
+54	46	จระเข้หันทั้งตัว	1000.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661635/Market-LOGO/h6awzgcoa66boigb0ar5.jpg	2025-10-17 07:40:35.903164	[]	\N	1150.00	[]	12	\N	t
+55	46	ปลาเผาน้ำจิ้มแจ่ว	70.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661761/Market-LOGO/hkncfxemzi6wvmrxckrq.jpg	2025-10-17 07:42:42.302366	[{"label": "ชุดใหญ่", "extraPrice": 30}, {"label": "แจ่วสูตรอ้ายเสก", "extraPrice": 0}, {"label": "แจ่วขม", "extraPrice": 0}, {"label": "แจ่วแซ่บ", "extraPrice": 0}]	\N	81.00	[{"label": "ชุดใหญ่", "extraPrice": 35}, {"label": "แจ่วสูตรอ้ายเสก", "extraPrice": 0}, {"label": "แจ่วขม", "extraPrice": 0}, {"label": "แจ่วแซ่บ", "extraPrice": 0}]	12	\N	t
+56	46	หมึกย่างเสียบไม้	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661902/Market-LOGO/ecrwxk6eflu5bcf8u6rx.jpg	2025-10-17 07:45:02.994833	[{"label": "น้ำจิ้มซีฟู้ด", "extraPrice": 0}, {"label": "น้ำจิ้มมะขามเปียก", "extraPrice": 0}, {"label": "ไม่เผ็ด", "extraPrice": 0}, {"label": "เผ็ดมากๆ", "extraPrice": 0}]	\N	12.00	[{"label": "น้ำจิ้มซีฟู้ด", "extraPrice": 0}, {"label": "น้ำจิ้มมะขามเปียก", "extraPrice": 0}, {"label": "ไม่เผ็ด", "extraPrice": 0}, {"label": "เผ็ดมากๆ", "extraPrice": 0}]	13	\N	t
+57	47	ฝรั่งดอง	10.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662460/Market-LOGO/m9l2968zanxpkknvfzyv.jpg	2025-10-17 07:54:20.875243	[]	\N	12.00	[]	14	\N	t
+58	47	แตงโม	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662511/Market-LOGO/w8rppdptgpw9dwqiyow4.jpg	2025-10-17 07:55:11.577933	[]	\N	23.00	[]	14	\N	t
+59	47	ลำไย	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662565/Market-LOGO/zk2fqdecm8aolxe0ldrq.jpg	2025-10-17 07:56:06.54741	[]	\N	23.00	[]	14	\N	t
+60	47	สับปะรด	20.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662673/Market-LOGO/k6l8ahjedyppbh0zvz7t.png	2025-10-17 07:57:54.231832	[]	\N	23.00	[]	14	\N	t
+61	48	ชาไทยเย็น	50.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663251/food-menu/a2ikfs4p5shcjct2b6lk.jpg	2025-10-17 08:07:32.388773	[{"label": "เพิ่มนม", "extraPrice": 5}]	\N	60.00	[{"label": "เพิ่มนม", "extraPrice": 6}]	10	1	t
+62	48	มัทฉะมะพร้าว	65.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663329/food-menu/yrqlf6nqfu6t4xnqcda0.jpg	2025-10-17 08:08:49.81744	[]	\N	78.00	[]	10	1	t
+63	49	ก๋วยเตี๋ยวเย็นตาโฟ	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663737/food-menu/ffnmklwvwo81lt7ztqlr.jpg	2025-10-17 08:15:38.033474	[{"label": "เส้นเล็ก", "extraPrice": 0}, {"label": "เส้นมาม่า", "extraPrice": 0}, {"label": "เส้นหมี่เหลือง", "extraPrice": 0}, {"label": "น้ำตก", "extraPrice": 0}, {"label": "น้ำใส", "extraPrice": 0}]	\N	48.00	[{"label": "เส้นเล็ก", "extraPrice": 0}, {"label": "เส้นมาม่า", "extraPrice": 0}, {"label": "เส้นหมี่เหลือง", "extraPrice": 0}, {"label": "น้ำตก", "extraPrice": 0}, {"label": "น้ำใส", "extraPrice": 0}]	11	1	t
+64	49	ก๋วยเตี๋ยวเนื้อเปื่อย	40.00	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663983/food-menu/bxssykeldbwcugohdwwd.jpg	2025-10-17 08:19:43.720844	[{"label": "เส้นเล็ก", "extraPrice": 0}, {"label": "วุ้นเส้น", "extraPrice": 0}, {"label": "มาม่า", "extraPrice": 0}, {"label": "น้ำตก", "extraPrice": 0}, {"label": "น้ำใส", "extraPrice": 0}]	\N	48.00	[{"label": "เส้นเล็ก", "extraPrice": 0}, {"label": "วุ้นเส้น", "extraPrice": 0}, {"label": "มาม่า", "extraPrice": 0}, {"label": "น้ำตก", "extraPrice": 0}, {"label": "น้ำใส", "extraPrice": 0}]	11	1	t
 \.
 
 
 --
--- TOC entry 3727 (class 0 OID 25418)
--- Dependencies: 229
+-- TOC entry 3749 (class 0 OID 16466)
+-- Dependencies: 233
 -- Data for Name: market_reviews; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.market_reviews (review_id, order_id, user_id, market_id, rating, comment, created_at, updated_at) FROM stdin;
-40	260	31	37	4	เเซบ	2025-10-15 16:16:24.713456	2025-10-15 16:16:24.713456
-41	261	31	37	4	เร็วดี	2025-10-15 16:29:43.539943	2025-10-15 16:29:43.539943
-42	269	31	38	2	อร่อยมาก	2025-10-17 02:21:54.35162	2025-10-17 02:21:54.35162
-43	271	31	38	3	o	2025-10-17 04:27:35.444956	2025-10-17 04:27:35.444956
-44	270	31	44	3	yy	2025-10-17 04:27:43.139971	2025-10-17 04:27:43.139971
 \.
 
 
 --
--- TOC entry 3729 (class 0 OID 25427)
--- Dependencies: 231
+-- TOC entry 3751 (class 0 OID 16475)
+-- Dependencies: 235
 -- Data for Name: markets; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.markets (market_id, owner_id, shop_name, shop_description, shop_logo_url, created_at, latitude, longitude, open_time, close_time, is_open, is_manual_override, override_until, rating, address, phone, approve, admin_id, is_admin, reviews_count) FROM stdin;
-38	\N	ร้านแอดมิน	ร้านแอดมิน เด้อจ่ะ แพงขึ้น 20%	https://res.cloudinary.com/djqdn2zru/image/upload/v1757608039/food-menu/hserelfmmpvtup06j3lb.jpg	2025-09-11 23:27:20.249612	13.736717	100.523186	00:00	07:11	t	f	\N	2.5	23/1 เชียงเครือ	-	f	1	t	2
-37	31	เสกสายเบิร์น (ย่าง)	ขายไก่ย่าง เนื้อย่าง ปลาเผา ส่งฟรี ส่งไว หอมอร่อย. 🏎️💥	https://res.cloudinary.com/djqdn2zru/image/upload/v1757491128/Market-LOGO/zegkbequ9px72yz8mdkn.jpg	2025-09-10 14:58:49.472311	17.27025890434053	104.13420014083385	14:00	06:50	t	f	\N	4.0	42/6 เชียงเครือ หออะตอม 45801	0987654321	t	\N	f	2
-44	\N	ซิมเบิ่งเด้อ	ขายอาการตามสั่ง เปิด 18:00 - 05:00 น. อร่อยพร้อมส่ง	https://res.cloudinary.com/djqdn2zru/image/upload/v1759586644/food-menu/ngr6oteprzvu64u9thov.jpg	2025-10-04 21:04:05.394236	17.272637211868073	104.13484127931125	10:00	02:00	f	f	\N	3.0	123/9 บ้านเชียงเครือ เชียงเครือ เมือง สกลนคร 47000	0998234657	f	1	t	1
-40	34	สมรักษ์ไง	สวัสดีครับ	https://res.cloudinary.com/djqdn2zru/image/upload/v1758282179/Market-LOGO/x379jxfcblswkbgrcv2y.jpg	2025-09-19 18:43:00.668904	51.93657927318116	-100.27912449091673	04:42	23:59	t	f	\N	\N	ศรีเกต	0984857628	t	1	f	0
-45	\N	หกหก	หก	https://res.cloudinary.com/djqdn2zru/image/upload/v1759682440/food-menu/qe8fm7rg2y1z6bv30yrp.jpg	2025-10-05 23:40:41.440782	17.28934765314215	104.11304434246144	19:09	11:41	t	f	\N	\N	s	0912013123	f	15	t	0
-39	36	ร้ายแรงมาก a	ไฟฟ้า a	https://res.cloudinary.com/djqdn2zru/image/upload/v1759827313/Market-LOGO/gdjy3svitexlgayxkgql.png	2025-09-19 18:29:17.243767	17.27891775402024	104.11517959088087	15:54	19:54	f	f	\N	\N	42/6 เชียงเครือ หออะตอม 45801a	0716876464	t	1	f	2
-43	35	122	122	https://res.cloudinary.com/djqdn2zru/image/upload/v1758360443/Market-LOGO/s8yir43xu0t8tbzptnj1.jpg	2025-09-20 16:27:25.266129	38.28260714608228	-93.04697670042515	16:26	23:26	f	f	\N	\N	122	122	t	1	f	0
+49	\N	เตี๋ยวเรือปัณณพร	ขายก๋วยเตี๋ยว	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663662/food-menu/sa2xmesydbl9sspkgfpb.jpg	2025-10-17 08:13:59.119096	17.2812439	104.12021659999999	08:13	22:20	t	f	\N	\N	74JC+F3W, Unnamed Rd, Tambon Chiang Khruea, Amphoe Mueang Sakon Nakhon, Chang Wat Sakon Nakhon 47000, Thailand	099999999999	f	1	t	0
+45	\N	พุงโลหมูปิ้ง	ขายหมูปิ้งแซ่บๆ	https://res.cloudinary.com/djqdn2zru/image/upload/v1760658609/food-menu/tvrmk3wsdzydo7cxr1gv.jpg	2025-10-05 23:40:41.440782	17.28602753616214	104.11513813043838	06:10	16:41	t	f	\N	\N		0919463256	f	15	t	0
+48	\N	Aree cafe & workspace 	ขายเครื่องดื่ม กาแฟ ขนมหวาน	https://res.cloudinary.com/djqdn2zru/image/upload/v1760663107/food-menu/k221p1rwooailtedekve.jpg	2025-10-17 08:04:34.914688	17.265102	104.13390989999999	09:00	19:04	t	f	\N	\N	ชาลี อพาร์ทเม้นท์ 513 ม.1, Tambon Chiang Khruea, เมือง Chang Wat Sakon Nakhon 47000, Thailand	0933843575	f	1	t	0
+44	\N	ซิมเบิ่งเด้อ	ขายอาการตามสั่ง เปิด 18:00 - 05:00 น. อร่อยพร้อมส่ง	https://res.cloudinary.com/djqdn2zru/image/upload/v1760657892/food-menu/eetdfxhx0nvt6zybswrb.jpg	2025-10-04 21:04:05.394236	17.272637211868073	104.13484127931125	11:00	03:00	f	f	\N	0.0	123/9 บ้านเชียงเครือ เชียงเครือ เมือง สกลนคร 47000	0951361517	f	1	t	0
+46	46	ร้านอ้ายเสก(สายย่าง)	ขายเนื้อปิ้งย่างทุกเนื้อที่ปิ้งได้	https://res.cloudinary.com/djqdn2zru/image/upload/v1760661131/Market-LOGO/mdr7d2nb5kxqf8bjxplw.jpg	2025-10-17 07:32:12.295026	17.280726	104.1220469	09:30	23:40	t	t	\N	\N	หอเชรวรี หอชายตึกA	0933333333333	t	\N	f	0
+39	36	ร้านน้องหวาน	ร้านขายของหวาน	https://res.cloudinary.com/djqdn2zru/image/upload/v1760659311/Market-LOGO/vkub02oygequ7u0dlyz0.jpg	2025-09-19 18:29:17.243767	17.27891775402024	104.11517959088087	15:54	19:54	t	t	\N	\N	42/6 เชียงเครือ หออะตอม 45801a	0716876464	t	1	f	2
+38	\N	ร้านแอดมิน	ร้านแอดมิน เด้อจ่ะ แพงขึ้น 20%	https://res.cloudinary.com/djqdn2zru/image/upload/v1757608039/food-menu/hserelfmmpvtup06j3lb.jpg	2025-09-11 23:27:20.249612	13.736717	100.523186	00:00	07:11	f	f	\N	0.0	23/1 เชียงเครือ	-	f	1	t	0
+47	47	ร้านผลไม้สด	ขายผลไม้ทุกชนิด	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662375/Market-LOGO/fwyzdo3uiuocnraa04ak.jpg	2025-10-17 07:52:55.767128	72.59838236851405	-96.7843871936202	06:00	17:52	t	f	\N	\N	หอตาลฟ้า	093333333333	t	\N	f	0
 \.
 
 
 --
--- TOC entry 3731 (class 0 OID 25439)
--- Dependencies: 233
+-- TOC entry 3753 (class 0 OID 16487)
+-- Dependencies: 237
 -- Data for Name: order_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.order_items (item_id, order_id, food_id, food_name, quantity, sell_price, subtotal, selected_options, original_price, original_subtotal, original_options, additional_notes, is_reviewed) FROM stdin;
-267	260	18	ลาบ	1	27.00	45.00	[{"label": "หมู", "extraPrice": 18}]	23.00	38.00	[{"label": "หมู", "extraPrice": 15}]		t
-268	261	18	ลาบ	1	27.00	39.00	[{"label": "ไก่", "extraPrice": 12}]	23.00	33.00	[{"label": "ไก่", "extraPrice": 10}]		t
-270	263	37	ขี้คน	1	60.00	90.00	[{"label": "", "extraPrice": 30}]	50.00	50.00	[]		f
-271	264	19	อ่อมหมู	1	71.00	71.00	[]	59.00	59.00	[]		t
-272	265	19	อ่อมหมู	1	71.00	71.00	[]	59.00	59.00	[]		t
-273	266	18	ลาบ	1	27.00	27.00	[]	23.00	23.00	[]		t
-274	267	42	กาว	1	23.00	598.00	[{"label": "เมา", "extraPrice": 575}]	20.00	520.00	[{"label": "เมา", "extraPrice": 500}]		t
-275	268	37	ขี้คน	1	60.00	60.00	[]	50.00	50.00	[]		f
-276	269	19	อ่อมหมู	1	71.00	71.00	[]	59.00	59.00	[]		t
-277	270	37	ขี้คน	1	60.00	90.00	[{"label": "", "extraPrice": 30}]	50.00	50.00	[]		f
-278	271	19	อ่อมหมู	3	71.00	213.00	[]	59.00	177.00	[]		f
-279	272	40	ข้าวผัด	1	120.00	120.00	[]	100.00	100.00	[]		f
 \.
 
 
 --
--- TOC entry 3733 (class 0 OID 25449)
--- Dependencies: 235
+-- TOC entry 3755 (class 0 OID 16499)
+-- Dependencies: 239
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.orders (order_id, user_id, market_id, rider_id, address, delivery_type, payment_method, note, distance_km, delivery_fee, total_price, status, created_at, updated_at, address_id, rider_required_gp, bonus, original_total_price, shop_status, delivery_photo, is_market_reviewed, is_rider_reviewed) FROM stdin;
-272	31	45	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.98	15.00	135.00	rider_assigned	2025-10-17 04:25:58.893725	2025-10-17 04:26:26.109002	8	20.00	0.00	100.00	\N	\N	f	f
-271	31	38	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		660.74	3275.00	3488.00	completed	2025-10-17 04:18:18.167716	2025-10-17 04:27:35.444956	8	26.00	10.00	177.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760649925075_j5evaf.jpg	t	t
-270	31	44	11	74CG+G37 74CG+G37 ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.76	15.00	105.00	completed	2025-10-17 03:23:07.075643	2025-10-17 04:27:43.139971	8	40.00	0.00	50.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760649354991_lbks1o.jpg	t	f
-260	31	37	10	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	60.00	completed	2025-10-15 16:13:09.796264	2025-10-15 16:16:41.398618	7	7.00	0.00	38.00	ready_for_pickup	http://10.28.145.44:4000/uploads/delivery_photos/delivery_1760519709037_nemsnv.jpg	t	t
-261	31	37	10	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	54.00	completed	2025-10-15 16:25:49.033576	2025-10-15 16:29:56.763913	7	6.00	0.00	33.00	ready_for_pickup	http://10.28.145.44:4000/uploads/delivery_photos/delivery_1760520465934_gt5fgr.jpg	t	t
-264	31	38	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-16 04:29:01.979237	2025-10-16 04:29:01.979237	7	12.00	0.00	59.00	\N	\N	f	f
-265	31	38	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-16 04:32:16.663082	2025-10-16 04:32:16.663082	7	12.00	0.00	59.00	\N	\N	f	f
-266	31	37	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	42.00	completed	2025-10-16 04:39:52.051967	2025-10-16 04:39:52.051967	7	4.00	0.00	23.00	\N	\N	f	f
-267	31	37	\N	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		2.39	15.00	613.00	completed	2025-10-16 04:41:30.562277	2025-10-16 04:41:30.562277	7	63.00	15.00	520.00	\N	\N	f	f
-268	36	44	11	Bokpyin ต.Bokpyin อ.Kawthoung จ.Tanintharyi Region	แบบ/วางไว้จุดที่ระบุ	เงินสด		14.06	45.00	105.00	completed	2025-10-16 15:49:03.421567	2025-10-17 02:12:15.618985	10	10.00	0.00	50.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760641935460_ogk46q.jpg	f	f
-263	31	44	11	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		3.82	15.00	105.00	completed	2025-10-15 20:59:22.677191	2025-10-17 02:17:35.224027	7	40.00	0.00	50.00	\N	http://10.164.109.44:4000/uploads/delivery_photos/delivery_1760604591873_vsp9.jpg	f	t
-269	31	38	11	749P+JVJ 749P+JVJ ตำบล เชียงเครือ อำเภอเมืองสกลนคร สกลนคร 47000 ประเทศไทย อ.อำเภอเมืองสกลนคร จ.สกลนคร 47000	แบบ/วางไว้จุดที่ระบุ	เงินสด		661.65	3280.00	3351.00	completed	2025-10-17 02:19:15.102766	2025-10-17 02:21:54.35162	7	12.00	0.00	59.00	\N	http://192.168.1.129:4000/uploads/delivery_photos/delivery_1760642494793_p44ixt.jpg	t	f
 \.
 
 
 --
--- TOC entry 3735 (class 0 OID 25462)
--- Dependencies: 237
+-- TOC entry 3757 (class 0 OID 16514)
+-- Dependencies: 241
 -- Data for Name: rider_addresses; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -1747,34 +1695,30 @@ COPY public.rider_addresses (address_id, user_id, house_number, street, subdistr
 
 
 --
--- TOC entry 3737 (class 0 OID 25471)
--- Dependencies: 239
+-- TOC entry 3759 (class 0 OID 16523)
+-- Dependencies: 243
 -- Data for Name: rider_profiles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.rider_profiles (rider_id, user_id, id_card_number, id_card_photo_url, id_card_selfie_url, driving_license_number, driving_license_photo_url, vehicle_type, vehicle_brand_model, vehicle_color, vehicle_photo_url, vehicle_registration_photo_url, approval_status, approved_by, approved_at, rejection_reason, created_at, updated_at, vehicle_registration_number, vehicle_registration_province, promptpay, gp_balance, rating, reviews_count) FROM stdin;
-10	35	9901700123459	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260702/rider-documents/ppufc7us313g6qem5zkp.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260701/rider-documents/hphwpjueczxwksykhlmr.png	DL1234568	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260703/rider-documents/n6ycoqgi3oz0wy3db1cj.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260704/rider-documents/qslldgochuknpxqns2hn.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260705/rider-documents/itjr5smgaraqqtadtlzb.png	approved	1	\N	\N	2025-09-19 12:44:59.694794	2025-10-15 16:29:56.763913	ฟก-123	สกลนคร	1234556789012	5875.00	4.5	2
-11	45	1560528864554	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530956/rider-documents/i7fitnarwwldd3zxv7zn.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530955/rider-documents/qmebayouuhdu7gfuvnjt.jpg	12356788	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530957/rider-documents/ajjpa2tveycyxnvmky9k.jpg	motorcycle	hcjcfu	red	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530959/rider-documents/ikedac3ptle9rzap78cp.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530960/rider-documents/cuuzoncicyrqixvdnglu.jpg	approved	1	2025-10-15 19:42:04.201079	\N	2025-10-15 19:22:33.223371	2025-10-17 04:27:27.512626	yyy	ggg	0989520103	138.00	4.5	2
+10	35	9901700123459	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260702/rider-documents/ppufc7us313g6qem5zkp.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260701/rider-documents/hphwpjueczxwksykhlmr.png	DL1234568	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260703/rider-documents/n6ycoqgi3oz0wy3db1cj.png	motorcycle	Honda Wave	Red	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260704/rider-documents/qslldgochuknpxqns2hn.png	https://res.cloudinary.com/djqdn2zru/image/upload/v1758260705/rider-documents/itjr5smgaraqqtadtlzb.png	approved	1	\N	\N	2025-09-19 12:44:59.694794	2025-10-17 06:16:21.688124	ฟก-123	สกลนคร	1234556789012	5875.00	0.0	0
+11	45	1560528864554	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530956/rider-documents/i7fitnarwwldd3zxv7zn.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530955/rider-documents/qmebayouuhdu7gfuvnjt.jpg	12356788	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530957/rider-documents/ajjpa2tveycyxnvmky9k.jpg	motorcycle	hcjcfu	red	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530959/rider-documents/ikedac3ptle9rzap78cp.jpg	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530960/rider-documents/cuuzoncicyrqixvdnglu.jpg	approved	1	2025-10-15 19:42:04.201079	\N	2025-10-15 19:22:33.223371	2025-10-17 06:16:21.688124	yyy	ggg	0989520103	138.00	0.0	0
 \.
 
 
 --
--- TOC entry 3739 (class 0 OID 25487)
--- Dependencies: 241
+-- TOC entry 3761 (class 0 OID 16539)
+-- Dependencies: 245
 -- Data for Name: rider_reviews; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.rider_reviews (review_id, order_id, user_id, rider_id, rating, comment, created_at, updated_at) FROM stdin;
-23	260	31	10	5	เร็วไปเเรงจริง	2025-10-15 16:16:41.398618	2025-10-15 16:16:41.398618
-24	261	31	10	4	ค้อน	2025-10-15 16:29:56.763913	2025-10-15 16:29:56.763913
-25	263	31	11	4	ขี้กาก	2025-10-17 02:17:35.224027	2025-10-17 02:17:35.224027
-26	271	31	11	5	\N	2025-10-17 04:27:27.512626	2025-10-17 04:27:27.512626
 \.
 
 
 --
--- TOC entry 3741 (class 0 OID 25496)
--- Dependencies: 243
+-- TOC entry 3763 (class 0 OID 16548)
+-- Dependencies: 247
 -- Data for Name: rider_topups; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -1791,23 +1735,23 @@ COPY public.rider_topups (topup_id, user_id, amount, slip_url, status, rejection
 
 
 --
--- TOC entry 3750 (class 0 OID 26080)
--- Dependencies: 252
+-- TOC entry 3765 (class 0 OID 16558)
+-- Dependencies: 249
 -- Data for Name: shop_closed_reports; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.shop_closed_reports (report_id, order_id, market_id, rider_id, reason, note, image_urls, status, reviewed_by, reviewed_at, created_at, updated_at) FROM stdin;
-10	\N	40	10	โทรไม่ติด / ไม่มีคนรับสาย	\N	{}	pending	\N	\N	2025-10-14 20:57:19.06891	2025-10-14 20:57:19.06891
-13	\N	40	10	ร้านย้ายที่ตั้ง	ร้านปิดสัส	{http://10.164.109.44:4000/uploads/shop_closed/shopclosed_1760450675948_499915471.jpg}	checked	\N	2025-10-14 21:55:23.695013	2025-10-14 21:04:35.984919	2025-10-14 21:55:23.695013
 8	\N	39	10	ร้านปิดชั่วคราว	ไม่มีคนอยู่ในร้าน	{http://0.0.0.0:4000/uploads/shop_closed/shopclosed_1760438349626_724130693.jpeg,http://0.0.0.0:4000/uploads/shop_closed/shopclosed_1760438349627_352237942.jpeg}	pending	\N	\N	2025-10-14 17:39:09.635337	2025-10-14 17:39:09.635337
-12	\N	43	10	ร้านปิดชั่วคราว	\N	{}	pending	\N	2025-10-14 22:12:31.219977	2025-10-14 21:02:42.031228	2025-10-14 22:12:31.219977
 14	\N	45	10	ร้านไม่อยู่ในพื้นที่	\N	{http://10.164.109.44:4000/uploads/shop_closed/shopclosed_1760455696628_523435492.jpg,http://10.164.109.44:4000/uploads/shop_closed/shopclosed_1760455696646_491273531.jpg}	pending	\N	\N	2025-10-14 22:28:17.039717	2025-10-14 22:28:17.039717
+12	\N	\N	10	ร้านปิดชั่วคราว	\N	{}	pending	\N	2025-10-14 22:12:31.219977	2025-10-14 21:02:42.031228	2025-10-14 22:12:31.219977
+10	\N	\N	10	โทรไม่ติด / ไม่มีคนรับสาย	\N	{}	pending	\N	\N	2025-10-14 20:57:19.06891	2025-10-14 20:57:19.06891
+13	\N	\N	10	ร้านย้ายที่ตั้ง	ร้านปิดสัส	{http://10.164.109.44:4000/uploads/shop_closed/shopclosed_1760450675948_499915471.jpg}	checked	\N	2025-10-14 21:55:23.695013	2025-10-14 21:04:35.984919	2025-10-14 21:55:23.695013
 \.
 
 
 --
--- TOC entry 3743 (class 0 OID 25506)
--- Dependencies: 245
+-- TOC entry 3767 (class 0 OID 16568)
+-- Dependencies: 251
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -1820,11 +1764,13 @@ COPY public.users (user_id, google_id, display_name, email, password, birthdate,
 41	113608970896437541477	ปองมณี คําภูษา	pongmnee73@gmail.com	\N	\N	\N	\N	2025-10-15 18:38:29.592526	f	https://lh3.googleusercontent.com/a/ACg8ocK0RKutJveFfp_Cc-VcRGRhcJNVnxcQjrEyjIhlwHJhYepmPQ=s96-c	google	f	rider	\N
 44	105426277786935562046	taweechok khamphusa	aumtch0@gmail.com	\N	\N	\N	\N	2025-10-15 19:18:33.992396	f	https://lh3.googleusercontent.com/a/ACg8ocLhitygVoLkOorCQb1eXQKeMRnO8QEYPqHRgBdySs_Rl8_EBA=s96-c	google	f	rider	\N
 45	\N	คน	aumtch1@gmail.com	$2b$10$EUeV17/tqcNkcst4nLp0LOQq9dJ0DOeoHkj8/CTPgigl3eU4m/tD2	2003-01-04	0	0852147963	2025-10-15 19:20:48.328898	t	https://res.cloudinary.com/djqdn2zru/image/upload/v1760530850/rider-profiles/livqqmtzpyu0ie8ggfja.png	\N	f	rider	\N
+46	\N	สมรักษ์ สาเทียน	mon22opz@gmail.com	$2b$10$p4mZic0sgLncwDxkVhYVP.xPpgRQFaQR.kPGQSBC9gojLRW2iF2wK	2000-01-17	0	0933843575	2025-10-17 07:25:10.201178	t	https://res.cloudinary.com/djqdn2zru/image/upload/v1760660709/Market-LOGO/ocvxytx5wh0ktdnraexa.jpg	manual	t	member	\N
+47	\N	bae jinsol	shora2256@gmail.com	$2b$10$PPv9dyEazehgZZsT/thKc.BrxjFqyToY6g5aF3kpqu9trc2KaqN4.	2000-01-18	1	08888888888	2025-10-17 07:48:27.1911	t	https://res.cloudinary.com/djqdn2zru/image/upload/v1760662106/Market-LOGO/y3wpgttonzekf6hpqmml.jpg	manual	t	member	\N
 \.
 
 
 --
--- TOC entry 3797 (class 0 OID 0)
+-- TOC entry 3815 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: admins_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1833,7 +1779,7 @@ SELECT pg_catalog.setval('public.admins_id_seq', 15, true);
 
 
 --
--- TOC entry 3798 (class 0 OID 0)
+-- TOC entry 3816 (class 0 OID 0)
 -- Dependencies: 218
 -- Name: carts_cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1842,16 +1788,16 @@ SELECT pg_catalog.setval('public.carts_cart_id_seq', 321, true);
 
 
 --
--- TOC entry 3799 (class 0 OID 0)
+-- TOC entry 3817 (class 0 OID 0)
 -- Dependencies: 220
 -- Name: categorys_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.categorys_id_seq', 3, true);
+SELECT pg_catalog.setval('public.categorys_id_seq', 15, true);
 
 
 --
--- TOC entry 3800 (class 0 OID 0)
+-- TOC entry 3818 (class 0 OID 0)
 -- Dependencies: 222
 -- Name: chat_messages_message_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1860,7 +1806,7 @@ SELECT pg_catalog.setval('public.chat_messages_message_id_seq', 126, true);
 
 
 --
--- TOC entry 3801 (class 0 OID 0)
+-- TOC entry 3819 (class 0 OID 0)
 -- Dependencies: 224
 -- Name: chat_rooms_room_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1869,7 +1815,7 @@ SELECT pg_catalog.setval('public.chat_rooms_room_id_seq', 33, true);
 
 
 --
--- TOC entry 3802 (class 0 OID 0)
+-- TOC entry 3820 (class 0 OID 0)
 -- Dependencies: 226
 -- Name: client_addresses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -1878,8 +1824,8 @@ SELECT pg_catalog.setval('public.client_addresses_id_seq', 13, true);
 
 
 --
--- TOC entry 3803 (class 0 OID 0)
--- Dependencies: 249
+-- TOC entry 3821 (class 0 OID 0)
+-- Dependencies: 228
 -- Name: complaints_complaint_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1887,8 +1833,8 @@ SELECT pg_catalog.setval('public.complaints_complaint_id_seq', 3, true);
 
 
 --
--- TOC entry 3804 (class 0 OID 0)
--- Dependencies: 247
+-- TOC entry 3822 (class 0 OID 0)
+-- Dependencies: 230
 -- Name: food_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1896,17 +1842,17 @@ SELECT pg_catalog.setval('public.food_reviews_review_id_seq', 42, true);
 
 
 --
--- TOC entry 3805 (class 0 OID 0)
--- Dependencies: 228
+-- TOC entry 3823 (class 0 OID 0)
+-- Dependencies: 232
 -- Name: foods_food_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.foods_food_id_seq', 42, true);
+SELECT pg_catalog.setval('public.foods_food_id_seq', 64, true);
 
 
 --
--- TOC entry 3806 (class 0 OID 0)
--- Dependencies: 230
+-- TOC entry 3824 (class 0 OID 0)
+-- Dependencies: 234
 -- Name: market_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1914,17 +1860,17 @@ SELECT pg_catalog.setval('public.market_reviews_review_id_seq', 44, true);
 
 
 --
--- TOC entry 3807 (class 0 OID 0)
--- Dependencies: 232
+-- TOC entry 3825 (class 0 OID 0)
+-- Dependencies: 236
 -- Name: markets_market_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.markets_market_id_seq', 45, true);
+SELECT pg_catalog.setval('public.markets_market_id_seq', 49, true);
 
 
 --
--- TOC entry 3808 (class 0 OID 0)
--- Dependencies: 234
+-- TOC entry 3826 (class 0 OID 0)
+-- Dependencies: 238
 -- Name: order_items_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1932,8 +1878,8 @@ SELECT pg_catalog.setval('public.order_items_item_id_seq', 279, true);
 
 
 --
--- TOC entry 3809 (class 0 OID 0)
--- Dependencies: 236
+-- TOC entry 3827 (class 0 OID 0)
+-- Dependencies: 240
 -- Name: orders_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1941,8 +1887,8 @@ SELECT pg_catalog.setval('public.orders_order_id_seq', 272, true);
 
 
 --
--- TOC entry 3810 (class 0 OID 0)
--- Dependencies: 238
+-- TOC entry 3828 (class 0 OID 0)
+-- Dependencies: 242
 -- Name: rider_addresses_address_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1950,8 +1896,8 @@ SELECT pg_catalog.setval('public.rider_addresses_address_id_seq', 8, true);
 
 
 --
--- TOC entry 3811 (class 0 OID 0)
--- Dependencies: 240
+-- TOC entry 3829 (class 0 OID 0)
+-- Dependencies: 244
 -- Name: rider_profiles_rider_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1959,8 +1905,8 @@ SELECT pg_catalog.setval('public.rider_profiles_rider_id_seq', 11, true);
 
 
 --
--- TOC entry 3812 (class 0 OID 0)
--- Dependencies: 242
+-- TOC entry 3830 (class 0 OID 0)
+-- Dependencies: 246
 -- Name: rider_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1968,8 +1914,8 @@ SELECT pg_catalog.setval('public.rider_reviews_review_id_seq', 26, true);
 
 
 --
--- TOC entry 3813 (class 0 OID 0)
--- Dependencies: 244
+-- TOC entry 3831 (class 0 OID 0)
+-- Dependencies: 248
 -- Name: rider_topups_topup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1977,8 +1923,8 @@ SELECT pg_catalog.setval('public.rider_topups_topup_id_seq', 13, true);
 
 
 --
--- TOC entry 3814 (class 0 OID 0)
--- Dependencies: 251
+-- TOC entry 3832 (class 0 OID 0)
+-- Dependencies: 250
 -- Name: shop_closed_reports_report_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -1986,16 +1932,16 @@ SELECT pg_catalog.setval('public.shop_closed_reports_report_id_seq', 14, true);
 
 
 --
--- TOC entry 3815 (class 0 OID 0)
--- Dependencies: 246
+-- TOC entry 3833 (class 0 OID 0)
+-- Dependencies: 252
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 45, true);
+SELECT pg_catalog.setval('public.users_user_id_seq', 47, true);
 
 
 --
--- TOC entry 3440 (class 2606 OID 25533)
+-- TOC entry 3458 (class 2606 OID 16598)
 -- Name: admins admins_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2004,7 +1950,7 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 3442 (class 2606 OID 25535)
+-- TOC entry 3460 (class 2606 OID 16600)
 -- Name: admins admins_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2013,7 +1959,7 @@ ALTER TABLE ONLY public.admins
 
 
 --
--- TOC entry 3444 (class 2606 OID 25537)
+-- TOC entry 3462 (class 2606 OID 16602)
 -- Name: carts carts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2022,7 +1968,7 @@ ALTER TABLE ONLY public.carts
 
 
 --
--- TOC entry 3446 (class 2606 OID 25539)
+-- TOC entry 3464 (class 2606 OID 16604)
 -- Name: categorys categorys_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2031,7 +1977,7 @@ ALTER TABLE ONLY public.categorys
 
 
 --
--- TOC entry 3448 (class 2606 OID 25541)
+-- TOC entry 3466 (class 2606 OID 16606)
 -- Name: chat_messages chat_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2040,7 +1986,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 3452 (class 2606 OID 25543)
+-- TOC entry 3470 (class 2606 OID 16608)
 -- Name: chat_rooms chat_rooms_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2049,7 +1995,7 @@ ALTER TABLE ONLY public.chat_rooms
 
 
 --
--- TOC entry 3459 (class 2606 OID 25545)
+-- TOC entry 3477 (class 2606 OID 16610)
 -- Name: client_addresses client_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2058,7 +2004,7 @@ ALTER TABLE ONLY public.client_addresses
 
 
 --
--- TOC entry 3521 (class 2606 OID 25802)
+-- TOC entry 3479 (class 2606 OID 16612)
 -- Name: complaints complaints_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2067,7 +2013,7 @@ ALTER TABLE ONLY public.complaints
 
 
 --
--- TOC entry 3517 (class 2606 OID 25764)
+-- TOC entry 3481 (class 2606 OID 16614)
 -- Name: food_reviews food_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2076,7 +2022,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3461 (class 2606 OID 25547)
+-- TOC entry 3485 (class 2606 OID 16616)
 -- Name: foods foods_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2085,7 +2031,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 3465 (class 2606 OID 25549)
+-- TOC entry 3489 (class 2606 OID 16618)
 -- Name: market_reviews market_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2094,7 +2040,7 @@ ALTER TABLE ONLY public.market_reviews
 
 
 --
--- TOC entry 3469 (class 2606 OID 25551)
+-- TOC entry 3493 (class 2606 OID 16620)
 -- Name: markets markets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2103,7 +2049,7 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 3472 (class 2606 OID 25553)
+-- TOC entry 3496 (class 2606 OID 16622)
 -- Name: order_items order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2112,7 +2058,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 3477 (class 2606 OID 25555)
+-- TOC entry 3501 (class 2606 OID 16624)
 -- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2121,7 +2067,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 3482 (class 2606 OID 25557)
+-- TOC entry 3506 (class 2606 OID 16626)
 -- Name: rider_addresses rider_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2130,7 +2076,7 @@ ALTER TABLE ONLY public.rider_addresses
 
 
 --
--- TOC entry 3491 (class 2606 OID 25559)
+-- TOC entry 3515 (class 2606 OID 16628)
 -- Name: rider_profiles rider_profiles_driving_license_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2139,7 +2085,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3493 (class 2606 OID 25561)
+-- TOC entry 3517 (class 2606 OID 16630)
 -- Name: rider_profiles rider_profiles_id_card_number_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2148,7 +2094,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3495 (class 2606 OID 25563)
+-- TOC entry 3519 (class 2606 OID 16632)
 -- Name: rider_profiles rider_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2157,7 +2103,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3497 (class 2606 OID 25565)
+-- TOC entry 3521 (class 2606 OID 16634)
 -- Name: rider_profiles rider_profiles_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2166,7 +2112,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3503 (class 2606 OID 25567)
+-- TOC entry 3527 (class 2606 OID 16636)
 -- Name: rider_reviews rider_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2175,7 +2121,7 @@ ALTER TABLE ONLY public.rider_reviews
 
 
 --
--- TOC entry 3511 (class 2606 OID 25569)
+-- TOC entry 3535 (class 2606 OID 16638)
 -- Name: rider_topups rider_topups_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2184,7 +2130,7 @@ ALTER TABLE ONLY public.rider_topups
 
 
 --
--- TOC entry 3523 (class 2606 OID 26091)
+-- TOC entry 3537 (class 2606 OID 16640)
 -- Name: shop_closed_reports shop_closed_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2193,7 +2139,7 @@ ALTER TABLE ONLY public.shop_closed_reports
 
 
 --
--- TOC entry 3519 (class 2606 OID 25791)
+-- TOC entry 3483 (class 2606 OID 16642)
 -- Name: food_reviews unique_food_review_per_item; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2202,7 +2148,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3499 (class 2606 OID 25571)
+-- TOC entry 3523 (class 2606 OID 16644)
 -- Name: rider_profiles unique_vehicle_registration; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2211,7 +2157,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3457 (class 2606 OID 25573)
+-- TOC entry 3475 (class 2606 OID 16646)
 -- Name: chat_rooms uq_chat_room_order; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2220,7 +2166,7 @@ ALTER TABLE ONLY public.chat_rooms
 
 
 --
--- TOC entry 3467 (class 2606 OID 25575)
+-- TOC entry 3491 (class 2606 OID 16648)
 -- Name: market_reviews uq_market_review_per_order; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2229,7 +2175,7 @@ ALTER TABLE ONLY public.market_reviews
 
 
 --
--- TOC entry 3505 (class 2606 OID 25577)
+-- TOC entry 3529 (class 2606 OID 16650)
 -- Name: rider_reviews uq_rider_review_per_order; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2238,7 +2184,7 @@ ALTER TABLE ONLY public.rider_reviews
 
 
 --
--- TOC entry 3513 (class 2606 OID 25579)
+-- TOC entry 3539 (class 2606 OID 16652)
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2247,7 +2193,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3515 (class 2606 OID 25581)
+-- TOC entry 3541 (class 2606 OID 16654)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2256,7 +2202,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3449 (class 1259 OID 25582)
+-- TOC entry 3467 (class 1259 OID 16655)
 -- Name: idx_chat_messages_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2264,7 +2210,7 @@ CREATE INDEX idx_chat_messages_created_at ON public.chat_messages USING btree (c
 
 
 --
--- TOC entry 3450 (class 1259 OID 25583)
+-- TOC entry 3468 (class 1259 OID 16656)
 -- Name: idx_chat_messages_room_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2272,7 +2218,7 @@ CREATE INDEX idx_chat_messages_room_id ON public.chat_messages USING btree (room
 
 
 --
--- TOC entry 3453 (class 1259 OID 25584)
+-- TOC entry 3471 (class 1259 OID 16657)
 -- Name: idx_chat_rooms_customer_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2280,7 +2226,7 @@ CREATE INDEX idx_chat_rooms_customer_id ON public.chat_rooms USING btree (custom
 
 
 --
--- TOC entry 3454 (class 1259 OID 25585)
+-- TOC entry 3472 (class 1259 OID 16658)
 -- Name: idx_chat_rooms_order_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2288,7 +2234,7 @@ CREATE INDEX idx_chat_rooms_order_id ON public.chat_rooms USING btree (order_id)
 
 
 --
--- TOC entry 3455 (class 1259 OID 25586)
+-- TOC entry 3473 (class 1259 OID 16659)
 -- Name: idx_chat_rooms_rider_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2296,7 +2242,7 @@ CREATE INDEX idx_chat_rooms_rider_id ON public.chat_rooms USING btree (rider_id)
 
 
 --
--- TOC entry 3462 (class 1259 OID 25587)
+-- TOC entry 3486 (class 1259 OID 16660)
 -- Name: idx_market_reviews_market_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2304,7 +2250,7 @@ CREATE INDEX idx_market_reviews_market_id ON public.market_reviews USING btree (
 
 
 --
--- TOC entry 3463 (class 1259 OID 25588)
+-- TOC entry 3487 (class 1259 OID 16661)
 -- Name: idx_market_reviews_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2312,7 +2258,7 @@ CREATE INDEX idx_market_reviews_user_id ON public.market_reviews USING btree (us
 
 
 --
--- TOC entry 3470 (class 1259 OID 25589)
+-- TOC entry 3494 (class 1259 OID 16662)
 -- Name: idx_order_items_original_price; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2320,7 +2266,7 @@ CREATE INDEX idx_order_items_original_price ON public.order_items USING btree (o
 
 
 --
--- TOC entry 3473 (class 1259 OID 25590)
+-- TOC entry 3497 (class 1259 OID 16663)
 -- Name: idx_orders_market_status_created; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2328,7 +2274,7 @@ CREATE INDEX idx_orders_market_status_created ON public.orders USING btree (mark
 
 
 --
--- TOC entry 3474 (class 1259 OID 25591)
+-- TOC entry 3498 (class 1259 OID 16664)
 -- Name: idx_orders_original_total_price; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2336,7 +2282,7 @@ CREATE INDEX idx_orders_original_total_price ON public.orders USING btree (origi
 
 
 --
--- TOC entry 3475 (class 1259 OID 25592)
+-- TOC entry 3499 (class 1259 OID 16665)
 -- Name: idx_orders_shop_status; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2344,7 +2290,7 @@ CREATE INDEX idx_orders_shop_status ON public.orders USING btree (shop_status);
 
 
 --
--- TOC entry 3478 (class 1259 OID 25593)
+-- TOC entry 3502 (class 1259 OID 16666)
 -- Name: idx_rider_addresses_district; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2352,7 +2298,7 @@ CREATE INDEX idx_rider_addresses_district ON public.rider_addresses USING btree 
 
 
 --
--- TOC entry 3479 (class 1259 OID 25594)
+-- TOC entry 3503 (class 1259 OID 16667)
 -- Name: idx_rider_addresses_province; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2360,7 +2306,7 @@ CREATE INDEX idx_rider_addresses_province ON public.rider_addresses USING btree 
 
 
 --
--- TOC entry 3480 (class 1259 OID 25595)
+-- TOC entry 3504 (class 1259 OID 16668)
 -- Name: idx_rider_addresses_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2368,7 +2314,7 @@ CREATE INDEX idx_rider_addresses_user_id ON public.rider_addresses USING btree (
 
 
 --
--- TOC entry 3483 (class 1259 OID 25596)
+-- TOC entry 3507 (class 1259 OID 16669)
 -- Name: idx_rider_profiles_approval_status; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2376,7 +2322,7 @@ CREATE INDEX idx_rider_profiles_approval_status ON public.rider_profiles USING b
 
 
 --
--- TOC entry 3484 (class 1259 OID 25597)
+-- TOC entry 3508 (class 1259 OID 16670)
 -- Name: idx_rider_profiles_driving_license_number; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2384,7 +2330,7 @@ CREATE INDEX idx_rider_profiles_driving_license_number ON public.rider_profiles 
 
 
 --
--- TOC entry 3485 (class 1259 OID 25598)
+-- TOC entry 3509 (class 1259 OID 16671)
 -- Name: idx_rider_profiles_id_card_number; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2392,7 +2338,7 @@ CREATE INDEX idx_rider_profiles_id_card_number ON public.rider_profiles USING bt
 
 
 --
--- TOC entry 3486 (class 1259 OID 25599)
+-- TOC entry 3510 (class 1259 OID 16672)
 -- Name: idx_rider_profiles_promptpay; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2400,7 +2346,7 @@ CREATE INDEX idx_rider_profiles_promptpay ON public.rider_profiles USING btree (
 
 
 --
--- TOC entry 3487 (class 1259 OID 25600)
+-- TOC entry 3511 (class 1259 OID 16673)
 -- Name: idx_rider_profiles_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2408,7 +2354,7 @@ CREATE INDEX idx_rider_profiles_user_id ON public.rider_profiles USING btree (us
 
 
 --
--- TOC entry 3488 (class 1259 OID 25601)
+-- TOC entry 3512 (class 1259 OID 16674)
 -- Name: idx_rider_profiles_vehicle_province; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2416,7 +2362,7 @@ CREATE INDEX idx_rider_profiles_vehicle_province ON public.rider_profiles USING 
 
 
 --
--- TOC entry 3489 (class 1259 OID 25602)
+-- TOC entry 3513 (class 1259 OID 16675)
 -- Name: idx_rider_profiles_vehicle_registration; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2424,7 +2370,7 @@ CREATE INDEX idx_rider_profiles_vehicle_registration ON public.rider_profiles US
 
 
 --
--- TOC entry 3500 (class 1259 OID 25603)
+-- TOC entry 3524 (class 1259 OID 16676)
 -- Name: idx_rider_reviews_rider_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2432,7 +2378,7 @@ CREATE INDEX idx_rider_reviews_rider_id ON public.rider_reviews USING btree (rid
 
 
 --
--- TOC entry 3501 (class 1259 OID 25604)
+-- TOC entry 3525 (class 1259 OID 16677)
 -- Name: idx_rider_reviews_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2440,7 +2386,7 @@ CREATE INDEX idx_rider_reviews_user_id ON public.rider_reviews USING btree (user
 
 
 --
--- TOC entry 3506 (class 1259 OID 25605)
+-- TOC entry 3530 (class 1259 OID 16678)
 -- Name: idx_rider_topups_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2448,7 +2394,7 @@ CREATE INDEX idx_rider_topups_created_at ON public.rider_topups USING btree (cre
 
 
 --
--- TOC entry 3507 (class 1259 OID 25606)
+-- TOC entry 3531 (class 1259 OID 16679)
 -- Name: idx_rider_topups_rider_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2456,7 +2402,7 @@ CREATE INDEX idx_rider_topups_rider_id ON public.rider_topups USING btree (rider
 
 
 --
--- TOC entry 3508 (class 1259 OID 25607)
+-- TOC entry 3532 (class 1259 OID 16680)
 -- Name: idx_rider_topups_status; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2464,7 +2410,7 @@ CREATE INDEX idx_rider_topups_status ON public.rider_topups USING btree (status)
 
 
 --
--- TOC entry 3509 (class 1259 OID 25608)
+-- TOC entry 3533 (class 1259 OID 16681)
 -- Name: idx_rider_topups_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2472,7 +2418,7 @@ CREATE INDEX idx_rider_topups_user_id ON public.rider_topups USING btree (user_i
 
 
 --
--- TOC entry 3564 (class 2620 OID 25609)
+-- TOC entry 3582 (class 2620 OID 16682)
 -- Name: market_reviews trg_market_reviews_aiud; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2480,7 +2426,7 @@ CREATE TRIGGER trg_market_reviews_aiud AFTER INSERT OR DELETE OR UPDATE ON publi
 
 
 --
--- TOC entry 3568 (class 2620 OID 25610)
+-- TOC entry 3586 (class 2620 OID 16683)
 -- Name: rider_reviews trg_rider_reviews_aiud; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2488,7 +2434,7 @@ CREATE TRIGGER trg_rider_reviews_aiud AFTER INSERT OR DELETE OR UPDATE ON public
 
 
 --
--- TOC entry 3565 (class 2620 OID 25611)
+-- TOC entry 3583 (class 2620 OID 16684)
 -- Name: market_reviews trg_validate_market_review; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2496,7 +2442,7 @@ CREATE TRIGGER trg_validate_market_review BEFORE INSERT OR UPDATE ON public.mark
 
 
 --
--- TOC entry 3569 (class 2620 OID 25612)
+-- TOC entry 3587 (class 2620 OID 16685)
 -- Name: rider_reviews trg_validate_rider_review; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2504,7 +2450,7 @@ CREATE TRIGGER trg_validate_rider_review BEFORE INSERT OR UPDATE ON public.rider
 
 
 --
--- TOC entry 3563 (class 2620 OID 25613)
+-- TOC entry 3581 (class 2620 OID 16686)
 -- Name: chat_rooms update_chat_rooms_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2512,7 +2458,7 @@ CREATE TRIGGER update_chat_rooms_updated_at BEFORE UPDATE ON public.chat_rooms F
 
 
 --
--- TOC entry 3566 (class 2620 OID 25614)
+-- TOC entry 3584 (class 2620 OID 16687)
 -- Name: rider_addresses update_rider_addresses_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2520,7 +2466,7 @@ CREATE TRIGGER update_rider_addresses_updated_at BEFORE UPDATE ON public.rider_a
 
 
 --
--- TOC entry 3567 (class 2620 OID 25615)
+-- TOC entry 3585 (class 2620 OID 16688)
 -- Name: rider_profiles update_rider_profiles_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -2528,7 +2474,7 @@ CREATE TRIGGER update_rider_profiles_updated_at BEFORE UPDATE ON public.rider_pr
 
 
 --
--- TOC entry 3524 (class 2606 OID 25616)
+-- TOC entry 3542 (class 2606 OID 16689)
 -- Name: carts carts_food_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2537,7 +2483,7 @@ ALTER TABLE ONLY public.carts
 
 
 --
--- TOC entry 3525 (class 2606 OID 25621)
+-- TOC entry 3543 (class 2606 OID 16694)
 -- Name: carts carts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2546,7 +2492,7 @@ ALTER TABLE ONLY public.carts
 
 
 --
--- TOC entry 3526 (class 2606 OID 25626)
+-- TOC entry 3544 (class 2606 OID 16699)
 -- Name: chat_messages chat_messages_room_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2555,7 +2501,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 3527 (class 2606 OID 25631)
+-- TOC entry 3545 (class 2606 OID 16704)
 -- Name: chat_messages chat_messages_sender_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2564,7 +2510,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 3528 (class 2606 OID 25636)
+-- TOC entry 3546 (class 2606 OID 16709)
 -- Name: chat_rooms chat_rooms_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2573,7 +2519,7 @@ ALTER TABLE ONLY public.chat_rooms
 
 
 --
--- TOC entry 3529 (class 2606 OID 25641)
+-- TOC entry 3547 (class 2606 OID 16714)
 -- Name: chat_rooms chat_rooms_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2582,7 +2528,7 @@ ALTER TABLE ONLY public.chat_rooms
 
 
 --
--- TOC entry 3530 (class 2606 OID 25646)
+-- TOC entry 3548 (class 2606 OID 16719)
 -- Name: chat_rooms chat_rooms_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2591,7 +2537,7 @@ ALTER TABLE ONLY public.chat_rooms
 
 
 --
--- TOC entry 3556 (class 2606 OID 25813)
+-- TOC entry 3549 (class 2606 OID 16724)
 -- Name: complaints complaints_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2600,7 +2546,7 @@ ALTER TABLE ONLY public.complaints
 
 
 --
--- TOC entry 3557 (class 2606 OID 25808)
+-- TOC entry 3550 (class 2606 OID 16729)
 -- Name: complaints complaints_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2609,7 +2555,7 @@ ALTER TABLE ONLY public.complaints
 
 
 --
--- TOC entry 3558 (class 2606 OID 25803)
+-- TOC entry 3551 (class 2606 OID 16734)
 -- Name: complaints complaints_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2618,7 +2564,7 @@ ALTER TABLE ONLY public.complaints
 
 
 --
--- TOC entry 3540 (class 2606 OID 25651)
+-- TOC entry 3566 (class 2606 OID 16739)
 -- Name: orders fk_address; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2627,7 +2573,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 3536 (class 2606 OID 25656)
+-- TOC entry 3562 (class 2606 OID 16744)
 -- Name: markets fk_admin; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2636,7 +2582,7 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 3551 (class 2606 OID 25780)
+-- TOC entry 3552 (class 2606 OID 16749)
 -- Name: food_reviews fk_food_reviews_food; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2645,7 +2591,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3552 (class 2606 OID 25775)
+-- TOC entry 3553 (class 2606 OID 16754)
 -- Name: food_reviews fk_food_reviews_market; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2654,7 +2600,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3553 (class 2606 OID 25765)
+-- TOC entry 3554 (class 2606 OID 16759)
 -- Name: food_reviews fk_food_reviews_order; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2663,7 +2609,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3554 (class 2606 OID 25770)
+-- TOC entry 3555 (class 2606 OID 16764)
 -- Name: food_reviews fk_food_reviews_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2672,7 +2618,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3542 (class 2606 OID 25661)
+-- TOC entry 3568 (class 2606 OID 16769)
 -- Name: rider_addresses fk_rider_addresses_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2681,7 +2627,7 @@ ALTER TABLE ONLY public.rider_addresses
 
 
 --
--- TOC entry 3543 (class 2606 OID 25666)
+-- TOC entry 3569 (class 2606 OID 16774)
 -- Name: rider_profiles fk_rider_profiles_approved_by; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2690,7 +2636,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3544 (class 2606 OID 25671)
+-- TOC entry 3570 (class 2606 OID 16779)
 -- Name: rider_profiles fk_rider_profiles_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2699,7 +2645,7 @@ ALTER TABLE ONLY public.rider_profiles
 
 
 --
--- TOC entry 3555 (class 2606 OID 25785)
+-- TOC entry 3556 (class 2606 OID 16784)
 -- Name: food_reviews food_reviews_order_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2708,7 +2654,7 @@ ALTER TABLE ONLY public.food_reviews
 
 
 --
--- TOC entry 3531 (class 2606 OID 25746)
+-- TOC entry 3557 (class 2606 OID 16789)
 -- Name: foods foods_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2717,7 +2663,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 3532 (class 2606 OID 25676)
+-- TOC entry 3558 (class 2606 OID 16794)
 -- Name: foods foods_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2726,7 +2672,7 @@ ALTER TABLE ONLY public.foods
 
 
 --
--- TOC entry 3533 (class 2606 OID 25681)
+-- TOC entry 3559 (class 2606 OID 16799)
 -- Name: market_reviews market_reviews_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2735,7 +2681,7 @@ ALTER TABLE ONLY public.market_reviews
 
 
 --
--- TOC entry 3534 (class 2606 OID 25686)
+-- TOC entry 3560 (class 2606 OID 16804)
 -- Name: market_reviews market_reviews_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2744,7 +2690,7 @@ ALTER TABLE ONLY public.market_reviews
 
 
 --
--- TOC entry 3535 (class 2606 OID 25691)
+-- TOC entry 3561 (class 2606 OID 16809)
 -- Name: market_reviews market_reviews_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2753,7 +2699,7 @@ ALTER TABLE ONLY public.market_reviews
 
 
 --
--- TOC entry 3537 (class 2606 OID 25696)
+-- TOC entry 3563 (class 2606 OID 16814)
 -- Name: markets markets_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2762,7 +2708,7 @@ ALTER TABLE ONLY public.markets
 
 
 --
--- TOC entry 3538 (class 2606 OID 25701)
+-- TOC entry 3564 (class 2606 OID 16819)
 -- Name: order_items order_items_food_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2771,7 +2717,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 3539 (class 2606 OID 25706)
+-- TOC entry 3565 (class 2606 OID 16824)
 -- Name: order_items order_items_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2780,7 +2726,7 @@ ALTER TABLE ONLY public.order_items
 
 
 --
--- TOC entry 3541 (class 2606 OID 25711)
+-- TOC entry 3567 (class 2606 OID 16829)
 -- Name: orders orders_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2789,7 +2735,7 @@ ALTER TABLE ONLY public.orders
 
 
 --
--- TOC entry 3545 (class 2606 OID 25716)
+-- TOC entry 3571 (class 2606 OID 16834)
 -- Name: rider_reviews rider_reviews_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2798,7 +2744,7 @@ ALTER TABLE ONLY public.rider_reviews
 
 
 --
--- TOC entry 3546 (class 2606 OID 25721)
+-- TOC entry 3572 (class 2606 OID 16839)
 -- Name: rider_reviews rider_reviews_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2807,7 +2753,7 @@ ALTER TABLE ONLY public.rider_reviews
 
 
 --
--- TOC entry 3547 (class 2606 OID 25726)
+-- TOC entry 3573 (class 2606 OID 16844)
 -- Name: rider_reviews rider_reviews_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2816,7 +2762,7 @@ ALTER TABLE ONLY public.rider_reviews
 
 
 --
--- TOC entry 3548 (class 2606 OID 25731)
+-- TOC entry 3574 (class 2606 OID 16849)
 -- Name: rider_topups rider_topups_admin_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2825,7 +2771,7 @@ ALTER TABLE ONLY public.rider_topups
 
 
 --
--- TOC entry 3549 (class 2606 OID 25736)
+-- TOC entry 3575 (class 2606 OID 16854)
 -- Name: rider_topups rider_topups_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2834,7 +2780,7 @@ ALTER TABLE ONLY public.rider_topups
 
 
 --
--- TOC entry 3550 (class 2606 OID 25741)
+-- TOC entry 3576 (class 2606 OID 16859)
 -- Name: rider_topups rider_topups_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2843,7 +2789,7 @@ ALTER TABLE ONLY public.rider_topups
 
 
 --
--- TOC entry 3559 (class 2606 OID 26097)
+-- TOC entry 3577 (class 2606 OID 16864)
 -- Name: shop_closed_reports shop_closed_reports_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2852,7 +2798,7 @@ ALTER TABLE ONLY public.shop_closed_reports
 
 
 --
--- TOC entry 3560 (class 2606 OID 26092)
+-- TOC entry 3578 (class 2606 OID 16869)
 -- Name: shop_closed_reports shop_closed_reports_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2861,7 +2807,7 @@ ALTER TABLE ONLY public.shop_closed_reports
 
 
 --
--- TOC entry 3561 (class 2606 OID 26107)
+-- TOC entry 3579 (class 2606 OID 16874)
 -- Name: shop_closed_reports shop_closed_reports_reviewed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2870,7 +2816,7 @@ ALTER TABLE ONLY public.shop_closed_reports
 
 
 --
--- TOC entry 3562 (class 2606 OID 26102)
+-- TOC entry 3580 (class 2606 OID 16879)
 -- Name: shop_closed_reports shop_closed_reports_rider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2878,11 +2824,11 @@ ALTER TABLE ONLY public.shop_closed_reports
     ADD CONSTRAINT shop_closed_reports_rider_id_fkey FOREIGN KEY (rider_id) REFERENCES public.rider_profiles(rider_id) ON DELETE SET NULL;
 
 
--- Completed on 2025-10-17 05:29:43 +07
+-- Completed on 2025-10-17 09:47:47 +07
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lmfbcKj95RfcXQx2xAFDz8he8nMOkv0oeKaLy40achZKQbkMtnUtJwAd2ueYTZH
+\unrestrict 7i9jmpqvS2vDqfZaw67yXpkpuAqdxcdL7URBq4RsvmYoB1yCHVq9LQH5E8YLN85
 
